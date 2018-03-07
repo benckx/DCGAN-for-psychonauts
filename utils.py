@@ -2,17 +2,17 @@
 Some codes from https://github.com/Newmu/dcgan_code
 """
 from __future__ import division
-import math
-import json
-import random
-import pprint
-import scipy.misc
-import numpy as np
-from time import gmtime, strftime
-from six.moves import xrange
 
+import math
+import pprint
+import random
+from time import gmtime, strftime
+
+import numpy as np
+import scipy.misc
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from six.moves import xrange
 
 pp = pprint.PrettyPrinter()
 
@@ -241,10 +241,3 @@ def visualize(sess, dcgan, config, option):
     new_image_set = [merge(np.array([images[idx] for images in image_set]), [10, 10]) \
         for idx in range(64) + range(63, -1, -1)]
     make_gif(new_image_set, './samples/test_gif_merged.gif', duration=8)
-
-
-def image_manifold_size(num_images):
-  manifold_h = int(np.floor(np.sqrt(num_images)))
-  manifold_w = int(np.ceil(np.sqrt(num_images)))
-  assert manifold_h * manifold_w == num_images
-  return manifold_h, manifold_w

@@ -1,9 +1,8 @@
 import os
-import scipy.misc
 import numpy as np
 
 from model import DCGAN
-from utils import pp, visualize, to_json, show_all_variables
+from utils import pp, visualize, show_all_variables
 
 import tensorflow as tf
 
@@ -12,7 +11,9 @@ flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
 flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
-flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
+flags.DEFINE_integer("batch_size", None, "The size of batch images [64]")
+flags.DEFINE_integer("grid_height", 8, "Grid Height")
+flags.DEFINE_integer("grid_width", 8, "Grid Width")
 flags.DEFINE_integer("input_height", 108, "The size of image to use (will be center cropped). [108]")
 flags.DEFINE_integer("input_width", None, "The size of image to use (will be center cropped). If None, same value as input_height [None]")
 flags.DEFINE_integer("output_height", 64, "The size of the output images to produce [64]")
@@ -27,7 +28,14 @@ flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothin
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
 FLAGS = flags.FLAGS
 
-def main(_):
+if FLAGS.batch_size is None and FLAGS.grid_height is not None and FLAGS.grid_width is not None:
+    batch_size = FLAGS.grid_height * FLAGS.grid_width
+elif FLAGS.batch_size is not None:
+    batch_size = FLAGS.batch_size
+else:
+    raise Exception('grid_height/grid_width or batch_size must be provided')
+
+def main( ):
   pp.pprint(flags.FLAGS.__flags)
 
   if FLAGS.input_width is None:
@@ -52,8 +60,10 @@ def main(_):
           input_height=FLAGS.input_height,
           output_width=FLAGS.output_width,
           output_height=FLAGS.output_height,
-          batch_size=FLAGS.batch_size,
-          sample_num=FLAGS.batch_size,
+          grid_height=FLAGS.grid_height,
+          grid_width=FLAGS.grid_width,
+          batch_size=batch_size,
+          sample_num=batch_size,
           y_dim=10,
           z_dim=FLAGS.generate_test_images,
           dataset_name=FLAGS.dataset,
@@ -68,8 +78,10 @@ def main(_):
           input_height=FLAGS.input_height,
           output_width=FLAGS.output_width,
           output_height=FLAGS.output_height,
-          batch_size=FLAGS.batch_size,
-          sample_num=FLAGS.batch_size,
+          grid_height=FLAGS.grid_height,
+          grid_width=FLAGS.grid_width,
+          batch_size=batch_size,
+          sample_num=batch_size,
           z_dim=FLAGS.generate_test_images,
           dataset_name=FLAGS.dataset,
           input_fname_pattern=FLAGS.input_fname_pattern,

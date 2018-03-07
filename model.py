@@ -1,14 +1,12 @@
 from __future__ import division
+
 import os
 import time
-import math
 from glob import glob
-import tensorflow as tf
-import numpy as np
-from six.moves import xrange
 
 from ops import *
 from utils import *
+
 
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
@@ -16,6 +14,7 @@ def conv_out_size_same(size, stride):
 class DCGAN(object):
   def __init__(self, sess, input_height=108, input_width=108, crop=True,
          batch_size=64, sample_num = 64, output_height=64, output_width=64,
+         grid_height=8, grid_width=8,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
          input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None):
@@ -42,6 +41,9 @@ class DCGAN(object):
     self.input_width = input_width
     self.output_height = output_height
     self.output_width = output_width
+
+    self.grid_width = grid_width
+    self.grid_height = grid_height
 
     self.y_dim = y_dim
     self.z_dim = z_dim
@@ -189,18 +191,18 @@ class DCGAN(object):
 
     for epoch in xrange(config.epoch):
       if config.dataset == 'mnist':
-        batch_idxs = min(len(self.data_X), config.train_size) // config.batch_size
+        batch_idxs = min(len(self.data_X), config.train_size) // self.batch_size
       else:      
         self.data = glob(os.path.join(
           "./data", config.dataset, self.input_fname_pattern))
-        batch_idxs = min(len(self.data), config.train_size) // config.batch_size
+        batch_idxs = min(len(self.data), config.train_size) // self.batch_size
 
       for idx in xrange(0, batch_idxs):
         if config.dataset == 'mnist':
-          batch_images = self.data_X[idx*config.batch_size:(idx+1)*config.batch_size]
-          batch_labels = self.data_y[idx*config.batch_size:(idx+1)*config.batch_size]
+          batch_images = self.data_X[idx*self.batch_size:(idx+1)*self.batch_size]
+          batch_labels = self.data_y[idx*self.batch_size:(idx+1)*self.batch_size]
         else:
-          batch_files = self.data[idx*config.batch_size:(idx+1)*config.batch_size]
+          batch_files = self.data[idx*self.batch_size:(idx+1)*self.batch_size]
           batch = [
               get_image(batch_file,
                         input_height=self.input_height,
@@ -214,7 +216,7 @@ class DCGAN(object):
           else:
             batch_images = np.array(batch).astype(np.float32)
 
-        batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
+        batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]) \
               .astype(np.float32)
 
         if config.dataset == 'mnist':
@@ -277,7 +279,7 @@ class DCGAN(object):
           % (epoch, idx, batch_idxs,
             time.time() - start_time, errD_fake+errD_real, errG))
 
-        if np.mod(counter, 100) == 1:
+        if np.mod(counter, 2) == 1:
           if config.dataset == 'mnist':
             samples, d_loss, g_loss = self.sess.run(
               [self.sampler, self.d_loss, self.g_loss],
@@ -287,7 +289,7 @@ class DCGAN(object):
                   self.y:sample_labels,
               }
             )
-            save_images(samples, image_manifold_size(samples.shape[0]),
+            save_images(samples, (self.grid_height, self.grid_width),
                   './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
             print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
           else:
@@ -299,7 +301,7 @@ class DCGAN(object):
                     self.inputs: sample_inputs,
                 },
               )
-              save_images(samples, image_manifold_size(samples.shape[0]),
+              save_images(samples, (self.grid_height, self.grid_width),
                     './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
               print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
             except:
