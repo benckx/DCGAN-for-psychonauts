@@ -1,5 +1,10 @@
 # About this fork
+The idea is to tinker a bit with the code to better understand how it works and to better interface with 
+[another project](https://github.com/benckx/dnn-movie-posters).
+
 * Added parameters `grid_height` and `grid_width`
+* Parameters `input_height`, `input_width`, `output_height`, `output_width` are set automatically 
+(assuming all images in the data set have the same size)
 
 # DCGAN in Tensorflow
 

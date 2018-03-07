@@ -1,10 +1,15 @@
+import io
 import os
+import os.path
+from os import listdir
+from os.path import isfile, join
+
 import numpy as np
+import tensorflow as tf
+from PIL import Image
 
 from model import DCGAN
 from utils import pp, visualize, show_all_variables
-
-import tensorflow as tf
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
@@ -14,9 +19,9 @@ flags.DEFINE_integer("train_size", np.inf, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", None, "The size of batch images [64]")
 flags.DEFINE_integer("grid_height", 8, "Grid Height")
 flags.DEFINE_integer("grid_width", 8, "Grid Width")
-flags.DEFINE_integer("input_height", 108, "The size of image to use (will be center cropped). [108]")
+flags.DEFINE_integer("input_height", None, "The size of image to use (will be center cropped). [108]")
 flags.DEFINE_integer("input_width", None, "The size of image to use (will be center cropped). If None, same value as input_height [None]")
-flags.DEFINE_integer("output_height", 64, "The size of the output images to produce [64]")
+flags.DEFINE_integer("output_height", None, "The size of the output images to produce [64]")
 flags.DEFINE_integer("output_width", None, "The size of the output images to produce. If None, same value as output_height [None]")
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("input_fname_pattern", "*.jpg", "Glob pattern of filename of input images [*]")
@@ -28,6 +33,7 @@ flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothin
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
 FLAGS = flags.FLAGS
 
+# default batch_size
 if FLAGS.batch_size is None and FLAGS.grid_height is not None and FLAGS.grid_width is not None:
     batch_size = FLAGS.grid_height * FLAGS.grid_width
 elif FLAGS.batch_size is not None:
@@ -35,7 +41,28 @@ elif FLAGS.batch_size is not None:
 else:
     raise Exception('grid_height/grid_width or batch_size must be provided')
 
-def main( ):
+# default size parameters
+input_width = 0
+input_height = 0
+output_width = 0
+output_height = 0
+
+if FLAGS.input_height is None \
+        and FLAGS.input_width is None \
+        and FLAGS.output_height is None \
+        and FLAGS.output_width is None:
+    data_path = 'data/' + FLAGS.dataset
+    first_image = [f for f in listdir(data_path) if isfile(join(data_path, f))][0]
+    image_data = open(data_path + '/' + first_image, "rb").read()
+    image = Image.open(io.BytesIO(image_data))
+    rgb_im = image.convert('RGB')
+    input_width = rgb_im.size[0]
+    output_width = rgb_im.size[0]
+    input_height = rgb_im.size[1]
+    output_height = rgb_im.size[1]
+
+
+def main(_):
   pp.pprint(flags.FLAGS.__flags)
 
   if FLAGS.input_width is None:
@@ -56,10 +83,10 @@ def main( ):
     if FLAGS.dataset == 'mnist':
       dcgan = DCGAN(
           sess,
-          input_width=FLAGS.input_width,
-          input_height=FLAGS.input_height,
-          output_width=FLAGS.output_width,
-          output_height=FLAGS.output_height,
+          input_width=input_width,
+          input_height=input_height,
+          output_width=output_width,
+          output_height=output_height,
           grid_height=FLAGS.grid_height,
           grid_width=FLAGS.grid_width,
           batch_size=batch_size,
@@ -74,10 +101,10 @@ def main( ):
     else:
       dcgan = DCGAN(
           sess,
-          input_width=FLAGS.input_width,
-          input_height=FLAGS.input_height,
-          output_width=FLAGS.output_width,
-          output_height=FLAGS.output_height,
+          input_width=input_width,
+          input_height=input_height,
+          output_width=output_width,
+          output_height=output_height,
           grid_height=FLAGS.grid_height,
           grid_width=FLAGS.grid_width,
           batch_size=batch_size,
