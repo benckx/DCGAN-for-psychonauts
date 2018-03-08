@@ -5,6 +5,7 @@ The idea is to tinker a bit with the code to better understand how it works and 
 * Added parameters `grid_height` and `grid_width`
 * Parameters `input_height`, `input_width`, `output_height`, `output_width` are set automatically 
 (assuming all images in the data set have the same size)
+* Added `sample_rate` parameter.
 
 # DCGAN in Tensorflow
 
