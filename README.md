@@ -3,10 +3,10 @@ The idea is to tinker a bit with the code to better understand how it works and 
 [another project](https://github.com/benckx/dnn-movie-posters).
 
 * Compatible with TensorFlow 1.5.0
-* Added parameters `grid_height` and `grid_width`
+* Added parameters `grid_height` and `grid_width`: the size of the grid of the 'train' and 'test' images (in the folder 'samples')
 * Parameters `input_height`, `input_width`, `output_height`, `output_width` are set automatically 
 (assuming all images in the data set have the same size)
-* Added `sample_rate` parameter.
+* Added `sample_rate` parameter: how often it creates a sample image ('1' for every iteration, '2' for every other iteration, etc.)
 
 # DCGAN in Tensorflow
 

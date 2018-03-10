@@ -43,15 +43,12 @@ else:
     raise Exception('grid_height/grid_width or batch_size must be provided')
 
 # default size parameters
-input_width = 0
-input_height = 0
-output_width = 0
-output_height = 0
+input_width = FLAGS.input_width
+input_height = FLAGS.input_height
+output_width = FLAGS.output_width
+output_height = FLAGS.output_height
 
-if FLAGS.input_height is None \
-        and FLAGS.input_width is None \
-        and FLAGS.output_height is None \
-        and FLAGS.output_width is None:
+if (input_height is None and input_width is None) or (output_height is None and output_width is None):
     data_path = 'data/' + FLAGS.dataset
     first_image = [f for f in listdir(data_path) if isfile(join(data_path, f))][0]
     image_data = open(data_path + '/' + first_image, "rb").read()
@@ -135,7 +132,7 @@ def main(_):
 
     # Below is codes for visualization
     OPTION = 1
-    visualize(sess, dcgan, FLAGS, OPTION)
+    visualize(sess, dcgan, FLAGS, batch_size, OPTION)
 
 if __name__ == '__main__':
   tf.app.run()
