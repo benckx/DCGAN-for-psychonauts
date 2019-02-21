@@ -32,6 +32,7 @@ flags.DEFINE_boolean("train", False, "True for training, False for testing [Fals
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
+flags.DEFINE_integer("nbr_of_layers", 5, "Number of layers")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -95,7 +96,8 @@ def main(_):
           input_fname_pattern=FLAGS.input_fname_pattern,
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
-          sample_dir=FLAGS.sample_dir)
+          sample_dir=FLAGS.sample_dir,
+          nbr_of_layers=FLAGS.nbr_of_layers)
     else:
       dcgan = DCGAN(
           sess,
@@ -113,7 +115,8 @@ def main(_):
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
           sample_dir=FLAGS.sample_dir,
-          sample_rate=FLAGS.sample_rate)
+          sample_rate=FLAGS.sample_rate,
+          nbr_of_layers=FLAGS.nbr_of_layers)
 
     show_all_variables()
 

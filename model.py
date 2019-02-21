@@ -17,7 +17,7 @@ class DCGAN(object):
          grid_height=8, grid_width=8,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None):
+         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None, nbr_of_layers=5):
     """
 
     Args:
@@ -73,6 +73,7 @@ class DCGAN(object):
     self.checkpoint_dir = checkpoint_dir
 
     self.sample_rate = sample_rate
+    self.nbr_of_layers = nbr_of_layers
 
     if self.dataset_name == 'mnist':
       self.data_X, self.data_y = self.load_mnist()
@@ -321,13 +322,22 @@ class DCGAN(object):
         scope.reuse_variables()
 
       if not self.y_dim:
-        h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-        h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim*2, name='d_h1_conv')))
-        h2 = lrelu(self.d_bn2(conv2d(h1, self.df_dim*4, name='d_h2_conv')))
-        h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim*8, name='d_h3_conv')))
-        h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h4_lin')
+        # h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
+        # h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim * 2, name='d_h1_conv')))
+        # h2 = lrelu(self.d_bn2(conv2d(h1, self.df_dim * 4, name='d_h2_conv')))
+        # h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim * 8, name='d_h3_conv')))
+        # h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h4_lin')
+        # return tf.nn.sigmoid(h4), h4
 
-        return tf.nn.sigmoid(h4), h4
+        print('init discriminator with ' + str(self.nbr_of_layers) + ' layers ...')
+        previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
+        for i in range(1, self.nbr_of_layers - 1):
+            name = 'd_h' + str(i) + '_conv'
+            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, self.df_dim * (2 * i), name=name)))
+
+        name = 'd_h' + str(self.nbr_of_layers - 1) + '_lin'
+        last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, name)
+        return tf.nn.sigmoid(last_layer), last_layer
       else:
         yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
         x = conv_cond_concat(image, yb)
@@ -349,36 +359,62 @@ class DCGAN(object):
   def generator(self, z, y=None):
     with tf.variable_scope("generator") as scope:
       if not self.y_dim:
-        s_h, s_w = self.output_height, self.output_width
-        s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-        s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-        s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-        s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+        nbr_layers = self.nbr_of_layers
+
+        # s_h, s_w = self.output_height, self.output_width
+        # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
+        # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
+        # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
+        # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+
+        heights = []
+        widths = []
+
+        prev_h, prev_w = self.output_height, self.output_width
+        heights.append(prev_h)
+        widths.append(prev_w)
+
+        for i in range(1, nbr_layers):
+            prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+            heights.append(prev_h)
+            widths.append(prev_w)
 
         # project `z` and reshape
-        self.z_, self.h0_w, self.h0_b = linear(
-            z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin', with_w=True)
+        # z_, h0_w, h0_b = linear(z, self.gf_dim * 8 * s_h16 * s_w16, 'g_h0_lin', with_w=True)
+        #
+        # h0 = tf.reshape(z_, [-1, s_h16, s_w16, self.gf_dim * 8])
+        # h0 = tf.nn.relu(self.g_bn0(h0))
+        #
+        # h1, h1_w, h1_b = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim * 4], name='g_h1', with_w=True)
+        # h1 = tf.nn.relu(self.g_bn1(h1))
+        #
+        # h2, h2_w, h2_b = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_h2', with_w=True)
+        # h2 = tf.nn.relu(self.g_bn2(h2))
+        #
+        # h3, h3_w, h3_b = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_h3', with_w=True)
+        # h3 = tf.nn.relu(self.g_bn3(h3))
+        #
+        # h4, h4_w, h4_b = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4', with_w=True)
+        #
+        # return tf.nn.tanh(h4)
 
-        self.h0 = tf.reshape(
-            self.z_, [-1, s_h16, s_w16, self.gf_dim * 8])
-        h0 = tf.nn.relu(self.g_bn0(self.h0))
+        mul = 2 ** (nbr_layers - 2)
 
-        self.h1, self.h1_w, self.h1_b = deconv2d(
-            h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1', with_w=True)
-        h1 = tf.nn.relu(self.g_bn1(self.h1))
+        z_, h0_w, h0_b = linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin', with_w=True)
+        prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
+        prev_layer = tf.nn.relu(self.g_bn0(prev_layer))
 
-        h2, self.h2_w, self.h2_b = deconv2d(
-            h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2', with_w=True)
-        h2 = tf.nn.relu(self.g_bn2(h2))
+        for i in range(1, nbr_layers - 1):
+            mul = mul // 2
+            h = heights[nbr_layers - i - 1]
+            w = widths[nbr_layers - i - 1]
+            name = 'g_h' + str(i)
+            prev_layer, _w, _b = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name, with_w=True)
+            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
 
-        h3, self.h3_w, self.h3_b = deconv2d(
-            h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3', with_w=True)
-        h3 = tf.nn.relu(self.g_bn3(h3))
+        last_layer, _w, _b = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1), with_w=True)
 
-        h4, self.h4_w, self.h4_b = deconv2d(
-            h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4', with_w=True)
-
-        return tf.nn.tanh(h4)
+        return tf.nn.tanh(last_layer)
       else:
         s_h, s_w = self.output_height, self.output_width
         s_h2, s_h4 = int(s_h/2), int(s_h/4)
@@ -410,30 +446,57 @@ class DCGAN(object):
       scope.reuse_variables()
 
       if not self.y_dim:
-        s_h, s_w = self.output_height, self.output_width
-        s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-        s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-        s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-        s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+        # s_h, s_w = self.output_height, self.output_width
+        # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
+        # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
+        # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
+        # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
+
+        nbr_layers = self.nbr_of_layers
+
+        heights = []
+        widths = []
+
+        prev_h, prev_w = self.output_height, self.output_width
+        heights.append(prev_h)
+        widths.append(prev_w)
+
+        for i in range(1, nbr_layers):
+            prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+            heights.append(prev_h)
+            widths.append(prev_w)
 
         # project `z` and reshape
-        h0 = tf.reshape(
-            linear(z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin'),
-            [-1, s_h16, s_w16, self.gf_dim * 8])
-        h0 = tf.nn.relu(self.g_bn0(h0, train=False))
+        # h0 = tf.reshape(linear(z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin'),[-1, s_h16, s_w16, self.gf_dim * 8])
+        # h0 = tf.nn.relu(self.g_bn0(h0, train=False))
+        #
+        # h1 = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
+        # h1 = tf.nn.relu(self.g_bn1(h1, train=False))
+        #
+        # h2 = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2')
+        # h2 = tf.nn.relu(self.g_bn2(h2, train=False))
+        #
+        # h3 = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3')
+        # h3 = tf.nn.relu(self.g_bn3(h3, train=False))
+        #
+        # h4 = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4')
+        #
+        # return tf.nn.tanh(h4)
 
-        h1 = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
-        h1 = tf.nn.relu(self.g_bn1(h1, train=False))
+        mul = 2 ** (nbr_layers - 2)
 
-        h2 = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2')
-        h2 = tf.nn.relu(self.g_bn2(h2, train=False))
+        prev_layer = tf.reshape(linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'), [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
 
-        h3 = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3')
-        h3 = tf.nn.relu(self.g_bn3(h3, train=False))
+        for i in range(1, nbr_layers - 1):
+            mul = mul // 2
+            h = heights[nbr_layers - i - 1]
+            w = widths[nbr_layers - i - 1]
+            name = 'g_h' + str(i)
+            prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name)
+            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
 
-        h4 = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4')
-
-        return tf.nn.tanh(h4)
+        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
+        return tf.nn.tanh(last_layer)
       else:
         s_h, s_w = self.output_height, self.output_width
         s_h2, s_h4 = int(s_h/2), int(s_h/4)
