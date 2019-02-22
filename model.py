@@ -17,7 +17,7 @@ class DCGAN(object):
          grid_height=8, grid_width=8,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None, nbr_of_layers=5):
+         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None, nbr_of_layers_d=5, nbr_of_layers_g=5):
     """
 
     Args:
@@ -73,7 +73,8 @@ class DCGAN(object):
     self.checkpoint_dir = checkpoint_dir
 
     self.sample_rate = sample_rate
-    self.nbr_of_layers = nbr_of_layers
+    self.nbr_of_layers_d = nbr_of_layers_d
+    self.nbr_of_layers_g = nbr_of_layers_g
 
     if self.dataset_name == 'mnist':
       self.data_X, self.data_y = self.load_mnist()
@@ -329,13 +330,13 @@ class DCGAN(object):
         # h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h4_lin')
         # return tf.nn.sigmoid(h4), h4
 
-        print('init discriminator with ' + str(self.nbr_of_layers) + ' layers ...')
+        print('init discriminator with ' + str(self.nbr_of_layers_d) + ' layers ...')
         previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-        for i in range(1, self.nbr_of_layers - 1):
+        for i in range(1, self.nbr_of_layers_d - 1):
             name = 'd_h' + str(i) + '_conv'
             previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, self.df_dim * (2 * i), name=name)))
 
-        name = 'd_h' + str(self.nbr_of_layers - 1) + '_lin'
+        name = 'd_h' + str(self.nbr_of_layers_d - 1) + '_lin'
         last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, name)
         return tf.nn.sigmoid(last_layer), last_layer
       else:
@@ -359,7 +360,8 @@ class DCGAN(object):
   def generator(self, z, y=None):
     with tf.variable_scope("generator") as scope:
       if not self.y_dim:
-        nbr_layers = self.nbr_of_layers
+        nbr_layers = self.nbr_of_layers_g
+        print('init generator with ' + str(nbr_layers) + ' layers ...')
 
         # s_h, s_w = self.output_height, self.output_width
         # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
@@ -400,7 +402,9 @@ class DCGAN(object):
 
         mul = 2 ** (nbr_layers - 2)
 
-        z_, h0_w, h0_b = linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin', with_w=True)
+        h = heights[nbr_layers - 1]
+        w =  widths[nbr_layers - 1]
+        z_, h0_w, h0_b = linear(z, self.gf_dim * mul * h * w, 'g_h0_lin', with_w=True)
         prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
         prev_layer = tf.nn.relu(self.g_bn0(prev_layer))
 
@@ -452,7 +456,7 @@ class DCGAN(object):
         # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
         # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
 
-        nbr_layers = self.nbr_of_layers
+        nbr_layers = self.nbr_of_layers_g
 
         heights = []
         widths = []

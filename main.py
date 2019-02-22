@@ -32,7 +32,8 @@ flags.DEFINE_boolean("train", False, "True for training, False for testing [Fals
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
-flags.DEFINE_integer("nbr_of_layers", 5, "Number of layers")
+flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
+flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -97,7 +98,8 @@ def main(_):
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
           sample_dir=FLAGS.sample_dir,
-          nbr_of_layers=FLAGS.nbr_of_layers)
+          nbr_of_layers_d=FLAGS.nbr_of_layers_d,
+          nbr_of_layers_g=FLAGS.nbr_of_layers_g)
     else:
       dcgan = DCGAN(
           sess,
@@ -116,7 +118,8 @@ def main(_):
           checkpoint_dir=FLAGS.checkpoint_dir,
           sample_dir=FLAGS.sample_dir,
           sample_rate=FLAGS.sample_rate,
-          nbr_of_layers=FLAGS.nbr_of_layers)
+          nbr_of_layers_d=FLAGS.nbr_of_layers_d,
+          nbr_of_layers_g=FLAGS.nbr_of_layers_g)
 
     show_all_variables()
 
