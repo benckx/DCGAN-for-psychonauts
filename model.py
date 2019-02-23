@@ -494,6 +494,7 @@ class DCGAN(object):
         mul = 2 ** (nbr_layers - 2)
 
         prev_layer = tf.reshape(linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'), [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
+        prev_layer = tf.nn.relu(self.g_bn0(prev_layer, train=False))
 
         for i in range(1, nbr_layers - 1):
             mul = mul // 2
