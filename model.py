@@ -334,7 +334,7 @@ class DCGAN(object):
         previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
         for i in range(1, self.nbr_of_layers_d - 1):
             name = 'd_h' + str(i) + '_conv'
-            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, self.df_dim * (2 * i), name=name)))
+            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, self.df_dim * (2 ** i), name=name)))
 
         name = 'd_h' + str(self.nbr_of_layers_d - 1) + '_lin'
         last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, name)
