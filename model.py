@@ -327,13 +327,6 @@ class DCGAN(object):
         scope.reuse_variables()
 
       if not self.y_dim:
-        # h0 = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-        # h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim * 2, name='d_h1_conv')))
-        # h2 = lrelu(self.d_bn2(conv2d(h1, self.df_dim * 4, name='d_h2_conv')))
-        # h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim * 8, name='d_h3_conv')))
-        # h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h4_lin')
-        # return tf.nn.sigmoid(h4), h4
-
         print('init discriminator with ' + str(self.nbr_of_layers_d) + ' layers ...')
         previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
         for i in range(1, self.nbr_of_layers_d - 1):
@@ -367,12 +360,6 @@ class DCGAN(object):
         nbr_layers = self.nbr_of_layers_g
         print('init generator with ' + str(nbr_layers) + ' layers ...')
 
-        # s_h, s_w = self.output_height, self.output_width
-        # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-        # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-        # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-        # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
-
         heights = []
         widths = []
 
@@ -384,25 +371,6 @@ class DCGAN(object):
             prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
             heights.append(prev_h)
             widths.append(prev_w)
-
-        # project `z` and reshape
-        # z_, h0_w, h0_b = linear(z, self.gf_dim * 8 * s_h16 * s_w16, 'g_h0_lin', with_w=True)
-        #
-        # h0 = tf.reshape(z_, [-1, s_h16, s_w16, self.gf_dim * 8])
-        # h0 = tf.nn.relu(self.g_bn0(h0))
-        #
-        # h1, h1_w, h1_b = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim * 4], name='g_h1', with_w=True)
-        # h1 = tf.nn.relu(self.g_bn1(h1))
-        #
-        # h2, h2_w, h2_b = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim * 2], name='g_h2', with_w=True)
-        # h2 = tf.nn.relu(self.g_bn2(h2))
-        #
-        # h3, h3_w, h3_b = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim * 1], name='g_h3', with_w=True)
-        # h3 = tf.nn.relu(self.g_bn3(h3))
-        #
-        # h4, h4_w, h4_b = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4', with_w=True)
-        #
-        # return tf.nn.tanh(h4)
 
         mul = 2 ** (nbr_layers - 2)
 
@@ -454,12 +422,6 @@ class DCGAN(object):
       scope.reuse_variables()
 
       if not self.y_dim:
-        # s_h, s_w = self.output_height, self.output_width
-        # s_h2, s_w2 = conv_out_size_same(s_h, 2), conv_out_size_same(s_w, 2)
-        # s_h4, s_w4 = conv_out_size_same(s_h2, 2), conv_out_size_same(s_w2, 2)
-        # s_h8, s_w8 = conv_out_size_same(s_h4, 2), conv_out_size_same(s_w4, 2)
-        # s_h16, s_w16 = conv_out_size_same(s_h8, 2), conv_out_size_same(s_w8, 2)
-
         nbr_layers = self.nbr_of_layers_g
 
         heights = []
@@ -473,23 +435,6 @@ class DCGAN(object):
             prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
             heights.append(prev_h)
             widths.append(prev_w)
-
-        # project `z` and reshape
-        # h0 = tf.reshape(linear(z, self.gf_dim*8*s_h16*s_w16, 'g_h0_lin'),[-1, s_h16, s_w16, self.gf_dim * 8])
-        # h0 = tf.nn.relu(self.g_bn0(h0, train=False))
-        #
-        # h1 = deconv2d(h0, [self.batch_size, s_h8, s_w8, self.gf_dim*4], name='g_h1')
-        # h1 = tf.nn.relu(self.g_bn1(h1, train=False))
-        #
-        # h2 = deconv2d(h1, [self.batch_size, s_h4, s_w4, self.gf_dim*2], name='g_h2')
-        # h2 = tf.nn.relu(self.g_bn2(h2, train=False))
-        #
-        # h3 = deconv2d(h2, [self.batch_size, s_h2, s_w2, self.gf_dim*1], name='g_h3')
-        # h3 = tf.nn.relu(self.g_bn3(h3, train=False))
-        #
-        # h4 = deconv2d(h3, [self.batch_size, s_h, s_w, self.c_dim], name='g_h4')
-        #
-        # return tf.nn.tanh(h4)
 
         mul = 2 ** (nbr_layers - 2)
 
