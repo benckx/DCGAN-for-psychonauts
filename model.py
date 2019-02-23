@@ -17,7 +17,8 @@ class DCGAN(object):
          grid_height=8, grid_width=8,
          y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
          gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None, nbr_of_layers_d=5, nbr_of_layers_g=5):
+         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
+         nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True):
     """
 
     Args:
@@ -75,6 +76,7 @@ class DCGAN(object):
     self.sample_rate = sample_rate
     self.nbr_of_layers_d = nbr_of_layers_d
     self.nbr_of_layers_g = nbr_of_layers_g
+    self.use_checkpoints = use_checkpoints
 
     if self.dataset_name == 'mnist':
       self.data_X, self.data_y = self.load_mnist()
@@ -186,15 +188,16 @@ class DCGAN(object):
         sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
       else:
         sample_inputs = np.array(sample).astype(np.float32)
-  
+
     counter = 1
     start_time = time.time()
-    could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-    if could_load:
-      counter = checkpoint_counter
-      print(" [*] Load SUCCESS")
-    else:
-      print(" [!] Load failed...")
+    if self.use_checkpoints:
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        if could_load:
+            counter = checkpoint_counter
+            print(" [*] Load SUCCESS")
+        else:
+            print(" [!] Load failed...")
 
     for epoch in xrange(config.epoch):
       if config.dataset == 'mnist':
@@ -314,7 +317,7 @@ class DCGAN(object):
             except:
               print("one pic error!...")
 
-        if np.mod(counter, 500) == 2:
+        if self.use_checkpoints and np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
 
   def discriminator(self, image, y=None, reuse=False):
@@ -403,7 +406,7 @@ class DCGAN(object):
         mul = 2 ** (nbr_layers - 2)
 
         h = heights[nbr_layers - 1]
-        w =  widths[nbr_layers - 1]
+        w = widths[nbr_layers - 1]
         z_, h0_w, h0_b = linear(z, self.gf_dim * mul * h * w, 'g_h0_lin', with_w=True)
         prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
         prev_layer = tf.nn.relu(self.g_bn0(prev_layer))

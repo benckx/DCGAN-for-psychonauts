@@ -34,6 +34,7 @@ flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothin
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
 flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
 flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
+flags.DEFINE_boolean("use_checkpoints", True, "Save and load checkpoints")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -99,7 +100,8 @@ def main(_):
           checkpoint_dir=FLAGS.checkpoint_dir,
           sample_dir=FLAGS.sample_dir,
           nbr_of_layers_d=FLAGS.nbr_of_layers_d,
-          nbr_of_layers_g=FLAGS.nbr_of_layers_g)
+          nbr_of_layers_g=FLAGS.nbr_of_layers_g,
+          use_checkpoints=FLAGS.use_checkpoints)
     else:
       dcgan = DCGAN(
           sess,
@@ -119,7 +121,8 @@ def main(_):
           sample_dir=FLAGS.sample_dir,
           sample_rate=FLAGS.sample_rate,
           nbr_of_layers_d=FLAGS.nbr_of_layers_d,
-          nbr_of_layers_g=FLAGS.nbr_of_layers_g)
+          nbr_of_layers_g=FLAGS.nbr_of_layers_g,
+          use_checkpoints=FLAGS.use_checkpoints)
 
     show_all_variables()
 
