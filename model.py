@@ -327,14 +327,17 @@ class DCGAN(object):
         scope.reuse_variables()
 
       if not self.y_dim:
-        print('init discriminator with ' + str(self.nbr_of_layers_d) + ' layers ...')
-        previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
-        for i in range(1, self.nbr_of_layers_d - 1):
-            name = 'd_h' + str(i) + '_conv'
-            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, self.df_dim * (2 ** i), name=name)))
+        nbr_layers = self.nbr_of_layers_d
 
-        name = 'd_h' + str(self.nbr_of_layers_d - 1) + '_lin'
-        last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, name)
+        print('init discriminator with ' + str(nbr_layers) + ' layers ...')
+        previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
+        for i in range(1, nbr_layers - 1):
+            output_dim = self.df_dim * (2 ** i)
+            layer_name = 'd_h' + str(i) + '_conv'
+            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, output_dim, name=layer_name)))
+
+        layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
+        last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
         return tf.nn.sigmoid(last_layer), last_layer
       else:
         yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
@@ -374,21 +377,22 @@ class DCGAN(object):
 
         mul = 2 ** (nbr_layers - 2)
 
-        h = heights[nbr_layers - 1]
-        w = widths[nbr_layers - 1]
-        z_, h0_w, h0_b = linear(z, self.gf_dim * mul * h * w, 'g_h0_lin', with_w=True)
+        height = heights[nbr_layers - 1]
+        width = widths[nbr_layers - 1]
+        z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
         prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-        prev_layer = tf.nn.relu(self.g_bn0(prev_layer))
+        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
 
         for i in range(1, nbr_layers - 1):
             mul = mul // 2
-            h = heights[nbr_layers - i - 1]
-            w = widths[nbr_layers - i - 1]
-            name = 'g_h' + str(i)
-            prev_layer, _w, _b = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name, with_w=True)
+            height = heights[nbr_layers - 1 - i]
+            width = widths[nbr_layers - 1 - i]
+            layer_name = 'g_h' + str(i)
+            prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
             prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
 
-        last_layer, _w, _b = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1), with_w=True)
+        layer_name = 'g_h' + str(nbr_layers - 1)
+        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
 
         return tf.nn.tanh(last_layer)
       else:
