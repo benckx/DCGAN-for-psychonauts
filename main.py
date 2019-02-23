@@ -73,16 +73,17 @@ def main(_):
 
   if FLAGS.use_checkpoints and not os.path.exists(FLAGS.checkpoint_dir):
     os.makedirs(FLAGS.checkpoint_dir)
-  if not os.path.exists(FLAGS.sample_dir):
-    os.makedirs(FLAGS.sample_dir)
+
+  sample_dir = FLAGS.sample_dir + "_g" + str(FLAGS.nbr_of_layers_g) + "_d" + str(FLAGS.nbr_of_layers_d)
+
+  if not os.path.exists(sample_dir):
+    os.makedirs(sample_dir)
 
   #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
   run_config = tf.ConfigProto()
   run_config.gpu_options.allow_growth=True
 
   with tf.Session(config=run_config) as sess:
-    sample_dir = FLAGS.sample_dir + "g" + str(FLAGS.nbr_of_layers_g) + "_d" + str(FLAGS.nbr_of_layers_d)
-
     if FLAGS.dataset == 'mnist':
       dcgan = DCGAN(
           sess,
