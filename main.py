@@ -71,7 +71,7 @@ def main(_):
   if FLAGS.output_width is None:
     FLAGS.output_width = FLAGS.output_height
 
-  if not os.path.exists(FLAGS.checkpoint_dir):
+  if FLAGS.use_checkpoints and not os.path.exists(FLAGS.checkpoint_dir):
     os.makedirs(FLAGS.checkpoint_dir)
   if not os.path.exists(FLAGS.sample_dir):
     os.makedirs(FLAGS.sample_dir)
@@ -81,6 +81,8 @@ def main(_):
   run_config.gpu_options.allow_growth=True
 
   with tf.Session(config=run_config) as sess:
+    sample_dir = FLAGS.sample_dir + "g" + str(FLAGS.nbr_of_layers_g) + "_d" + str(FLAGS.nbr_of_layers_d)
+
     if FLAGS.dataset == 'mnist':
       dcgan = DCGAN(
           sess,
@@ -98,7 +100,7 @@ def main(_):
           input_fname_pattern=FLAGS.input_fname_pattern,
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
-          sample_dir=FLAGS.sample_dir,
+          sample_dir=sample_dir,
           nbr_of_layers_d=FLAGS.nbr_of_layers_d,
           nbr_of_layers_g=FLAGS.nbr_of_layers_g,
           use_checkpoints=FLAGS.use_checkpoints)
@@ -118,7 +120,7 @@ def main(_):
           input_fname_pattern=FLAGS.input_fname_pattern,
           crop=FLAGS.crop,
           checkpoint_dir=FLAGS.checkpoint_dir,
-          sample_dir=FLAGS.sample_dir,
+          sample_dir=sample_dir,
           sample_rate=FLAGS.sample_rate,
           nbr_of_layers_d=FLAGS.nbr_of_layers_d,
           nbr_of_layers_g=FLAGS.nbr_of_layers_g,
