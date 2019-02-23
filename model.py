@@ -77,6 +77,7 @@ class DCGAN(object):
     self.nbr_of_layers_d = nbr_of_layers_d
     self.nbr_of_layers_g = nbr_of_layers_g
     self.use_checkpoints = use_checkpoints
+    self.sample_dir = sample_dir
 
     if self.dataset_name == 'mnist':
       self.data_X, self.data_y = self.load_mnist()
@@ -300,7 +301,7 @@ class DCGAN(object):
               }
             )
             save_images(samples, (self.grid_height, self.grid_width),
-                  './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                  './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx))
             print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
           else:
             try:
@@ -312,7 +313,7 @@ class DCGAN(object):
                 },
               )
               save_images(samples, (self.grid_height, self.grid_width),
-                    './{}/train_{:02d}_{:04d}.png'.format(config.sample_dir, epoch, idx))
+                    './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx))
               print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss)) 
             except:
               print("one pic error!...")
