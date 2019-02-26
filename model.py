@@ -113,8 +113,7 @@ class DCGAN(object):
 
     inputs = self.inputs
 
-    self.z = tf.placeholder(
-      tf.float32, [None, self.z_dim], name='z')
+    self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
     self.G                  = self.generator(self.z, self.y)
@@ -287,32 +286,32 @@ class DCGAN(object):
             time.time() - start_time, errD_fake+errD_real, errG))
 
         if self.sample_rate is not None and (self.sample_rate == 1 or np.mod(counter, self.sample_rate) == 1):
-          if config.dataset == 'mnist':
+          # if config.dataset == 'mnist':
+          #   samples, d_loss, g_loss = self.sess.run(
+          #     [self.sampler, self.d_loss, self.g_loss],
+          #     feed_dict={
+          #         self.z: sample_z,
+          #         self.inputs: sample_inputs,
+          #         self.y:sample_labels,
+          #     }
+          #   )
+          #   save_images(samples, (self.grid_height, self.grid_width),
+          #         './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx))
+          #   print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+          # else:
+          try:
             samples, d_loss, g_loss = self.sess.run(
               [self.sampler, self.d_loss, self.g_loss],
               feed_dict={
-                  self.z: sample_z,
-                  self.inputs: sample_inputs,
-                  self.y:sample_labels,
-              }
+                self.z: sample_z,
+                self.inputs: sample_inputs,
+              },
             )
-            save_images(samples, (self.grid_height, self.grid_width),
-                  './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx))
+            file_name = './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx)
+            save_images(samples, (self.grid_height, self.grid_width), file_name)
             print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
-          else:
-            try:
-              samples, d_loss, g_loss = self.sess.run(
-                [self.sampler, self.d_loss, self.g_loss],
-                feed_dict={
-                    self.z: sample_z,
-                    self.inputs: sample_inputs,
-                },
-              )
-              save_images(samples, (self.grid_height, self.grid_width),
-                    './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx))
-              print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
-            except:
-              print("one pic error!...")
+          except:
+            print("one pic error!...")
 
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
@@ -354,42 +353,42 @@ class DCGAN(object):
 
   def generator(self, z, y=None):
     with tf.variable_scope("generator") as scope:
-      if not self.y_dim:
-        nbr_layers = self.nbr_of_layers_g
-        print('init generator with ' + str(nbr_layers) + ' layers ...')
+      # if not self.y_dim:
+      nbr_layers = self.nbr_of_layers_g
+      print('init generator with ' + str(nbr_layers) + ' layers ...')
 
-        heights = []
-        widths = []
+      heights = []
+      widths = []
 
-        prev_h, prev_w = self.output_height, self.output_width
+      prev_h, prev_w = self.output_height, self.output_width
+      heights.append(prev_h)
+      widths.append(prev_w)
+
+      for i in range(1, nbr_layers):
+        prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
         heights.append(prev_h)
         widths.append(prev_w)
 
-        for i in range(1, nbr_layers):
-            prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
-            heights.append(prev_h)
-            widths.append(prev_w)
+      mul = 2 ** (nbr_layers - 2)
 
-        mul = 2 ** (nbr_layers - 2)
+      height = heights[nbr_layers - 1]
+      width = widths[nbr_layers - 1]
+      z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
+      prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
+      prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
 
-        height = heights[nbr_layers - 1]
-        width = widths[nbr_layers - 1]
-        z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
-        prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
+      for i in range(1, nbr_layers - 1):
+        mul = mul // 2
+        height = heights[nbr_layers - 1 - i]
+        width = widths[nbr_layers - 1 - i]
+        layer_name = 'g_h' + str(i)
+        prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
+        prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
 
-        for i in range(1, nbr_layers - 1):
-            mul = mul // 2
-            height = heights[nbr_layers - 1 - i]
-            width = widths[nbr_layers - 1 - i]
-            layer_name = 'g_h' + str(i)
-            prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
-            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
+      layer_name = 'g_h' + str(nbr_layers - 1)
+      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
 
-        layer_name = 'g_h' + str(nbr_layers - 1)
-        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
-
-        return tf.nn.tanh(last_layer)
+      return tf.nn.tanh(last_layer)
       # else:
       #   s_h, s_w = self.output_height, self.output_width
       #   s_h2, s_h4 = int(s_h/2), int(s_h/4)
@@ -420,36 +419,38 @@ class DCGAN(object):
     with tf.variable_scope("generator") as scope:
       scope.reuse_variables()
 
-      if not self.y_dim:
-        nbr_layers = self.nbr_of_layers_g
+      # if not self.y_dim:
+      nbr_layers = self.nbr_of_layers_g
 
-        heights = []
-        widths = []
+      heights = []
+      widths = []
 
-        prev_h, prev_w = self.output_height, self.output_width
+      prev_h, prev_w = self.output_height, self.output_width
+      heights.append(prev_h)
+      widths.append(prev_w)
+
+      for i in range(1, nbr_layers):
+        prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
         heights.append(prev_h)
         widths.append(prev_w)
 
-        for i in range(1, nbr_layers):
-            prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
-            heights.append(prev_h)
-            widths.append(prev_w)
+      mul = 2 ** (nbr_layers - 2)
 
-        mul = 2 ** (nbr_layers - 2)
+      prev_layer = tf.reshape(
+        linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'),
+        [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
+      prev_layer = tf.nn.relu(self.g_bn0(prev_layer, train=False))
 
-        prev_layer = tf.reshape(linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'), [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-        prev_layer = tf.nn.relu(self.g_bn0(prev_layer, train=False))
+      for i in range(1, nbr_layers - 1):
+        mul = mul // 2
+        h = heights[nbr_layers - i - 1]
+        w = widths[nbr_layers - i - 1]
+        name = 'g_h' + str(i)
+        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name)
+        prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
 
-        for i in range(1, nbr_layers - 1):
-            mul = mul // 2
-            h = heights[nbr_layers - i - 1]
-            w = widths[nbr_layers - i - 1]
-            name = 'g_h' + str(i)
-            prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name)
-            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
-
-        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
-        return tf.nn.tanh(last_layer)
+      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
+      return tf.nn.tanh(last_layer)
       # else:
       #   s_h, s_w = self.output_height, self.output_width
       #   s_h2, s_h4 = int(s_h/2), int(s_h/4)
