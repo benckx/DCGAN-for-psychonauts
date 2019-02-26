@@ -1,6 +1,5 @@
 # Data
 data
-samples
 *.zip
 logs
 test*
@@ -88,3 +87,5 @@ Session.vim
 
 .idea
 nohup.out
+
+samples_*
