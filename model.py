@@ -100,9 +100,9 @@ class DCGAN(object):
     self.z_sum = histogram_summary("z", self.z)
 
     self.G                  = self.generator(self.z, self.y)
-    self.D, self.D_logits   = self.discriminator(inputs, self.y, reuse=False)
+    self.D, self.D_logits   = self.discriminator(inputs, reuse=False)
     self.sampler            = self.sampler(self.z, self.y)
-    self.D_, self.D_logits_ = self.discriminator(self.G, self.y, reuse=True)
+    self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
     self.d__sum = histogram_summary("d_", self.D_)
@@ -239,7 +239,7 @@ class DCGAN(object):
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
 
-  def discriminator(self, image, y=None, reuse=False):
+  def discriminator(self, image, reuse=False):
     with tf.variable_scope("discriminator") as scope:
       if reuse:
         scope.reuse_variables()
