@@ -36,8 +36,10 @@ flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothin
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
 flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
 flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
-flags.DEFINE_boolean("use_checkpoints", True, "Save and load checkpoints")
+flags.DEFINE_boolean("use_checkpoints", False, "Save and load checkpoints")
 flags.DEFINE_string("name", "dcgan", "Name of the job")
+flags.DEFINE_boolean("batch_norm_g", False, "Batch normalization in Generator")
+flags.DEFINE_boolean("batch_norm_d", False, "Batch normalization in Discriminator")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -74,6 +76,8 @@ def main(_):
   print("FLAGS.nbr_of_layers_d: " + str(FLAGS.nbr_of_layers_d))
   print("FLAGS.dataset: " + str(FLAGS.dataset))
   print("FLAGS.use_checkpoints: " + str(FLAGS.use_checkpoints))
+  print("FLAGS.batch_norm_g: " + str(FLAGS.batch_norm_g))
+  print("FLAGS.batch_norm_d: " + str(FLAGS.batch_norm_d))
   print()
 
   if FLAGS.input_width is None:
@@ -113,7 +117,9 @@ def main(_):
       sample_rate=FLAGS.sample_rate,
       nbr_of_layers_d=FLAGS.nbr_of_layers_d,
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,
-      use_checkpoints=FLAGS.use_checkpoints)
+      use_checkpoints=FLAGS.use_checkpoints,
+      batch_norm_g=FLAGS.batch_norm_g,
+      batch_norm_d=FLAGS.batch_norm_d)
 
     show_all_variables()
 

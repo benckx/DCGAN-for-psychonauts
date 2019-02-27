@@ -19,7 +19,7 @@ class DCGAN(object):
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
-               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True):
+               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True):
     """
 
     Args:
@@ -65,6 +65,9 @@ class DCGAN(object):
     self.nbr_of_layers_g = nbr_of_layers_g
     self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
+
+    self.batch_norm_d = batch_norm_d
+    self.batch_norm_g = batch_norm_g
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imreadImg = imread(self.data[0])
@@ -246,11 +249,17 @@ class DCGAN(object):
 
       nbr_layers = self.nbr_of_layers_d
       print('init discriminator with ' + str(nbr_layers) + ' layers ...')
+
       previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
+
       for i in range(1, nbr_layers - 1):
         output_dim = self.df_dim * (2 ** i)
         layer_name = 'd_h' + str(i) + '_conv'
-        previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv2d(previous_layer, output_dim, name=layer_name)))
+        conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
+        if self.batch_norm_d:
+          previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv_layer))
+        else:
+          previous_layer = lrelu(conv_layer)
 
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
       last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)

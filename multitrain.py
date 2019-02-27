@@ -30,8 +30,11 @@ if os.path.exists('config.csv'):
     args.append("--nbr_of_layers_d")
     args.append(str(row['nbr_of_layers_d']))
 
-    args.append("--use_checkpoints")
-    args.append("False")
+    if row['batch_norm_d']:
+      args.append("--batch_norm_d")
+
+    if row['batch_norm_g']:
+      args.append("--batch_norm_g")
 
     args.append("--sample_rate")
     args.append("1")
