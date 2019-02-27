@@ -11,14 +11,15 @@ from utils import *
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
 
+
 class DCGAN(object):
   def __init__(self, sess, input_height=108, input_width=108, crop=True,
-         batch_size=64, sample_num = 64, output_height=64, output_width=64,
-         grid_height=8, grid_width=8,
-         y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-         gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-         input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
-         nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True):
+               batch_size=64, sample_num=64, output_height=64, output_width=64,
+               grid_height=8, grid_width=8,
+               y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
+               gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
+               input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
+               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True):
     """
 
     Args:
@@ -65,19 +66,15 @@ class DCGAN(object):
     self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
 
-    if self.dataset_name == 'mnist':
-      self.data_X, self.data_y = self.load_mnist()
-      self.c_dim = self.data_X[0].shape[-1]
+    self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
+    imreadImg = imread(self.data[0])
+    if len(imreadImg.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
+      self.c_dim = imread(self.data[0]).shape[-1]
     else:
-      self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
-      imreadImg = imread(self.data[0])
-      if len(imreadImg.shape) >= 3: #check if image is a non-grayscale image by checking channel number
-        self.c_dim = imread(self.data[0]).shape[-1]
-      else:
-        self.c_dim = 1
+      self.c_dim = 1
 
-      if len(self.data) < self.batch_size:
-        raise Exception("[!] Entire dataset size is less than the configured batch_size")
+    if len(self.data) < self.batch_size:
+      raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
     self.grayscale = (self.c_dim == 1)
 
@@ -157,10 +154,6 @@ class DCGAN(object):
 
     sample_z = np.random.uniform(-1, 1, size=(self.sample_num , self.z_dim))
 
-    # if config.dataset == 'mnist':
-    #   sample_inputs = self.data_X[0:self.sample_num]
-    #   sample_labels = self.data_y[0:self.sample_num]
-    # else:
     sample_files = self.data[0:self.sample_num]
     sample = [
       get_image(sample_file,
@@ -337,42 +330,6 @@ class DCGAN(object):
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
       return tf.nn.tanh(last_layer)
 
-  def load_mnist(self):
-    data_dir = os.path.join("./data", self.dataset_name)
-
-    fd = open(os.path.join(data_dir,'train-images-idx3-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    trX = loaded[16:].reshape((60000,28,28,1)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'train-labels-idx1-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    trY = loaded[8:].reshape((60000)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'t10k-images-idx3-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    teX = loaded[16:].reshape((10000,28,28,1)).astype(np.float)
-
-    fd = open(os.path.join(data_dir,'t10k-labels-idx1-ubyte'))
-    loaded = np.fromfile(file=fd,dtype=np.uint8)
-    teY = loaded[8:].reshape((10000)).astype(np.float)
-
-    trY = np.asarray(trY)
-    teY = np.asarray(teY)
-
-    X = np.concatenate((trX, teX), axis=0)
-    y = np.concatenate((trY, teY), axis=0).astype(np.int)
-
-    seed = 547
-    np.random.seed(seed)
-    np.random.shuffle(X)
-    np.random.seed(seed)
-    np.random.shuffle(y)
-
-    y_vec = np.zeros((len(y), self.y_dim), dtype=np.float)
-    for i, label in enumerate(y):
-      y_vec[i,y[i]] = 1.0
-
-    return X/255.,y_vec
 
   @property
   def model_dir(self):
