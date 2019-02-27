@@ -89,3 +89,4 @@ Session.vim
 nohup.out
 
 samples_*
+*.csv
