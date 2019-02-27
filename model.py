@@ -99,9 +99,9 @@ class DCGAN(object):
     self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
-    self.G                  = self.generator(self.z, self.y)
+    self.G                  = self.generator(self.z)
     self.D, self.D_logits   = self.discriminator(inputs, reuse=False)
-    self.sampler            = self.sampler(self.z, self.y)
+    self.sampler            = self.sampler(self.z)
     self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
@@ -256,7 +256,7 @@ class DCGAN(object):
       last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
       return tf.nn.sigmoid(last_layer), last_layer
 
-  def generator(self, z, y=None):
+  def generator(self, z):
     with tf.variable_scope("generator") as scope:
       nbr_layers = self.nbr_of_layers_g
       print('init generator with ' + str(nbr_layers) + ' layers ...')
@@ -294,7 +294,7 @@ class DCGAN(object):
 
       return tf.nn.tanh(last_layer)
 
-  def sampler(self, z, y=None):
+  def sampler(self, z):
     with tf.variable_scope("generator") as scope:
       scope.reuse_variables()
 
