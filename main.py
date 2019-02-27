@@ -9,7 +9,7 @@ import tensorflow as tf
 from PIL import Image
 
 from model import DCGAN
-from utils import pp, visualize, show_all_variables
+from utils import pp, show_all_variables
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
@@ -20,9 +20,11 @@ flags.DEFINE_integer("batch_size", None, "The size of batch images [64]")
 flags.DEFINE_integer("grid_height", 8, "Grid Height")
 flags.DEFINE_integer("grid_width", 8, "Grid Width")
 flags.DEFINE_integer("input_height", None, "The size of image to use (will be center cropped). [108]")
-flags.DEFINE_integer("input_width", None, "The size of image to use (will be center cropped). If None, same value as input_height [None]")
+flags.DEFINE_integer("input_width", None,
+                     "The size of image to use (will be center cropped). If None, same value as input_height [None]")
 flags.DEFINE_integer("output_height", None, "The size of the output images to produce [64]")
-flags.DEFINE_integer("output_width", None, "The size of the output images to produce. If None, same value as output_height [None]")
+flags.DEFINE_integer("output_width", None,
+                     "The size of the output images to produce. If None, same value as output_height [None]")
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("input_fname_pattern", "*.jpg", "Glob pattern of filename of input images [*]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
@@ -114,8 +116,8 @@ def main(_):
         raise Exception("[!] Train a model first, then run test mode")
 
     # Below is codes for visualization
-    OPTION = 1
-    visualize(sess, dcgan, FLAGS, batch_size, OPTION)
+    # OPTION = 1
+    # visualize(sess, dcgan, FLAGS, batch_size, OPTION)
 
 
 if __name__ == '__main__':

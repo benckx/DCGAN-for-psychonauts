@@ -90,3 +90,4 @@ nohup.out
 
 samples_*
 *.csv
+.~lock.*
