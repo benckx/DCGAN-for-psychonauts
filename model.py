@@ -230,7 +230,7 @@ class DCGAN(object):
                 self.inputs: sample_inputs,
               },
             )
-            file_name = './{}/train_{:02d}_{:04d}.png'.format(self.sample_dir, epoch, idx)
+            file_name = './{}/train_{:06d}_{:06d}.png'.format(self.sample_dir, epoch, idx)
             save_images(samples, (self.grid_height, self.grid_width), file_name)
             print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
           except:
