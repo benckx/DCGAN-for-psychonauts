@@ -34,9 +34,10 @@ flags.DEFINE_boolean("train", False, "True for training, False for testing [Fals
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
 flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
-flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
 flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
+flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
 flags.DEFINE_boolean("use_checkpoints", True, "Save and load checkpoints")
+flags.DEFINE_string("name", "dcgan", "Name of the job")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -66,7 +67,14 @@ if (input_height is None and input_width is None) or (output_height is None and 
 
 
 def main(_):
-  pp.pprint(flags.FLAGS.__flags)
+  # pp.pprint(flags.FLAGS.__flags)
+
+  print()
+  print("FLAGS.nbr_of_layers_g: " + str(FLAGS.nbr_of_layers_g))
+  print("FLAGS.nbr_of_layers_d: " + str(FLAGS.nbr_of_layers_d))
+  print("FLAGS.dataset: " + str(FLAGS.dataset))
+  print("FLAGS.use_checkpoints: " + str(FLAGS.use_checkpoints))
+  print()
 
   if FLAGS.input_width is None:
     FLAGS.input_width = FLAGS.input_height
@@ -76,7 +84,7 @@ def main(_):
   if FLAGS.use_checkpoints and not os.path.exists(FLAGS.checkpoint_dir):
     os.makedirs(FLAGS.checkpoint_dir)
 
-  sample_dir = FLAGS.sample_dir + "_g" + str(FLAGS.nbr_of_layers_g) + "_d" + str(FLAGS.nbr_of_layers_d)
+  sample_dir = 'samples_' + FLAGS.name
 
   if not os.path.exists(sample_dir):
     os.makedirs(sample_dir)

@@ -4,8 +4,8 @@ import subprocess
 import pandas as pd
 
 if os.path.exists('config.csv'):
-  rows = pd.read_csv('config.csv', encoding='UTF-8')
-  for index, row in rows.iterrows():
+  data = pd.read_csv('config.csv', encoding='UTF-8')
+  for index, row in data.iterrows():
     print(str(row))
 
     # noinspection PyListCreation
@@ -13,6 +13,9 @@ if os.path.exists('config.csv'):
 
     args.append("--epoch")
     args.append(str(row['epoch']))
+
+    args.append("--name")
+    args.append(str(row['name']))
 
     args.append("--dataset")
     args.append(str(row['dataset']))
