@@ -66,8 +66,8 @@ class DCGAN(object):
     self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
 
-    self.batch_norm_d = batch_norm_d
     self.batch_norm_g = batch_norm_g
+    self.batch_norm_d = batch_norm_d
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imreadImg = imread(self.data[0])
@@ -102,9 +102,9 @@ class DCGAN(object):
     self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
-    self.G                  = self.generator(self.z)
-    self.D, self.D_logits   = self.discriminator(inputs, reuse=False)
-    self.sampler            = self.sampler(self.z)
+    self.G = self.generator(self.z)
+    self.D, self.D_logits = self.discriminator(inputs, reuse=False)
+    self.sampler = self.sampler(self.z)
     self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
@@ -141,21 +141,21 @@ class DCGAN(object):
 
   def train(self, config):
     d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-              .minimize(self.d_loss, var_list=self.d_vars)
+      .minimize(self.d_loss, var_list=self.d_vars)
     g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-              .minimize(self.g_loss, var_list=self.g_vars)
+      .minimize(self.g_loss, var_list=self.g_vars)
     try:
       tf.global_variables_initializer().run()
     except:
       tf.initialize_all_variables().run()
 
     self.g_sum = merge_summary([self.z_sum, self.d__sum,
-      self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
+                                self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
     self.d_sum = merge_summary(
-        [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
+      [self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
     self.writer = SummaryWriter("./logs", self.sess.graph)
 
-    sample_z = np.random.uniform(-1, 1, size=(self.sample_num , self.z_dim))
+    sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
 
     sample_files = self.data[0:self.sample_num]
     sample = [
@@ -174,12 +174,12 @@ class DCGAN(object):
     counter = 1
     start_time = time.time()
     if self.use_checkpoints:
-        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-        if could_load:
-            counter = checkpoint_counter
-            print(" [*] Load SUCCESS")
-        else:
-            print(" [!] Load failed...")
+      could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+      if could_load:
+        counter = checkpoint_counter
+        print(" [*] Load SUCCESS")
+      else:
+        print(" [!] Load failed...")
 
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
@@ -201,7 +201,7 @@ class DCGAN(object):
           batch_images = np.array(batch).astype(np.float32)
 
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]) \
-              .astype(np.float32)
+          .astype(np.float32)
 
         # Update D network
         _, summary_str = self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images, self.z: batch_z})
@@ -221,8 +221,8 @@ class DCGAN(object):
 
         counter += 1
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
-          % (epoch, idx, batch_idxs,
-            time.time() - start_time, errD_fake+errD_real, errG))
+              % (epoch, idx, batch_idxs,
+                 time.time() - start_time, errD_fake + errD_real, errG))
 
         if self.sample_rate is not None and (self.sample_rate == 1 or np.mod(counter, self.sample_rate) == 1):
           try:
@@ -288,7 +288,10 @@ class DCGAN(object):
       width = widths[nbr_layers - 1]
       z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
       prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-      prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
+      if self.batch_norm_g:
+        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
+      else:
+        prev_layer = tf.nn.relu(prev_layer)
 
       for i in range(1, nbr_layers - 1):
         mul = mul // 2
@@ -296,7 +299,10 @@ class DCGAN(object):
         width = widths[nbr_layers - 1 - i]
         layer_name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
-        prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
+        if self.batch_norm_g:
+          prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
+        else:
+          prev_layer = tf.nn.relu(prev_layer)
 
       layer_name = 'g_h' + str(nbr_layers - 1)
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
@@ -326,7 +332,11 @@ class DCGAN(object):
       prev_layer = tf.reshape(
         linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'),
         [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-      prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer, train=False))
+
+      if self.batch_norm_g:
+        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer, train=False))
+      else:
+        prev_layer = tf.nn.relu(prev_layer)
 
       for i in range(1, nbr_layers - 1):
         mul = mul // 2
@@ -334,17 +344,19 @@ class DCGAN(object):
         w = widths[nbr_layers - i - 1]
         name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name)
-        prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
+        if self.batch_norm_g:
+          prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
+        else:
+          prev_layer = tf.nn.relu(prev_layer)
 
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
       return tf.nn.tanh(last_layer)
 
-
   @property
   def model_dir(self):
     return "{}_{}_{}_{}".format(
-        self.dataset_name, self.batch_size,
-        self.output_height, self.output_width)
+      self.dataset_name, self.batch_size,
+      self.output_height, self.output_width)
 
   def save(self, checkpoint_dir, step):
     model_name = "DCGAN.model"
@@ -354,8 +366,8 @@ class DCGAN(object):
       os.makedirs(checkpoint_dir)
 
     self.saver.save(self.sess,
-            os.path.join(checkpoint_dir, model_name),
-            global_step=step)
+                    os.path.join(checkpoint_dir, model_name),
+                    global_step=step)
 
   def load(self, checkpoint_dir):
     import re
@@ -366,7 +378,7 @@ class DCGAN(object):
     if ckpt and ckpt.model_checkpoint_path:
       ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
       self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
-      counter = int(next(re.finditer("(\d+)(?!.*\d)",ckpt_name)).group(0))
+      counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
       print(" [*] Success to read {}".format(ckpt_name))
       return True, counter
     else:
