@@ -18,14 +18,14 @@ def video_rendered():
 
 
 # noinspection PyListCreation
-def render_video(name, folder):
+def render_video(name, images_folder):
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('30')
   ffmpeg_cmd.append('-f')
   ffmpeg_cmd.append('image2')
   ffmpeg_cmd.append('-i')
-  ffmpeg_cmd.append(folder + '/%*.png')
+  ffmpeg_cmd.append(images_folder + '/%*.png')
   ffmpeg_cmd.append('-c:v')
   ffmpeg_cmd.append('libx264')
   ffmpeg_cmd.append('-profile:v')
@@ -37,7 +37,7 @@ def render_video(name, folder):
   ffmpeg_cmd.append(name + '.mp4')
 
 
-def process_video(name, upload_to_ftp, delete_images_after_render):
+def process_video(name, upload_to_ftp, delete_images):
   """ Render to video, upload to ftp """
 
   sample_folder = samples_prefix + name
@@ -55,7 +55,7 @@ def process_video(name, upload_to_ftp, delete_images_after_render):
     except ValueError as e:
       print('error during FTP transfer: ' + str(e))
 
-  if delete_images_after_render:
+  if delete_images:
     os.rmdir(sample_folder)
 
 
