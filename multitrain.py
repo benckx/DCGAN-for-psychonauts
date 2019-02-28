@@ -9,18 +9,18 @@ def render_video(name):
   # noinspection PyListCreation
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
-  ffmpeg_cmd.append('40')
+  ffmpeg_cmd.append('30')
   ffmpeg_cmd.append('-f')
   ffmpeg_cmd.append('image2')
   ffmpeg_cmd.append('-i')
   ffmpeg_cmd.append('samples_' + name + '/%*.png')
-  ffmpeg_cmd.append('c:v')
+  ffmpeg_cmd.append('-c:v')
   ffmpeg_cmd.append('libx264')
-  ffmpeg_cmd.append('profile:v')
+  ffmpeg_cmd.append('-profile:v')
   ffmpeg_cmd.append('high')
-  ffmpeg_cmd.append('crf')
+  ffmpeg_cmd.append('-crf')
   ffmpeg_cmd.append('17')
-  ffmpeg_cmd.append('pix_fmt')
+  ffmpeg_cmd.append('-pix_fmt')
   ffmpeg_cmd.append('yuv420p')
   ffmpeg_cmd.append(name + '.mp4')
 
@@ -78,7 +78,9 @@ for index, row in data.iterrows():
   dcgan_cmd.append("--train")
 
   subprocess.run(dcgan_cmd)
-  render_video(row['name'])
+
+  if row['process_video']:
+    render_video(row['name'])
 else:
   print('Config file not found')
 
