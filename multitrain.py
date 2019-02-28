@@ -2,7 +2,7 @@ import configparser
 import ftplib
 import os.path
 import subprocess
-import threading
+from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 
@@ -11,6 +11,10 @@ import pandas as pd
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
+
+
+def video_rendered():
+  print('video process asynchronously')
 
 
 def render_video(name, delete_images_after_render, upload_to_ftp):
@@ -64,6 +68,8 @@ for index, row in data.iterrows():
     print('Error: dataset ' + row['dataset'] + ' not found !')
     exit(1)
 
+pool = Pool(processes=10)
+
 for index, row in data.iterrows():
   print(str(row))
 
@@ -104,6 +110,9 @@ for index, row in data.iterrows():
 
   # render video asynchronously
   if row['render_video']:
-    threading.Thread(target=render_video(row['name'], row['delete_images_after_render'], row['upload_to_ftp'])).start()
+    pool.apply_async(render_video, (row['name'], row['delete_images_after_render'], row['upload_to_ftp']))
 else:
   print('Config file not found')
+
+pool.close()
+pool.join()
