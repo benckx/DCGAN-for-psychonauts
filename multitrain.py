@@ -1,46 +1,59 @@
-import os
 import subprocess
+from os import listdir
+from os.path import isfile, join
 
 import pandas as pd
 
-if os.path.exists('config.csv'):
-  data = pd.read_csv('config.csv', encoding='UTF-8')
-  for index, row in data.iterrows():
-    print(str(row))
+data_folders = [f for f in listdir('data/')]
+csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
 
-    # noinspection PyListCreation
-    args = ["python3", "main.py"]
+if len(csv_files) != 1:
+  print('csv issues: ' + str(csv_files))
+  exit(1)
 
-    args.append("--epoch")
-    args.append(str(row['epoch']))
+data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
-    args.append("--name")
-    args.append(str(row['name']))
+for index, row in data.iterrows():
+  if row['dataset'] not in data_folders:
+    print('Error: dataset ' + row['dataset'] + ' not found !')
+    exit(1)
 
-    args.append("--dataset")
-    args.append(str(row['dataset']))
+for index, row in data.iterrows():
+  print(str(row))
 
-    args.append("--grid_width")
-    args.append(str(row['grid_width']))
-    args.append("--grid_height")
-    args.append(str(row['grid_height']))
+  # noinspection PyListCreation
+  args = ["python3", "main.py"]
 
-    args.append("--nbr_of_layers_g")
-    args.append(str(row['nbr_of_layers_g']))
-    args.append("--nbr_of_layers_d")
-    args.append(str(row['nbr_of_layers_d']))
+  args.append("--epoch")
+  args.append(str(row['epoch']))
 
-    if row['batch_norm_d']:
-      args.append("--batch_norm_d")
+  args.append("--name")
+  args.append(str(row['name']))
 
-    if row['batch_norm_g']:
-      args.append("--batch_norm_g")
+  args.append("--dataset")
+  args.append(str(row['dataset']))
 
-    args.append("--sample_rate")
-    args.append("1")
+  args.append("--grid_width")
+  args.append(str(row['grid_width']))
+  args.append("--grid_height")
+  args.append(str(row['grid_height']))
 
-    args.append("--train")
+  args.append("--nbr_of_layers_g")
+  args.append(str(row['nbr_of_layers_g']))
+  args.append("--nbr_of_layers_d")
+  args.append(str(row['nbr_of_layers_d']))
 
-    subprocess.run(args)
+  if row['batch_norm_d']:
+    args.append("--batch_norm_d")
+
+  if row['batch_norm_g']:
+    args.append("--batch_norm_g")
+
+  args.append("--sample_rate")
+  args.append("1")
+
+  args.append("--train")
+
+  subprocess.run(args)
 else:
   print('Config file not found')
