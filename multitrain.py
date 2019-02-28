@@ -17,17 +17,15 @@ def video_rendered():
   print('video process asynchronously')
 
 
-def render_video(name, delete_images_after_render, upload_to_ftp):
-  sample_folder = samples_prefix + name
-
-  # noinspection PyListCreation
+# noinspection PyListCreation
+def render_video(name, folder):
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('30')
   ffmpeg_cmd.append('-f')
   ffmpeg_cmd.append('image2')
   ffmpeg_cmd.append('-i')
-  ffmpeg_cmd.append(sample_folder + '/%*.png')
+  ffmpeg_cmd.append(folder + '/%*.png')
   ffmpeg_cmd.append('-c:v')
   ffmpeg_cmd.append('libx264')
   ffmpeg_cmd.append('-profile:v')
@@ -38,7 +36,12 @@ def render_video(name, delete_images_after_render, upload_to_ftp):
   ffmpeg_cmd.append('yuv420p')
   ffmpeg_cmd.append(name + '.mp4')
 
-  subprocess.run(ffmpeg_cmd)
+
+def process_video(name, upload_to_ftp, delete_images_after_render):
+  """ Render to video, upload to ftp """
+
+  sample_folder = samples_prefix + name
+  render_video(name, sample_folder)
 
   if upload_to_ftp:
     try:
@@ -108,9 +111,9 @@ for index, row in data.iterrows():
 
   subprocess.run(dcgan_cmd)
 
-  # render video asynchronously
+  # process video asynchronously
   if row['render_video']:
-    pool.apply_async(render_video, (row['name'], row['delete_images_after_render'], row['upload_to_ftp']))
+    pool.apply_async(process_video, (row['name'], row['delete_images_after_render'], row['upload_to_ftp']))
 else:
   print('Config file not found')
 
