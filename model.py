@@ -342,14 +342,15 @@ class DCGAN(object):
         mul = mul // 2
         h = heights[nbr_layers - i - 1]
         w = widths[nbr_layers - i - 1]
-        name = 'g_h' + str(i)
-        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=name)
+        layer_name = 'g_h' + str(i)
+        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
         if self.batch_norm_g:
           prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
         else:
           prev_layer = tf.nn.relu(prev_layer)
 
-      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name='g_h' + str(nbr_layers - 1))
+      layer_name = 'g_h' + str(nbr_layers - 1)
+      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
       return tf.nn.tanh(last_layer)
 
   @property
