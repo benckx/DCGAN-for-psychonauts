@@ -1,11 +1,21 @@
+import configparser
+import ftplib
+import os.path
 import subprocess
+import threading
 from os import listdir
 from os.path import isfile, join
 
 import pandas as pd
 
+samples_prefix = 'samples_'
+data_folders = [f for f in listdir('data/')]
+csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
 
-def render_video(name):
+
+def render_video(name, delete_images_after_render, upload_to_ftp):
+  sample_folder = samples_prefix + name
+
   # noinspection PyListCreation
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
@@ -13,7 +23,7 @@ def render_video(name):
   ffmpeg_cmd.append('-f')
   ffmpeg_cmd.append('image2')
   ffmpeg_cmd.append('-i')
-  ffmpeg_cmd.append('samples_' + name + '/%*.png')
+  ffmpeg_cmd.append(sample_folder + '/%*.png')
   ffmpeg_cmd.append('-c:v')
   ffmpeg_cmd.append('libx264')
   ffmpeg_cmd.append('-profile:v')
@@ -26,16 +36,29 @@ def render_video(name):
 
   subprocess.run(ffmpeg_cmd)
 
+  if upload_to_ftp:
+    try:
+      config = configparser.ConfigParser()
+      config.read('ftp.ini')
+      session = ftplib.FTP(config['vjloops']['host'], config['vjloops']['user'], config['vjloops']['password'])
+      file = open(name + '.mp4', 'rb')
+      session.storbinary('STOR ' + name + '.mp4', file)
+      file.close()
+      session.quit()
+    except ValueError as e:
+      print('error during FTP transfer: ' + str(e))
 
-data_folders = [f for f in listdir('data/')]
-csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
+  if delete_images_after_render:
+    os.rmdir(sample_folder)
 
-if len(csv_files) != 1:
-  print('csv issues: ' + str(csv_files))
+
+if len(csv_files) == 0:
+  print('Error: no csv file')
   exit(1)
 
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
+# validate datasets
 for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
     print('Error: dataset ' + row['dataset'] + ' not found !')
@@ -79,12 +102,8 @@ for index, row in data.iterrows():
 
   subprocess.run(dcgan_cmd)
 
-  if row['process_video']:
-    render_video(row['name'])
+  # render video asynchronously
+  if row['render_video']:
+    threading.Thread(target=render_video(row['name'], row['delete_images_after_render'], row['upload_to_ftp'])).start()
 else:
   print('Config file not found')
-
-
-# import threading
-# thread = threading.Thread(target=f)
-# thread.start()
