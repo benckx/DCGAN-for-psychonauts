@@ -11,14 +11,15 @@ import pandas as pd
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
+csv_files.sort()
 
 
 def video_rendered():
   print('video process asynchronously')
 
 
-# noinspection PyListCreation
 def render_video(name, images_folder):
+  # noinspection PyListCreation
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('30')
@@ -35,6 +36,7 @@ def render_video(name, images_folder):
   ffmpeg_cmd.append('-pix_fmt')
   ffmpeg_cmd.append('yuv420p')
   ffmpeg_cmd.append(name + '.mp4')
+  subprocess.run(ffmpeg_cmd)
 
 
 def process_video(name, upload_to_ftp, delete_images):
@@ -63,59 +65,63 @@ if len(csv_files) == 0:
   print('Error: no csv file')
   exit(1)
 
+print('found config file: ' + csv_files[0])
+print()
+
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
 # validate datasets
 for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
-    print('Error: dataset ' + row['dataset'] + ' not found !')
+    print('Error: dataset ' + row['dataset'] + ' not found!')
     exit(1)
 
 pool = Pool(processes=10)
 
 for index, row in data.iterrows():
   print(str(row))
+  try:
+    # noinspection PyListCreation
+    dcgan_cmd = ["python3", "main.py"]
 
-  # noinspection PyListCreation
-  dcgan_cmd = ["python3", "main.py"]
+    dcgan_cmd.append("--epoch")
+    dcgan_cmd.append(str(row['epoch']))
 
-  dcgan_cmd.append("--epoch")
-  dcgan_cmd.append(str(row['epoch']))
+    dcgan_cmd.append("--name")
+    dcgan_cmd.append(str(row['name']))
 
-  dcgan_cmd.append("--name")
-  dcgan_cmd.append(str(row['name']))
+    dcgan_cmd.append("--dataset")
+    dcgan_cmd.append(str(row['dataset']))
 
-  dcgan_cmd.append("--dataset")
-  dcgan_cmd.append(str(row['dataset']))
+    dcgan_cmd.append("--grid_width")
+    dcgan_cmd.append(str(row['grid_width']))
+    dcgan_cmd.append("--grid_height")
+    dcgan_cmd.append(str(row['grid_height']))
 
-  dcgan_cmd.append("--grid_width")
-  dcgan_cmd.append(str(row['grid_width']))
-  dcgan_cmd.append("--grid_height")
-  dcgan_cmd.append(str(row['grid_height']))
+    dcgan_cmd.append("--nbr_of_layers_g")
+    dcgan_cmd.append(str(row['nbr_of_layers_g']))
+    dcgan_cmd.append("--nbr_of_layers_d")
+    dcgan_cmd.append(str(row['nbr_of_layers_d']))
 
-  dcgan_cmd.append("--nbr_of_layers_g")
-  dcgan_cmd.append(str(row['nbr_of_layers_g']))
-  dcgan_cmd.append("--nbr_of_layers_d")
-  dcgan_cmd.append(str(row['nbr_of_layers_d']))
+    if row['batch_norm_d']:
+      dcgan_cmd.append("--batch_norm_d")
 
-  if row['batch_norm_d']:
-    dcgan_cmd.append("--batch_norm_d")
+    if row['batch_norm_g']:
+      dcgan_cmd.append("--batch_norm_g")
 
-  if row['batch_norm_g']:
-    dcgan_cmd.append("--batch_norm_g")
+    dcgan_cmd.append("--sample_rate")
+    dcgan_cmd.append("1")
 
-  dcgan_cmd.append("--sample_rate")
-  dcgan_cmd.append("1")
+    dcgan_cmd.append("--train")
 
-  dcgan_cmd.append("--train")
+    subprocess.run(dcgan_cmd)
 
-  subprocess.run(dcgan_cmd)
-
-  # process video asynchronously
-  if row['render_video']:
-    pool.apply_async(process_video, (row['name'], row['delete_images_after_render'], row['upload_to_ftp']))
-else:
-  print('Config file not found')
+    # process video asynchronously
+    print('render video: ' + str(row['render_video']))
+    if row['render_video']:
+      pool.apply_async(process_video, (row['name'], row['upload_to_ftp'], row['delete_images_after_render']))
+  except ValueError as e:
+    print('error during process of:\n' + str(row))
 
 pool.close()
 pool.join()
