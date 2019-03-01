@@ -70,6 +70,16 @@ print()
 
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
+data.count()
+
+# validate names
+names = []
+for index, row in data.iterrows():
+  names.append(row['name'])
+
+if (len(names)) != len(set(names)):
+  print('Names are not unique')
+
 # validate datasets
 for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
