@@ -1,6 +1,6 @@
 import configparser
 import ftplib
-import os.path
+import shutil
 import subprocess
 from multiprocessing import Pool
 from os import listdir
@@ -58,7 +58,7 @@ def process_video(name, upload_to_ftp, delete_images):
       print('error during FTP transfer: ' + str(e))
 
   if delete_images:
-    os.rmdir(sample_folder)
+    shutil.rmtree(sample_folder)
 
 
 if len(csv_files) == 0:
