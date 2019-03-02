@@ -54,8 +54,8 @@ def process_video(name, upload_to_ftp, delete_images):
       session.storbinary('STOR ' + name + '.mp4', file)
       file.close()
       session.quit()
-    except ValueError as e:
-      print('error during FTP transfer: ' + str(e))
+    except:
+      print('error during FTP transfer')
 
   if delete_images:
     shutil.rmtree(sample_folder)
@@ -130,8 +130,8 @@ for index, row in data.iterrows():
     print('render video: ' + str(row['render_video']))
     if row['render_video']:
       pool.apply_async(process_video, (row['name'], row['upload_to_ftp'], row['delete_images_after_render']))
-  except ValueError as e:
-    print('error during process of:\n' + str(row))
+  except:
+    print('error during process of: ' + row['name'])
 
 pool.close()
 pool.join()
