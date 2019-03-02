@@ -18,7 +18,7 @@ class DCGAN(object):
                grid_height=8, grid_width=8,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-               input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
+               input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True):
     """
 
@@ -60,18 +60,20 @@ class DCGAN(object):
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
 
+    self.name = name
+    self.use_checkpoints = use_checkpoints
+    self.sample_dir = sample_dir
+
     self.sample_rate = sample_rate
     self.nbr_of_layers_d = nbr_of_layers_d
     self.nbr_of_layers_g = nbr_of_layers_g
-    self.use_checkpoints = use_checkpoints
-    self.sample_dir = sample_dir
 
     self.batch_norm_g = batch_norm_g
     self.batch_norm_d = batch_norm_d
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
-    imreadImg = imread(self.data[0])
-    if len(imreadImg.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
+    imread_img = imread(self.data[0])
+    if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
       self.c_dim = imread(self.data[0]).shape[-1]
     else:
       self.c_dim = 1
@@ -250,8 +252,10 @@ class DCGAN(object):
       nbr_layers = self.nbr_of_layers_d
       print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
+      # layer 0
       previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
 
+      # middle layers
       for i in range(1, nbr_layers - 1):
         output_dim = self.df_dim * (2 ** i)
         layer_name = 'd_h' + str(i) + '_conv'
@@ -261,6 +265,7 @@ class DCGAN(object):
         else:
           previous_layer = lrelu(conv_layer)
 
+      # last layer
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
       last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
       return tf.nn.sigmoid(last_layer), last_layer
@@ -284,6 +289,7 @@ class DCGAN(object):
 
       mul = 2 ** (nbr_layers - 2)
 
+      # layer 0
       height = heights[nbr_layers - 1]
       width = widths[nbr_layers - 1]
       z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
@@ -293,6 +299,7 @@ class DCGAN(object):
       else:
         prev_layer = tf.nn.relu(prev_layer)
 
+      # middle layers
       for i in range(1, nbr_layers - 1):
         mul = mul // 2
         height = heights[nbr_layers - 1 - i]
@@ -304,6 +311,7 @@ class DCGAN(object):
         else:
           prev_layer = tf.nn.relu(prev_layer)
 
+      # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
 
@@ -329,6 +337,7 @@ class DCGAN(object):
 
       mul = 2 ** (nbr_layers - 2)
 
+      # layer 0
       prev_layer = tf.reshape(
         linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'),
         [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
@@ -338,6 +347,7 @@ class DCGAN(object):
       else:
         prev_layer = tf.nn.relu(prev_layer)
 
+      # middle layers
       for i in range(1, nbr_layers - 1):
         mul = mul // 2
         h = heights[nbr_layers - i - 1]
@@ -349,15 +359,14 @@ class DCGAN(object):
         else:
           prev_layer = tf.nn.relu(prev_layer)
 
+      # later layer
       layer_name = 'g_h' + str(nbr_layers - 1)
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
       return tf.nn.tanh(last_layer)
 
   @property
   def model_dir(self):
-    return "{}_{}_{}_{}".format(
-      self.dataset_name, self.batch_size,
-      self.output_height, self.output_width)
+    return self.name
 
   def save(self, checkpoint_dir, step):
     model_name = "DCGAN.model"
@@ -366,9 +375,7 @@ class DCGAN(object):
     if not os.path.exists(checkpoint_dir):
       os.makedirs(checkpoint_dir)
 
-    self.saver.save(self.sess,
-                    os.path.join(checkpoint_dir, model_name),
-                    global_step=step)
+    self.saver.save(self.sess, os.path.join(checkpoint_dir, model_name), global_step=step)
 
   def load(self, checkpoint_dir):
     import re

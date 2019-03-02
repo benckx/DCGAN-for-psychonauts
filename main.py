@@ -9,7 +9,7 @@ import tensorflow as tf
 from PIL import Image
 
 from model import DCGAN
-from utils import pp, show_all_variables
+from utils import show_all_variables
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
@@ -114,6 +114,7 @@ def main(_):
       crop=FLAGS.crop,
       checkpoint_dir=FLAGS.checkpoint_dir,
       sample_dir=sample_dir,
+      name=FLAGS.name,
       sample_rate=FLAGS.sample_rate,
       nbr_of_layers_d=FLAGS.nbr_of_layers_d,
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,

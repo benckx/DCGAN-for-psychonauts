@@ -14,12 +14,48 @@ csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".c
 csv_files.sort()
 
 
-def video_rendered():
-  print('video process asynchronously')
+# noinspection PyListCreation
+def build_dcgan_cmd(cmd_row):
+  dcgan_cmd = ["python3", "main.py"]
+
+  dcgan_cmd.append("--epoch")
+  dcgan_cmd.append(str(cmd_row['epoch']))
+
+  dcgan_cmd.append("--name")
+  dcgan_cmd.append(str(cmd_row['name']))
+
+  dcgan_cmd.append("--dataset")
+  dcgan_cmd.append(str(cmd_row['dataset']))
+
+  dcgan_cmd.append("--grid_width")
+  dcgan_cmd.append(str(cmd_row['grid_width']))
+  dcgan_cmd.append("--grid_height")
+  dcgan_cmd.append(str(cmd_row['grid_height']))
+
+  dcgan_cmd.append("--nbr_of_layers_g")
+  dcgan_cmd.append(str(cmd_row['nbr_of_layers_g']))
+  dcgan_cmd.append("--nbr_of_layers_d")
+  dcgan_cmd.append(str(cmd_row['nbr_of_layers_d']))
+
+  if cmd_row['batch_norm_d']:
+    dcgan_cmd.append("--batch_norm_d")
+
+  if cmd_row['batch_norm_g']:
+    dcgan_cmd.append("--batch_norm_g")
+
+  if cmd_row['use_checkpoints']:
+    dcgan_cmd.append("--use_checkpoints")
+
+  dcgan_cmd.append("--sample_rate")
+  dcgan_cmd.append("1")
+
+  dcgan_cmd.append("--train")
+
+  return dcgan_cmd
 
 
+# noinspection PyListCreation
 def render_video(name, images_folder):
-  # noinspection PyListCreation
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('30')
@@ -49,7 +85,7 @@ def process_video(name, upload_to_ftp, delete_images):
     try:
       config = configparser.ConfigParser()
       config.read('ftp.ini')
-      session = ftplib.FTP(config['vjloops']['host'], config['vjloops']['user'], config['vjloops']['password'])
+      session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
       file = open(name + '.mp4', 'rb')
       session.storbinary('STOR ' + name + '.mp4', file)
       file.close()
@@ -70,8 +106,6 @@ print()
 
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
-data.count()
-
 # validate names
 names = []
 for index, row in data.iterrows():
@@ -91,40 +125,8 @@ pool = Pool(processes=10)
 for index, row in data.iterrows():
   print(str(row))
   try:
-    # noinspection PyListCreation
-    dcgan_cmd = ["python3", "main.py"]
-
-    dcgan_cmd.append("--epoch")
-    dcgan_cmd.append(str(row['epoch']))
-
-    dcgan_cmd.append("--name")
-    dcgan_cmd.append(str(row['name']))
-
-    dcgan_cmd.append("--dataset")
-    dcgan_cmd.append(str(row['dataset']))
-
-    dcgan_cmd.append("--grid_width")
-    dcgan_cmd.append(str(row['grid_width']))
-    dcgan_cmd.append("--grid_height")
-    dcgan_cmd.append(str(row['grid_height']))
-
-    dcgan_cmd.append("--nbr_of_layers_g")
-    dcgan_cmd.append(str(row['nbr_of_layers_g']))
-    dcgan_cmd.append("--nbr_of_layers_d")
-    dcgan_cmd.append(str(row['nbr_of_layers_d']))
-
-    if row['batch_norm_d']:
-      dcgan_cmd.append("--batch_norm_d")
-
-    if row['batch_norm_g']:
-      dcgan_cmd.append("--batch_norm_g")
-
-    dcgan_cmd.append("--sample_rate")
-    dcgan_cmd.append("1")
-
-    dcgan_cmd.append("--train")
-
-    subprocess.run(dcgan_cmd)
+    job_cmd = build_dcgan_cmd(row)
+    subprocess.run(job_cmd)
 
     # process video asynchronously
     print('render video: ' + str(row['render_video']))
