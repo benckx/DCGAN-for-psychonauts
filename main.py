@@ -40,6 +40,8 @@ flags.DEFINE_boolean("use_checkpoints", False, "Save and load checkpoints")
 flags.DEFINE_string("name", "dcgan", "Name of the job")
 flags.DEFINE_boolean("batch_norm_g", False, "Batch normalization in Generator")
 flags.DEFINE_boolean("batch_norm_d", False, "Batch normalization in Discriminator")
+flags.DEFINE_string("activation_g", "relu", "Activation function in Generator")
+flags.DEFINE_string("activation_d", "lrelu", "Activation function in Discriminator")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -120,7 +122,9 @@ def main(_):
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,
       use_checkpoints=FLAGS.use_checkpoints,
       batch_norm_g=FLAGS.batch_norm_g,
-      batch_norm_d=FLAGS.batch_norm_d)
+      batch_norm_d=FLAGS.batch_norm_d,
+      activation_g=FLAGS.activation_g,
+      activation_d=FLAGS.activation_d)
 
     show_all_variables()
 

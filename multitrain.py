@@ -1,5 +1,6 @@
 import configparser
 import ftplib
+import os
 import shutil
 import subprocess
 from multiprocessing import Pool
@@ -37,11 +38,17 @@ def build_dcgan_cmd(cmd_row):
   dcgan_cmd.append("--nbr_of_layers_d")
   dcgan_cmd.append(str(cmd_row['nbr_of_layers_d']))
 
+  if cmd_row['batch_norm_g']:
+    dcgan_cmd.append("--batch_norm_g")
+
   if cmd_row['batch_norm_d']:
     dcgan_cmd.append("--batch_norm_d")
 
-  if cmd_row['batch_norm_g']:
-    dcgan_cmd.append("--batch_norm_g")
+  dcgan_cmd.append("--activation_g")
+  dcgan_cmd.append(cmd_row['activation_g'])
+
+  dcgan_cmd.append("--activation_d")
+  dcgan_cmd.append(cmd_row['activation_d'])
 
   if cmd_row['use_checkpoints']:
     dcgan_cmd.append("--use_checkpoints")
@@ -106,6 +113,12 @@ print()
 
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
+# validate ftp
+for index, row in data.iterrows():
+  if row['upload_to_ftp'] and not os.path.exists('ftp.ici'):
+    print('option upload_to_ftp == true but ftp.ini file was not found')
+    exit(1)
+
 # validate names
 names = []
 for index, row in data.iterrows():
@@ -113,6 +126,7 @@ for index, row in data.iterrows():
 
 if (len(names)) != len(set(names)):
   print('Names are not unique')
+  exit(1)
 
 # validate datasets
 for index, row in data.iterrows():
