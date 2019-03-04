@@ -51,11 +51,11 @@ def build_dcgan_cmd(cmd_row):
   if cmd_row['batch_norm_d']:
     dcgan_cmd.append("--batch_norm_d")
 
-  if cmd_row['activation_g']:
+  if cmd_row['activation_g'] and not math.isnan(cmd_row['activation_g']):
     dcgan_cmd.append("--activation_g")
     dcgan_cmd.append(cmd_row['activation_g'])
 
-  if cmd_row['activation_d']:
+  if cmd_row['activation_d'] and not math.isnan(cmd_row['activation_d']):
     dcgan_cmd.append("--activation_d")
     dcgan_cmd.append(cmd_row['activation_d'])
 
