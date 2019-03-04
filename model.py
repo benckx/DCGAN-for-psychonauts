@@ -77,6 +77,9 @@ class DCGAN(object):
 
     self.nbr_g_updates = nbr_g_updates
 
+    print('self.activation_g: ' + self.activation_g)
+    print('self.activation_d: ' + self.activation_d)
+
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imread_img = imread(self.data[0])
     if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
