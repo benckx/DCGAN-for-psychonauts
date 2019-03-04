@@ -7,6 +7,9 @@ from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 
+import traceback
+import logging
+
 import pandas as pd
 
 samples_prefix = 'samples_'
@@ -33,10 +36,13 @@ def build_dcgan_cmd(cmd_row):
   dcgan_cmd.append("--grid_height")
   dcgan_cmd.append(str(cmd_row['grid_height']))
 
-  dcgan_cmd.append("--nbr_of_layers_g")
-  dcgan_cmd.append(str(cmd_row['nbr_of_layers_g']))
-  dcgan_cmd.append("--nbr_of_layers_d")
-  dcgan_cmd.append(str(cmd_row['nbr_of_layers_d']))
+  if cmd_row['nbr_of_layers_g']:
+    dcgan_cmd.append("--nbr_of_layers_g")
+    dcgan_cmd.append(str(cmd_row['nbr_of_layers_g']))
+
+  if cmd_row['nbr_of_layers_d']:
+    dcgan_cmd.append("--nbr_of_layers_d")
+    dcgan_cmd.append(str(cmd_row['nbr_of_layers_d']))
 
   if cmd_row['batch_norm_g']:
     dcgan_cmd.append("--batch_norm_g")
@@ -44,11 +50,13 @@ def build_dcgan_cmd(cmd_row):
   if cmd_row['batch_norm_d']:
     dcgan_cmd.append("--batch_norm_d")
 
-  dcgan_cmd.append("--activation_g")
-  dcgan_cmd.append(cmd_row['activation_g'])
+  if cmd_row['activation_g']:
+    dcgan_cmd.append("--activation_g")
+    dcgan_cmd.append(cmd_row['activation_g'])
 
-  dcgan_cmd.append("--activation_d")
-  dcgan_cmd.append(cmd_row['activation_d'])
+  if cmd_row['activation_d']:
+    dcgan_cmd.append("--activation_d")
+    dcgan_cmd.append(cmd_row['activation_d'])
 
   if cmd_row['use_checkpoints']:
     dcgan_cmd.append("--use_checkpoints")
@@ -146,8 +154,9 @@ for index, row in data.iterrows():
     print('render video: ' + str(row['render_video']))
     if row['render_video']:
       pool.apply_async(process_video, (row['name'], row['upload_to_ftp'], row['delete_images_after_render']))
-  except:
-    print('error during process of: ' + row['name'])
+  except Exception as e:
+    print('error during process of ' + row['name'] + " -> " + str(e))
+    print(traceback.format_exc())
 
 pool.close()
 pool.join()
