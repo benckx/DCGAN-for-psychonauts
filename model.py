@@ -20,7 +20,7 @@ class DCGAN(object):
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
-               activation_g="relu", activation_d="lrelu"):
+               activation_g="relu", activation_d="lrelu", nbr_g_updates=2):
     """
 
     Args:
@@ -74,6 +74,8 @@ class DCGAN(object):
 
     self.activation_g = activation_g
     self.activation_d = activation_d
+
+    self.nbr_g_updates = nbr_g_updates
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imread_img = imread(self.data[0])
@@ -214,12 +216,10 @@ class DCGAN(object):
         self.writer.add_summary(summary_str, counter)
 
         # Update G network
-        _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
-        self.writer.add_summary(summary_str, counter)
-
-        # Run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-        _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
-        self.writer.add_summary(summary_str, counter)
+        # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+        for x in range(0, self.nbr_g_updates):
+          _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
+          self.writer.add_summary(summary_str, counter)
 
         errD_fake = self.d_loss_fake.eval({self.z: batch_z})
         errD_real = self.d_loss_real.eval({self.inputs: batch_images})

@@ -67,6 +67,10 @@ def build_dcgan_cmd(cmd_row):
     dcgan_cmd.append("--beta1")
     dcgan_cmd.append(str(cmd_row['beta1']))
 
+  if cmd_row['nbr_g_updates'] and not math.isnan(cmd_row['nbr_g_updates']):
+    dcgan_cmd.append("--nbr_g_updates")
+    dcgan_cmd.append(str(int(cmd_row['nbr_g_updates'])))
+
   if cmd_row['use_checkpoints']:
     dcgan_cmd.append("--use_checkpoints")
 

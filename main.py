@@ -42,6 +42,7 @@ flags.DEFINE_boolean("batch_norm_g", False, "Batch normalization in Generator")
 flags.DEFINE_boolean("batch_norm_d", False, "Batch normalization in Discriminator")
 flags.DEFINE_string("activation_g", "relu", "Activation function in Generator")
 flags.DEFINE_string("activation_d", "lrelu", "Activation function in Discriminator")
+flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimizer")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -84,6 +85,7 @@ def main(_):
   print("FLAGS.use_checkpoints: " + str(FLAGS.use_checkpoints))
   print("FLAGS.batch_norm_g: " + str(FLAGS.batch_norm_g))
   print("FLAGS.batch_norm_d: " + str(FLAGS.batch_norm_d))
+  print("FLAGS.nbr_g_updates: " + str(int(FLAGS.nbr_g_updates)))
   print('sample size: {}x{}'.format(sample_width, sample_height))
   print('dataset size: {}'.format(dataset_size))
   print('iteration per epoch: {}'.format(int(dataset_size / batch_size)))
@@ -132,7 +134,8 @@ def main(_):
       batch_norm_g=FLAGS.batch_norm_g,
       batch_norm_d=FLAGS.batch_norm_d,
       activation_g=FLAGS.activation_g,
-      activation_d=FLAGS.activation_d)
+      activation_d=FLAGS.activation_d,
+      nbr_g_updates=FLAGS.nbr_g_updates)
 
     show_all_variables()
 
