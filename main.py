@@ -73,6 +73,10 @@ if (input_height is None and input_width is None) or (output_height is None and 
 def main(_):
   # pp.pprint(flags.FLAGS.__flags)
 
+  sample_width = FLAGS.grid_width * input_width
+  sample_height = FLAGS.grid_height * input_height
+  dataset_size = len(listdir('data/' + FLAGS.dataset))
+
   print()
   print("FLAGS.nbr_of_layers_g: " + str(FLAGS.nbr_of_layers_g))
   print("FLAGS.nbr_of_layers_d: " + str(FLAGS.nbr_of_layers_d))
@@ -80,6 +84,10 @@ def main(_):
   print("FLAGS.use_checkpoints: " + str(FLAGS.use_checkpoints))
   print("FLAGS.batch_norm_g: " + str(FLAGS.batch_norm_g))
   print("FLAGS.batch_norm_d: " + str(FLAGS.batch_norm_d))
+  print('sample size: {}x{}'.format(sample_width, sample_height))
+  print('dataset size: {}'.format(dataset_size))
+  print('iteration per epoch: {}'.format(int(dataset_size / batch_size)))
+  print('nbr of frames: {}'.format(int(dataset_size / batch_size) * FLAGS.epoch))
   print()
 
   if FLAGS.input_width is None:
