@@ -136,7 +136,7 @@ data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
 # validate ftp
 for index, row in data.iterrows():
-  if row['upload_to_ftp'] and not os.path.exists('ftp.ici'):
+  if row['upload_to_ftp'] and not os.path.exists('ftp.ini'):
     print('option upload_to_ftp == true but ftp.ini file was not found')
     exit(1)
 
