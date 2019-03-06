@@ -77,9 +77,6 @@ class DCGAN(object):
 
     self.nbr_g_updates = nbr_g_updates
 
-    print('self.activation_g: ' + self.activation_g)
-    print('self.activation_d: ' + self.activation_d)
-
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imread_img = imread(self.data[0])
     if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
@@ -151,6 +148,12 @@ class DCGAN(object):
     self.saver = tf.train.Saver()
 
   def train(self, config):
+    print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
+    print('self.activation_g: {}'.format(self.activation_g))
+    print('self.activation_d: {}'.format(self.activation_d))
+    print("config.learning_rate: {}".format(config.learning_rate))
+    print("config.beta1: {}".format(config.beta1))
+
     d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
       .minimize(self.d_loss, var_list=self.d_vars)
     g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
