@@ -10,6 +10,7 @@ from os.path import isfile, join
 import traceback
 import logging
 import math
+import datetime
 
 import pandas as pd
 
@@ -119,7 +120,7 @@ def process_video(name, upload_to_ftp, delete_images):
       file.close()
       session.quit()
     except Exception as e:
-      print('error during FTP transfer --> {}'.format(e))
+      print('error during FTP transfer -> {}'.format(e))
 
   if delete_images:
     shutil.rmtree(sample_folder)
@@ -160,9 +161,12 @@ pool = Pool(processes=10)
 for index, row in data.iterrows():
   print(str(row))
   try:
+    begin = datetime.datetime.now().replace(microsecond=0)
     job_cmd = build_dcgan_cmd(row)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
     subprocess.run(job_cmd)
+    duration = datetime.datetime.now().replace(microsecond=0) - begin
+    print('duration of the job: {}'.format(duration))
 
     # process video asynchronously
     print('render video: ' + str(row['render_video']))
