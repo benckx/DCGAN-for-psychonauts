@@ -121,11 +121,6 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images):
     shutil.rmtree(images_folder)
 
 
-def some_function():
-  print('SHE IS A WHOOOOORE')
-  threading.Timer(10.0, some_function).start()
-
-
 def scheduled_job():
   try:
     global current_cut
