@@ -73,11 +73,6 @@ if (input_height is None and input_width is None) or (output_height is None and 
 
 def main(_):
   # pp.pprint(flags.FLAGS.__flags)
-
-  sample_width = FLAGS.grid_width * input_width
-  sample_height = FLAGS.grid_height * input_height
-  dataset_size = len(listdir('data/' + FLAGS.dataset))
-
   print()
   print("FLAGS.learning_rate: {}".format(FLAGS.learning_rate))
   print("FLAGS.beta1: {}".format(FLAGS.beta1))
@@ -90,10 +85,6 @@ def main(_):
   print("FLAGS.activation_g: {}".format(FLAGS.activation_g))
   print("FLAGS.activation_d: {}".format(FLAGS.activation_d))
   print("FLAGS.nbr_g_updates: {}".format(FLAGS.nbr_g_updates))
-  print('sample size: {}x{}'.format(sample_width, sample_height))
-  print('dataset size: {}'.format(dataset_size))
-  print('iteration per epoch: {}'.format(int(dataset_size / batch_size)))
-  print('nbr of frames: {}'.format(int(dataset_size / batch_size) * FLAGS.epoch))
   print()
 
   if FLAGS.input_width is None:

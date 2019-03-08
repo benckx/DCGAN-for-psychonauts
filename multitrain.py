@@ -1,23 +1,19 @@
 import configparser
+import datetime
 import ftplib
-import os
+import io
+import math
+import os.path
 import shutil
 import subprocess
+import threading
+import traceback
 from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 
-import traceback
-import logging
-import math
-import datetime
-
 import pandas as pd
-
-samples_prefix = 'samples_'
-data_folders = [f for f in listdir('data/')]
-csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
-csv_files.sort()
+from PIL import Image
 
 
 # noinspection PyListCreation
@@ -104,27 +100,69 @@ def render_video(name, images_folder):
   subprocess.run(ffmpeg_cmd)
 
 
-def process_video(name, upload_to_ftp, delete_images):
+def process_video(video_name, images_folder, upload_to_ftp, delete_images):
   """ Render to video, upload to ftp """
 
-  sample_folder = samples_prefix + name
-  render_video(name, sample_folder)
+  render_video(video_name, images_folder)
 
   if upload_to_ftp:
     try:
       config = configparser.ConfigParser()
       config.read('ftp.ini')
       session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-      file = open(name + '.mp4', 'rb')
-      session.storbinary('STOR ' + name + '.mp4', file)
+      file = open(video_name + '.mp4', 'rb')
+      session.storbinary('STOR ' + video_name + '.mp4', file)
       file.close()
       session.quit()
-    except Exception as e:
-      print('error during FTP transfer -> {}'.format(e))
+    except Exception as exception:
+      print('error during FTP transfer -> {}'.format(exception))
 
   if delete_images:
-    shutil.rmtree(sample_folder)
+    shutil.rmtree(images_folder)
 
+
+def some_function():
+  print('SHE IS A WHOOOOORE')
+  threading.Timer(10.0, some_function).start()
+
+
+def scheduled_job():
+  try:
+    global current_cut
+    print('------ periodic render ------')
+
+    if os.path.exists(sample_folder):
+      sample_folder_size = len([f for f in listdir(sample_folder) if isfile(join(data_path, f))])
+      print('{} sample folder size: {}'.format(sample_folder, sample_folder_size))
+      print('current cut: {}'.format(current_cut))
+      print('auto_periodic_render_frames: {}'.format(auto_periodic_renders_nbr_of_frames))
+      print('we do: {}'.format(auto_periodic_renders_nbr_of_frames > sample_folder_size))
+      if auto_periodic_renders_nbr_of_frames > sample_folder_size:
+        create_video_cut()
+        current_cut += 1
+  except NameError:
+    print("sample_folder not defined yet")
+  finally:
+    print('----- / periodic render -----')
+    threading.Timer(60.0, scheduled_job).start()
+
+
+def create_video_cut():
+  frames = [f for f in listdir(sample_folder) if isfile(join(data_path, f))][0:auto_periodic_renders_nbr_of_frames + 1]
+  cut_folder = '{}_cut{:02d}'.format(sample_folder, current_cut)
+  video_name = job_name + '_cut{:02d}'.format(current_cut)
+  os.makedirs(cut_folder)
+  for f in frames:
+    print('moving ' + f)
+    os.rename(sample_folder + '/' + f, cut_folder + '/' + f)
+  process_video(video_name, current_cut, True, True)
+
+
+fps = 30
+samples_prefix = 'samples_'
+data_folders = [f for f in listdir('data/')]
+csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
+csv_files.sort()
 
 if len(csv_files) == 0:
   print('Error: no csv file')
@@ -158,9 +196,50 @@ for index, row in data.iterrows():
 
 pool = Pool(processes=10)
 
+# determine if we do automatic periodic renders
+auto_periodic_renders = False
+
+for index, row in data.iterrows():
+  if not auto_periodic_renders:
+    auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
+
+if auto_periodic_renders:
+  pool.apply_async(scheduled_job)
+
+# run the jobs
 for index, row in data.iterrows():
   print(str(row))
   try:
+    data_path = 'data/' + row['dataset']
+    first_image = [f for f in listdir(data_path) if isfile(join(data_path, f))][0]
+    image = Image.open(io.BytesIO(open(data_path + '/' + first_image, "rb").read()))
+    rgb_im = image.convert('RGB')
+    input_width = rgb_im.size[0]
+    input_height = rgb_im.size[1]
+    sample_width = row['grid_width'] * input_width
+    sample_height = row['grid_height'] * input_height
+    dataset_size = len(listdir(data_path))
+    batch_size = row['grid_width'] * row['grid_height']
+    nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
+    sample_folder = samples_prefix + row['name']
+
+    if auto_periodic_renders:
+      auto_periodic_renders_nbr_of_frames = row['auto_render_period'] * fps
+      job_name = row['name']
+      current_cut = 1
+
+    print('')
+    print('sample resolution: {}x{}'.format(sample_width, sample_height))
+    print('dataset size: {}'.format(dataset_size))
+    print('total nbr. of frames: {}'.format(nbr_of_frames))
+    print('length of video: {} min.'.format((nbr_of_frames / fps) / 60))
+    print('frames per minutes: {}'.format(fps * 60))
+    print('automatic periodic render: {}'.format(auto_periodic_renders))
+    if auto_periodic_renders:
+      auto_periodic_renders_nbr_of_frames = row['auto_render_period'] * fps
+      print('nbr of frames in periodic renders: {}'.format(auto_periodic_renders_nbr_of_frames))
+    print('')
+
     begin = datetime.datetime.now().replace(microsecond=0)
     job_cmd = build_dcgan_cmd(row)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
@@ -169,8 +248,7 @@ for index, row in data.iterrows():
     print('duration of the job: {}'.format(duration))
 
     # process video asynchronously
-    print('render video: ' + str(row['render_video']))
-    if row['render_video']:
+    if not auto_periodic_renders and row['render_video']:
       pool.apply_async(process_video, (row['name'], row['upload_to_ftp'], row['delete_images_after_render']))
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
