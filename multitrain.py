@@ -9,11 +9,60 @@ import subprocess
 import threading
 import traceback
 from multiprocessing import Pool
+from multiprocessing.managers import BaseManager
 from os import listdir
 from os.path import isfile, join
 
 import pandas as pd
 from PIL import Image
+
+
+class MySharedClass:
+  def __init__(self):
+    self.data_path = ""
+    self.my_folder = ""
+    self.job_name = ""
+    self.nbr_of_frames = 0
+    self.current_cut = 1
+
+  def get_data_path(self):
+    return self.data_path
+
+  def set_data_path(self, path):
+    self.data_path = path
+
+  def get_folder(self):
+    return self.my_folder
+
+  def set_folder(self, folder):
+    self.my_folder = folder
+
+  def get_job_name(self):
+    return self.job_name
+
+  def set_job_name(self, job_name):
+    self.job_name = job_name
+
+  def get_nbr_of_frames(self):
+    return self.nbr_of_frames
+
+  def set_nbr_of_frames(self, nbr_frames):
+    self.nbr_of_frames = nbr_frames
+
+  def get_current_cut(self):
+    return self.current_cut
+
+  def increment_cut(self):
+    self.current_cut += 1
+
+
+class MyManager(BaseManager):
+  pass
+
+
+BaseManager.register('MySharedClass', MySharedClass)
+manager = BaseManager()
+manager.start()
 
 
 # noinspection PyListCreation
@@ -121,36 +170,45 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images):
     shutil.rmtree(images_folder)
 
 
-def scheduled_job():
-  try:
-    global current_cut
-    print('------ periodic render ------')
-
-    if os.path.exists(sample_folder):
-      sample_folder_size = len([f for f in listdir(sample_folder) if isfile(join(data_path, f))])
-      print('{} sample folder size: {}'.format(sample_folder, sample_folder_size))
-      print('current cut: {}'.format(current_cut))
-      print('auto_periodic_render_frames: {}'.format(auto_periodic_renders_nbr_of_frames))
-      print('we do: {}'.format(auto_periodic_renders_nbr_of_frames > sample_folder_size))
-      if auto_periodic_renders_nbr_of_frames > sample_folder_size:
-        create_video_cut()
-        current_cut += 1
-  except NameError:
-    print("sample_folder not defined yet")
-  finally:
-    print('----- / periodic render -----')
-    threading.Timer(60.0, scheduled_job).start()
+def scheduled_job_test(shared_class):
+  print('SCHEDULE JOB TEST {}'.format(shared_class.get_folder()))
+  threading.Timer(5.0, scheduled_job_test, args=[shared_class]).start()
 
 
-def create_video_cut():
-  frames = [f for f in listdir(sample_folder) if isfile(join(data_path, f))][0:auto_periodic_renders_nbr_of_frames + 1]
-  cut_folder = '{}_cut{:02d}'.format(sample_folder, current_cut)
-  video_name = job_name + '_cut{:02d}'.format(current_cut)
-  os.makedirs(cut_folder)
+def scheduled_job(shared_class: MySharedClass):
+  print()
+  print('------ periodic render ------')
+  print('sample folder: {}'.format(shared_class.get_folder()))
+  print('current cut: {}'.format(shared_class.get_current_cut()))
+  print('nbr_of_frames_to_process: {}'.format(shared_class.get_nbr_of_frames()))
+  print('cut_idx: {}'.format(shared_class.get_current_cut()))
+  print('')
+
+  if os.path.exists(shared_class.get_folder()):
+    sample_folder_size = len(
+      [f for f in listdir(shared_class.get_folder()) if isfile(join(shared_class.get_data_path(), f))])
+    print('{} sample folder size: {}'.format(shared_class.get_folder(), sample_folder_size))
+    print('we do: {}'.format(nbr_of_frames.value > sample_folder_size))
+    if nbr_of_frames.value > sample_folder_size:
+      create_video_cut(shared_class)
+      shared_class.increment_cut()
+  else:
+    print('folder does not exist yet')
+
+  print('----- / periodic render -----')
+  print()
+  threading.Timer(60.0, scheduled_job, args=[shared_class]).start()
+
+
+def create_video_cut(shared_class: MySharedClass):
+  frames = [f for f in listdir(shared_class.get_folder()) if isfile(join(data_path, f))][
+           0:shared_class.get_nbr_of_frames() + 1]
+  video_name = '{}_cut{:02d}'.format(shared_class.get_job_name(), shared_class.get_current_cut())
+  os.makedirs(video_name)
   for f in frames:
     print('moving ' + f)
-    os.rename(sample_folder + '/' + f, cut_folder + '/' + f)
-  process_video(video_name, current_cut, True, True)
+    os.rename(shared_class.get_folder() + '/' + f, video_name + '/' + f)
+  process_video(video_name, shared_class.get_current_cut(), True, True)
 
 
 fps = 30
@@ -199,7 +257,8 @@ for index, row in data.iterrows():
     auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
 
 if auto_periodic_renders:
-  pool.apply_async(scheduled_job)
+  inst = manager.MySharedClass()
+  pool.apply(scheduled_job, args=[inst])
 
 # run the jobs
 for index, row in data.iterrows():
@@ -216,23 +275,22 @@ for index, row in data.iterrows():
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
     nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
-    sample_folder = samples_prefix + row['name']
-
-    if auto_periodic_renders:
-      auto_periodic_renders_nbr_of_frames = row['auto_render_period'] * fps
-      job_name = row['name']
-      current_cut = 1
 
     print('')
+    if auto_periodic_renders:
+      inst.set_data_path(data_path)
+      inst.set_folder(samples_prefix + row['name'])
+      inst.set_job_name(row['name'])
+      inst.set_nbr_of_frames(nbr_of_frames)
+      print('nbr of frames in periodic renders: {}'.format(inst.get_nbr_of_frames()))
+      print('sample folder: {}'.format(inst.get_folder()))
+
     print('sample resolution: {}x{}'.format(sample_width, sample_height))
     print('dataset size: {}'.format(dataset_size))
     print('total nbr. of frames: {}'.format(nbr_of_frames))
     print('length of video: {} min.'.format((nbr_of_frames / fps) / 60))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
-    if auto_periodic_renders:
-      auto_periodic_renders_nbr_of_frames = row['auto_render_period'] * fps
-      print('nbr of frames in periodic renders: {}'.format(auto_periodic_renders_nbr_of_frames))
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
