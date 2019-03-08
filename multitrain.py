@@ -182,8 +182,8 @@ def scheduled_job(shared: MySharedClass):
   if os.path.exists(shared.get_folder()):
     folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_data_path(), f))])
     print('{} folder size: {}'.format(shared.get_folder(), folder_size))
-    print('we do: {}'.format(shared.get_nbr_of_frames() > folder_size))
-    if shared.get_nbr_of_frames() > folder_size:
+    print('we do: {}'.format(shared.get_nbr_of_frames() < folder_size))
+    if shared.get_nbr_of_frames() < folder_size:
       create_video_cut(shared)
       shared.increment_cut()
   else:
@@ -201,7 +201,7 @@ def create_video_cut(shared: MySharedClass):
   for f in frames:
     print('moving ' + f)
     os.rename(shared.get_folder() + '/' + f, video_name + '/' + f)
-  process_video(video_name, shared.get_current_cut(), True, True)
+  process_video(video_name, shared.get_folder(), True, True)
 
 
 fps = 30
