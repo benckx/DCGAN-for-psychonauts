@@ -49,7 +49,7 @@ def build_dcgan_cmd(cmd_row):
   if cmd_row['batch_norm_g'] == '' or cmd_row['batch_norm_g']:
     dcgan_cmd.append("--batch_norm_g")
 
-  if  cmd_row['batch_norm_g'] == '' or cmd_row['batch_norm_d']:
+  if cmd_row['batch_norm_g'] == '' or cmd_row['batch_norm_d']:
     dcgan_cmd.append("--batch_norm_d")
 
   if cmd_row['activation_g'] and str(cmd_row['activation_g']) != "nan":
