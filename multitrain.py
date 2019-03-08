@@ -170,45 +170,38 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images):
     shutil.rmtree(images_folder)
 
 
-def scheduled_job_test(shared_class):
-  print('SCHEDULE JOB TEST {}'.format(shared_class.get_folder()))
-  threading.Timer(5.0, scheduled_job_test, args=[shared_class]).start()
-
-
-def scheduled_job(shared_class: MySharedClass):
+def scheduled_job(shared: MySharedClass):
   print()
   print('------ periodic render ------')
-  print('sample folder: {}'.format(shared_class.get_folder()))
-  print('current cut: {}'.format(shared_class.get_current_cut()))
-  print('nbr_of_frames_to_process: {}'.format(shared_class.get_nbr_of_frames()))
-  print('cut_idx: {}'.format(shared_class.get_current_cut()))
+  print('sample folder: {}'.format(shared.get_folder()))
+  print('current cut: {}'.format(shared.get_current_cut()))
+  print('nbr_of_frames_to_process: {}'.format(shared.get_nbr_of_frames()))
+  print('cut_idx: {}'.format(shared.get_current_cut()))
   print('')
 
-  if os.path.exists(shared_class.get_folder()):
-    sample_folder_size = len(
-      [f for f in listdir(shared_class.get_folder()) if isfile(join(shared_class.get_data_path(), f))])
-    print('{} sample folder size: {}'.format(shared_class.get_folder(), sample_folder_size))
-    print('we do: {}'.format(nbr_of_frames.value > sample_folder_size))
-    if nbr_of_frames.value > sample_folder_size:
-      create_video_cut(shared_class)
-      shared_class.increment_cut()
+  if os.path.exists(shared.get_folder()):
+    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_data_path(), f))])
+    print('{} folder size: {}'.format(shared.get_folder(), folder_size))
+    print('we do: {}'.format(shared.get_nbr_of_frames() > folder_size))
+    if shared.get_nbr_of_frames() > folder_size:
+      create_video_cut(shared)
+      shared.increment_cut()
   else:
     print('folder does not exist yet')
 
   print('----- / periodic render -----')
   print()
-  threading.Timer(60.0, scheduled_job, args=[shared_class]).start()
+  threading.Timer(60.0, scheduled_job, args=[shared]).start()
 
 
-def create_video_cut(shared_class: MySharedClass):
-  frames = [f for f in listdir(shared_class.get_folder()) if isfile(join(data_path, f))][
-           0:shared_class.get_nbr_of_frames() + 1]
-  video_name = '{}_cut{:02d}'.format(shared_class.get_job_name(), shared_class.get_current_cut())
+def create_video_cut(shared: MySharedClass):
+  frames = [f for f in listdir(shared.get_folder()) if isfile(join(data_path, f))][0:shared.get_nbr_of_frames() + 1]
+  video_name = '{}_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
   os.makedirs(video_name)
   for f in frames:
     print('moving ' + f)
-    os.rename(shared_class.get_folder() + '/' + f, video_name + '/' + f)
-  process_video(video_name, shared_class.get_current_cut(), True, True)
+    os.rename(shared.get_folder() + '/' + f, video_name + '/' + f)
+  process_video(video_name, shared.get_current_cut(), True, True)
 
 
 fps = 30
@@ -281,7 +274,7 @@ for index, row in data.iterrows():
       inst.set_data_path(data_path)
       inst.set_folder(samples_prefix + row['name'])
       inst.set_job_name(row['name'])
-      inst.set_nbr_of_frames(nbr_of_frames)
+      inst.set_nbr_of_frames(row['auto_render_period'] * fps)
       print('nbr of frames in periodic renders: {}'.format(inst.get_nbr_of_frames()))
       print('sample folder: {}'.format(inst.get_folder()))
 
