@@ -19,23 +19,16 @@ from PIL import Image
 
 class MySharedClass:
   def __init__(self):
-    self.data_path = ""
-    self.my_folder = ""
+    self.sample_folder = ""
     self.job_name = ""
     self.nbr_of_frames = 0
     self.current_cut = 1
 
-  def get_data_path(self):
-    return self.data_path
-
-  def set_data_path(self, path):
-    self.data_path = path
-
   def get_folder(self):
-    return self.my_folder
+    return self.sample_folder
 
   def set_folder(self, folder):
-    self.my_folder = folder
+    self.sample_folder = folder
 
   def get_job_name(self):
     return self.job_name
@@ -176,11 +169,10 @@ def scheduled_job(shared: MySharedClass):
   print('sample folder: {}'.format(shared.get_folder()))
   print('current cut: {}'.format(shared.get_current_cut()))
   print('nbr_of_frames_to_process: {}'.format(shared.get_nbr_of_frames()))
-  print('cut_idx: {}'.format(shared.get_current_cut()))
   print('')
 
   if os.path.exists(shared.get_folder()):
-    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_data_path(), f))])
+    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
     print('{} folder size: {}'.format(shared.get_folder(), folder_size))
     print('we do: {}'.format(shared.get_nbr_of_frames() < folder_size))
     if shared.get_nbr_of_frames() < folder_size:
@@ -191,17 +183,21 @@ def scheduled_job(shared: MySharedClass):
 
   print('----- / periodic render -----')
   print()
-  threading.Timer(60.0, scheduled_job, args=[shared]).start()
+  threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 
 def create_video_cut(shared: MySharedClass):
-  frames = [f for f in listdir(shared.get_folder()) if isfile(join(data_path, f))][0:shared.get_nbr_of_frames() + 1]
+  nbr_frames = shared.get_nbr_of_frames()
+  folder = shared.get_folder()
+  frames = [f for f in listdir(folder) if isfile(join(folder, f))].sort()[0:nbr_frames]
   video_name = '{}_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
   os.makedirs(video_name)
   for f in frames:
-    print('moving ' + f)
-    os.rename(shared.get_folder() + '/' + f, video_name + '/' + f)
-  process_video(video_name, shared.get_folder(), True, True)
+    src = shared.get_folder() + '/' + f
+    dest = video_name + '/' + f
+    print('moving from {} to {}'.format(src, dest))
+    os.rename(src, dest)
+  process_video(video_name, video_name, True, False)
 
 
 fps = 30
@@ -249,8 +245,8 @@ for index, row in data.iterrows():
   if not auto_periodic_renders:
     auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
 
+inst = manager.MySharedClass()
 if auto_periodic_renders:
-  inst = manager.MySharedClass()
   pool.apply(scheduled_job, args=[inst])
 
 # run the jobs
@@ -271,7 +267,6 @@ for index, row in data.iterrows():
 
     print('')
     if auto_periodic_renders:
-      inst.set_data_path(data_path)
       inst.set_folder(samples_prefix + row['name'])
       inst.set_job_name(row['name'])
       inst.set_nbr_of_frames(row['auto_render_period'] * fps)
@@ -281,7 +276,7 @@ for index, row in data.iterrows():
     print('sample resolution: {}x{}'.format(sample_width, sample_height))
     print('dataset size: {}'.format(dataset_size))
     print('total nbr. of frames: {}'.format(nbr_of_frames))
-    print('length of video: {} min.'.format((nbr_of_frames / fps) / 60))
+    print('length of final video: {} min.'.format((nbr_of_frames / fps) / 60))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('')

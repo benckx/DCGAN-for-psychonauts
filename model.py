@@ -148,11 +148,13 @@ class DCGAN(object):
     self.saver = tf.train.Saver()
 
   def train(self, config):
+    print()
     print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
     print('self.activation_g: {}'.format(self.activation_g))
     print('self.activation_d: {}'.format(self.activation_d))
     print("config.learning_rate: {}".format(config.learning_rate))
     print("config.beta1: {}".format(config.beta1))
+    print()
 
     d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
       .minimize(self.d_loss, var_list=self.d_vars)
