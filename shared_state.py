@@ -6,6 +6,7 @@ class ThreadsSharedState:
     self.current_cut = 1
     self.sample_res = None
     self.render_res = None
+    self.upload_to_ftp = False
 
   def get_folder(self):
     return self.sample_folder
@@ -42,3 +43,9 @@ class ThreadsSharedState:
 
   def set_render_res(self, res):
     self.render_res = res
+
+  def is_upload_to_ftp(self):
+    return self.upload_to_ftp
+
+  def set_upload_to_ftp(self, upload_to_ftp):
+    self.upload_to_ftp = upload_to_ftp

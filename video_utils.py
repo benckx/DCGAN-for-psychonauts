@@ -39,12 +39,15 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
 
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(images_folder)
+    if upload_to_ftp:
+      upload_via_ftp(images_folder + '.mp4')
   else:
     box_idx = 1
     for box in images_utils.get_boxes(sample_res, render_res):
       box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
       print('Box folder: {}'.format(box_folder_name))
       os.makedirs(box_folder_name)
+
       original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
       original_frames.sort()
       for f in original_frames:
@@ -53,11 +56,16 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
         print('Extracting {} to {} with {}'.format(src, dest, box))
         region = Image.open(src).crop(box)
         region.save(dest)
-      render_video(box_folder_name)
-      box_idx += 1
 
-  if upload_to_ftp:
-    upload_via_ftp(images_folder + '.mp4')
+      render_video(box_folder_name)
+
+      if upload_to_ftp:
+        upload_via_ftp(box_folder_name + '.mp4')
+
+      if delete_images:
+        shutil.rmtree(box_folder_name)
+
+      box_idx += 1
 
   if delete_images:
     shutil.rmtree(images_folder)
@@ -114,4 +122,5 @@ def create_video_cut(shared: shared_state.ThreadsSharedState):
     dest = time_cut_folder + '/' + f
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
-  process_video(time_cut_folder, True, False, shared.get_sample_res(), shared.get_render_res())
+  process_video(time_cut_folder, shared_state.is_upload_to_ftp(), True, shared.get_sample_res(),
+                shared.get_render_res())
