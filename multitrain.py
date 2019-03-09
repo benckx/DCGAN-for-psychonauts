@@ -15,7 +15,7 @@ from os.path import isfile, join
 
 import pandas as pd
 from PIL import Image
-from Pillow import Image as ImagePillow
+# from Pillow import Image as ImagePillow
 
 
 class MySharedClass:
@@ -174,7 +174,7 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
         src = images_folder + '/' + f
         dest = video_name + '/' + f
         shutil.copyfile(src, dest)
-        im = ImagePillow.open(dest)
+        im = Image.open(dest)
         region = im.crop(box)
         region.save(dest)
       render_video(video_name, video_name)
@@ -238,6 +238,7 @@ def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('resolution issues: {}, {}'.format(sample_res, render_res))
     exit(1)
+
   boxes = []
   x_cuts = int(sample_res[0] / render_res[0])
   y_cuts = int(sample_res[1] / render_res[1])
@@ -248,6 +249,7 @@ def get_boxes(sample_res, render_res):
       x2 = (x + 1) * render_res[0]
       y2 = (y + 1) * render_res[1]
       boxes.append([x1, y1, x2, y2])
+
   return boxes
 
 
@@ -333,9 +335,9 @@ for index, row in data.iterrows():
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
     if row['render_res']:
-      render_res = [int(x) for x in row['render_res'].split("x")]
+      render_res = tuple([int(x) for x in row['render_res'].split("x")])
       print('render resolution: {}'.format(render_res))
-      print('views: {}'.format(get_boxes(sample_res, render_res)))
+      print('boxes: {}'.format(get_boxes(sample_res, render_res)))
       if auto_periodic_renders:
         inst.set_sample_res((sample_width, sample_height))
         inst.set_render_res(render_res)
