@@ -15,7 +15,6 @@ from os.path import isfile, join
 
 import pandas as pd
 from PIL import Image
-
 from Pillow import Image as ImagePillow
 
 
@@ -25,6 +24,8 @@ class MySharedClass:
     self.job_name = ""
     self.nbr_of_frames = 0
     self.current_cut = 1
+    self.sample_res = None
+    self.render_res = None
 
   def get_folder(self):
     return self.sample_folder
@@ -49,6 +50,18 @@ class MySharedClass:
 
   def increment_cut(self):
     self.current_cut += 1
+
+  def get_sample_res(self):
+    return self.sample_res
+
+  def set_sample_res(self, res):
+    self.sample_res = res
+
+  def get_render_res(self):
+    return self.render_res
+
+  def set_render_res(self, res):
+    self.render_res = res
 
 
 class MyManager(BaseManager):
@@ -218,7 +231,7 @@ def create_video_cut(shared: MySharedClass):
     dest = video_name + '/' + f
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
-  process_video(video_name, video_name, True, False)
+  process_video(video_name, video_name, True, False, shared.get_sample_res(), shared.get_render_res())
 
 
 def get_boxes(sample_res, render_res):
@@ -302,6 +315,8 @@ for index, row in data.iterrows():
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
     nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
+    sample_res = (sample_width, sample_height)
+    render_res = None
 
     print('')
     if auto_periodic_renders:
@@ -316,11 +331,14 @@ for index, row in data.iterrows():
     print('length of final video: {} min.'.format((nbr_of_frames / fps) / 60))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
-    print('sample resolution: {}x{}'.format(sample_width, sample_height))
+    print('sample resolution: {}'.format(sample_res))
     if row['render_res']:
       render_res = [int(x) for x in row['render_res'].split("x")]
       print('render resolution: {}'.format(render_res))
-      print('views: {}'.format(get_boxes((sample_width, sample_height), render_res)))
+      print('views: {}'.format(get_boxes(sample_res, render_res)))
+      if auto_periodic_renders:
+        inst.set_sample_res((sample_width, sample_height))
+        inst.set_render_res(render_res)
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
@@ -332,7 +350,9 @@ for index, row in data.iterrows():
 
     # process video asynchronously
     if not auto_periodic_renders and row['render_video']:
-      pool.apply_async(process_video, (row['name'], row['upload_to_ftp'], row['delete_images_after_render']))
+      upload_to_ftp = row['upload_to_ftp']
+      delete_after = row['delete_images_after_render']
+      pool.apply_async(process_video, (row['name'], upload_to_ftp, delete_after, sample_res, render_res))
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())
