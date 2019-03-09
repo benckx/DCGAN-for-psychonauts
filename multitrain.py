@@ -254,11 +254,17 @@ def get_boxes(sample_res, render_res):
   return boxes
 
 
+# defining constants
 fps = 30
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
 csv_files.sort()
+
+pool = Pool(processes=10)
+
+# determine if we do automatic periodic renders
+auto_periodic_renders = False
 
 if len(csv_files) == 0:
   print('Error: no csv file')
@@ -290,17 +296,14 @@ for index, row in data.iterrows():
     print('Error: dataset ' + row['dataset'] + ' not found!')
     exit(1)
 
-pool = Pool(processes=10)
-
-# determine if we do automatic periodic renders
-auto_periodic_renders = False
-
 for index, row in data.iterrows():
   if not auto_periodic_renders:
     auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
 
-inst = manager.MySharedClass()
+# launch schedule job if needed
+inst = None
 if auto_periodic_renders:
+  inst = manager.MySharedClass()
   pool.apply(scheduled_job, args=[inst])
 
 # run the jobs
@@ -354,9 +357,10 @@ for index, row in data.iterrows():
 
     # process video asynchronously
     if not auto_periodic_renders and row['render_video']:
+      sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
-      pool.apply_async(process_video, (samples_prefix + row['name'], upload_to_ftp, delete_after, sample_res, render_res))
+      pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())
