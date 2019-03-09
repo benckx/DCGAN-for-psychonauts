@@ -75,16 +75,16 @@ def build_dcgan_cmd(cmd_row):
     dcgan_cmd.append(str(cmd_row['beta1']))
 
   if cmd_row['nbr_g_updates'] and not math.isnan(cmd_row['nbr_g_updates']):
-    dcgan_cmd.append("--nbr_g_updates")
+    dcgan_cmd.append('--nbr_g_updates')
     dcgan_cmd.append(str(int(cmd_row['nbr_g_updates'])))
 
   if cmd_row['use_checkpoints']:
     dcgan_cmd.append("--use_checkpoints")
 
-  dcgan_cmd.append("--sample_rate")
-  dcgan_cmd.append("1")
+  dcgan_cmd.append('--sample_rate')
+  dcgan_cmd.append('1')
 
-  dcgan_cmd.append("--train")
+  dcgan_cmd.append('--train')
 
   return dcgan_cmd
 
@@ -176,7 +176,7 @@ for index, row in data.iterrows():
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
     if row['render_res']:
-      render_res = tuple([int(x) for x in row['render_res'].split("x")])
+      render_res = tuple([int(x) for x in row['render_res'].split('x')])
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
       if auto_periodic_renders:

@@ -99,7 +99,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
     print('{} folder size: {}'.format(shared.get_folder(), folder_size))
     print('proceed to time cut: {}'.format(shared.get_frames_threshold() < folder_size))
     if shared.get_frames_threshold() < folder_size:
-      create_video_cut(shared)
+      create_video_time_cut(shared)
       shared.increment_cut()
   else:
     print('folder does not exist yet')
@@ -109,7 +109,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
   threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 
-def create_video_cut(shared: shared_state.ThreadsSharedState):
+def create_video_time_cut(shared: shared_state.ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
@@ -122,5 +122,8 @@ def create_video_cut(shared: shared_state.ThreadsSharedState):
     dest = time_cut_folder + '/' + f
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
-  process_video(time_cut_folder, shared_state.is_upload_to_ftp(), True, shared.get_sample_res(),
-                shared.get_render_res())
+
+  upload_to_ftp = shared_state.is_upload_to_ftp()
+  sample_res = shared_state.get_sample_res()
+  render_res = shared_state.get_render_res()
+  process_video(time_cut_folder, upload_to_ftp, True, sample_res, render_res)
