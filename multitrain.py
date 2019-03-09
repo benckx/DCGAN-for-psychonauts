@@ -15,7 +15,6 @@ from os.path import isfile, join
 
 import pandas as pd
 from PIL import Image
-# from Pillow import Image as ImagePillow
 
 
 class MySharedClass:
@@ -173,9 +172,7 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
       for f in frames:
         src = images_folder + '/' + f
         dest = video_name + '/' + f
-        shutil.copyfile(src, dest)
-        im = Image.open(dest)
-        region = im.crop(box)
+        region = Image.open(src).crop(box)
         region.save(dest)
       render_video(video_name, video_name)
       box_idx = +1
@@ -202,6 +199,8 @@ def scheduled_job(shared: MySharedClass):
   print('sample folder: {}'.format(shared.get_folder()))
   print('current cut: {}'.format(shared.get_current_cut()))
   print('nbr_of_frames_to_process: {}'.format(shared.get_nbr_of_frames()))
+  print('sample resolution: {}'.format(shared.get_sample_res()))
+  print('render resolution: {}'.format(shared.get_render_res()))
   print('')
 
   if os.path.exists(shared.get_folder()):
