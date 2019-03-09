@@ -47,7 +47,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       if not os.path.exists(box_folder_name):
         os.makedirs(box_folder_name)
       else:
-        print('Error: The time cut folder {} already exists'.format(box_folder_name))
+        print('Error: The box folder {} already exists'.format(box_folder_name))
       frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
       frames.sort()
       for f in frames:
@@ -84,16 +84,16 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
   print('------ periodic render ------')
   print('sample folder: {}'.format(shared.get_folder()))
   print('current time cut: {}'.format(shared.get_current_cut()))
-  print('frame threshold: {}'.format(shared.get_nbr_of_frames()))
+  print('frame threshold: {}'.format(shared.get_frames_threshold()))
   print('sample resolution: {}'.format(shared.get_sample_res()))
   print('render resolution: {}'.format(shared.get_render_res()))
   print('')
 
-  if os.path.exists(shared.get_folder()):
+  if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
     folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
     print('{} folder size: {}'.format(shared.get_folder(), folder_size))
-    print('proceed to time cut: {}'.format(shared.get_nbr_of_frames() < folder_size))
-    if shared.get_nbr_of_frames() < folder_size:
+    print('proceed to time cut: {}'.format(shared.get_frames_threshold() < folder_size))
+    if shared.get_frames_threshold() < folder_size:
       create_video_cut(shared)
       shared.increment_cut()
   else:
@@ -105,7 +105,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
 
 
 def create_video_cut(shared: shared_state.ThreadsSharedState):
-  nbr_frames = shared.get_nbr_of_frames()
+  nbr_frames = shared.get_frames_threshold()
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
   frames.sort()

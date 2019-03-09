@@ -166,8 +166,8 @@ for index, row in data.iterrows():
     if auto_periodic_renders:
       shared_state.set_folder(samples_prefix + row['name'])
       shared_state.set_job_name(row['name'])
-      shared_state.set_nbr_of_frames(row['auto_render_period'] * fps)
-      print('nbr of frames in periodic renders: {}'.format(shared_state.get_nbr_of_frames()))
+      shared_state.set_frames_threshold(row['auto_render_period'] * fps)
+      print('frames threshold: {}'.format(shared_state.get_frames_threshold()))
       print('sample folder: {}'.format(shared_state.get_folder()))
 
     print('dataset size: {}'.format(dataset_size))
