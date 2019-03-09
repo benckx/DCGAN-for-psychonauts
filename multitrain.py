@@ -151,8 +151,21 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(video_name, images_folder)
   else:
-    # TODO: cuts
-    render_video(video_name, images_folder)
+    box_idx = 0
+    for box in get_boxes(sample_res, render_res):
+      video_name = '{}_box{:02d}'.format(video_name, box_idx)
+      os.makedirs(video_name)
+      frames = [f for f in listdir(video_name) if isfile(join(video_name, f))]
+      frames.sort()
+      for f in frames:
+        src = images_folder + '/' + f
+        dest = video_name + '/' + f
+        shutil.copyfile(src, dest)
+        im = ImagePillow.open(dest)
+        region = im.crop(box)
+        region.save(dest)
+      render_video(video_name, video_name)
+      box_idx = +1
 
   if upload_to_ftp:
     try:
@@ -196,10 +209,11 @@ def scheduled_job(shared: MySharedClass):
 def create_video_cut(shared: MySharedClass):
   nbr_frames = shared.get_nbr_of_frames()
   folder = shared.get_folder()
-  frames = [f for f in listdir(folder) if isfile(join(folder, f))].sort()[0:nbr_frames]
+  frames = [f for f in listdir(folder) if isfile(join(folder, f))]
+  frames.sort()
   video_name = '{}_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
   os.makedirs(video_name)
-  for f in frames:
+  for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
     dest = video_name + '/' + f
     print('moving from {} to {}'.format(src, dest))
@@ -207,13 +221,21 @@ def create_video_cut(shared: MySharedClass):
   process_video(video_name, video_name, True, False)
 
 
-def get_views(sample_res, render_res):
+def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('resolution issues: {}, {}'.format(sample_res, render_res))
     exit(1)
+  boxes = []
   x_cuts = int(sample_res[0] / render_res[0])
   y_cuts = int(sample_res[1] / render_res[1])
-  print("cuts: {}, {}".format(x_cuts, y_cuts))
+  for x in range(0, x_cuts):
+    for y in range(0, y_cuts):
+      x1 = x * render_res[0]
+      y1 = y * render_res[1]
+      x2 = (x + 1) * render_res[0]
+      y2 = (y + 1) * render_res[1]
+      boxes.append([x1, y1, x2, y2])
+  return boxes
 
 
 fps = 30
@@ -298,7 +320,7 @@ for index, row in data.iterrows():
     if row['render_res']:
       render_res = [int(x) for x in row['render_res'].split("x")]
       print('render resolution: {}'.format(render_res))
-      print('views: {}'.format(get_views((sample_width, sample_height), render_res)))
+      print('views: {}'.format(get_boxes((sample_width, sample_height), render_res)))
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
