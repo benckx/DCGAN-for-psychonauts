@@ -92,3 +92,4 @@ samples_*
 .~lock.*
 ftp.ini
 *.csv
+*.mp4
