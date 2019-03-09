@@ -136,7 +136,7 @@ def build_dcgan_cmd(cmd_row):
 
 
 # noinspection PyListCreation
-def render_video(name, images_folder):
+def render_video(images_folder):
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('30')
@@ -152,21 +152,21 @@ def render_video(name, images_folder):
   ffmpeg_cmd.append('17')
   ffmpeg_cmd.append('-pix_fmt')
   ffmpeg_cmd.append('yuv420p')
-  ffmpeg_cmd.append(name + '.mp4')
+  ffmpeg_cmd.append(images_folder + '.mp4')
   subprocess.run(ffmpeg_cmd)
 
 
 # noinspection PyShadowingNames
-def process_video(video_name, images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
+def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
   """ Render to video, upload to ftp """
 
   if sample_res is None or render_res is None or sample_res == render_res:
-    render_video(video_name, images_folder)
+    render_video(images_folder)
   else:
     box_idx = 0
     for box in get_boxes(sample_res, render_res):
-      box_folder_name = '{}_box{:02d}'.format(video_name, box_idx)
-      os.makedirs(video_name)
+      box_folder_name = '{}_box{:03d}'.format(images_folder, box_idx)
+      os.makedirs(box_folder_name)
       frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
       frames.sort()
       for f in frames:
@@ -175,7 +175,7 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
         print('extracting {} with {} to {}'.format(src, box, dest))
         region = Image.open(src).crop(box)
         region.save(dest)
-      render_video(box_folder_name, box_folder_name)
+      render_video(box_folder_name)
       box_idx = +1
 
   if upload_to_ftp:
@@ -183,8 +183,8 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
       config = configparser.ConfigParser()
       config.read('ftp.ini')
       session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-      file = open(video_name + '.mp4', 'rb')
-      session.storbinary('STOR ' + video_name + '.mp4', file)
+      file = open(images_folder + '.mp4', 'rb')
+      session.storbinary('STOR ' + images_folder + '.mp4', file)
       file.close()
       session.quit()
     except Exception as exception:
@@ -224,14 +224,14 @@ def create_video_cut(shared: MySharedClass):
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
   frames.sort()
-  video_name = '{}_timecut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
-  os.makedirs(video_name)
+  time_cut_folder = '{}_time_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
+  os.makedirs(time_cut_folder)
   for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
-    dest = video_name + '/' + f
+    dest = time_cut_folder + '/' + f
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
-  process_video(video_name, video_name, True, False, shared.get_sample_res(), shared.get_render_res())
+  process_video(time_cut_folder, True, False, shared.get_sample_res(), shared.get_render_res())
 
 
 # noinspection PyShadowingNames
@@ -320,6 +320,7 @@ for index, row in data.iterrows():
     nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
     sample_res = (sample_width, sample_height)
     render_res = None
+    video_length_in_min = ((nbr_of_frames / fps) / 60)
 
     print('')
     if auto_periodic_renders:
@@ -330,7 +331,7 @@ for index, row in data.iterrows():
       print('sample folder: {}'.format(inst.get_folder()))
 
     print('dataset size: {}'.format(dataset_size))
-    print('total nbr. of frames: {}'.format(nbr_of_frames))
+    print('video length: {} frames --> {}'.format(nbr_of_frames, video_length_in_min))
     print('length of final video: {} min.'.format((nbr_of_frames / fps) / 60))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
@@ -355,7 +356,7 @@ for index, row in data.iterrows():
     if not auto_periodic_renders and row['render_video']:
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
-      pool.apply_async(process_video, (row['name'], upload_to_ftp, delete_after, sample_res, render_res))
+      pool.apply_async(process_video, (samples_prefix + row['name'], upload_to_ftp, delete_after, sample_res, render_res))
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())

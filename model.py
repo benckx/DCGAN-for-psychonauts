@@ -413,7 +413,7 @@ class DCGAN(object):
           else:
             exit(1)
 
-      # later layer
+      # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
       last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
       return tf.nn.tanh(last_layer)
