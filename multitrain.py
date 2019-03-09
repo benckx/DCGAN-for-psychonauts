@@ -165,16 +165,17 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
   else:
     box_idx = 0
     for box in get_boxes(sample_res, render_res):
-      video_name = '{}_box{:02d}'.format(video_name, box_idx)
+      box_folder_name = '{}_box{:02d}'.format(video_name, box_idx)
       os.makedirs(video_name)
-      frames = [f for f in listdir(video_name) if isfile(join(video_name, f))]
+      frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
       frames.sort()
       for f in frames:
         src = images_folder + '/' + f
-        dest = video_name + '/' + f
+        dest = box_folder_name + '/' + f
+        print('cutting {} to {}'.format(src, dest))
         region = Image.open(src).crop(box)
         region.save(dest)
-      render_video(video_name, video_name)
+      render_video(box_folder_name, box_folder_name)
       box_idx = +1
 
   if upload_to_ftp:
