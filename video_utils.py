@@ -1,0 +1,123 @@
+import configparser
+import ftplib
+import os.path
+import shutil
+import subprocess
+import threading
+from os import listdir
+from os.path import isfile, join
+
+from PIL import Image
+
+import images_utils
+import shared_state
+
+
+# noinspection PyListCreation
+def render_video(images_folder):
+  ffmpeg_cmd = ['ffmpeg']
+  ffmpeg_cmd.append('-framerate')
+  ffmpeg_cmd.append('30')
+  ffmpeg_cmd.append('-f')
+  ffmpeg_cmd.append('image2')
+  ffmpeg_cmd.append('-i')
+  ffmpeg_cmd.append(images_folder + '/%*.png')
+  ffmpeg_cmd.append('-c:v')
+  ffmpeg_cmd.append('libx264')
+  ffmpeg_cmd.append('-profile:v')
+  ffmpeg_cmd.append('high')
+  ffmpeg_cmd.append('-crf')
+  ffmpeg_cmd.append('17')
+  ffmpeg_cmd.append('-pix_fmt')
+  ffmpeg_cmd.append('yuv420p')
+  ffmpeg_cmd.append(images_folder + '.mp4')
+  subprocess.run(ffmpeg_cmd)
+
+
+def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
+  """ Render to video, upload to ftp """
+
+  if sample_res is None or render_res is None or sample_res == render_res:
+    render_video(images_folder)
+  else:
+    box_idx = 1
+    for box in images_utils.get_boxes(sample_res, render_res):
+      box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
+      print('Box folder: {}'.format(box_folder_name))
+      if not os.path.exists(box_folder_name):
+        os.makedirs(box_folder_name)
+      else:
+        print('Error: The time cut folder {} already exists'.format(box_folder_name))
+      frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
+      frames.sort()
+      for f in frames:
+        src = images_folder + '/' + f
+        dest = box_folder_name + '/' + f
+        print('extracting {} with {} to {}'.format(src, box, dest))
+        region = Image.open(src).crop(box)
+        region.save(dest)
+      render_video(box_folder_name)
+      box_idx = +1
+
+  if upload_to_ftp:
+    upload_via_ftp(images_folder + '.mp4')
+
+  if delete_images:
+    shutil.rmtree(images_folder)
+
+
+def upload_via_ftp(file_name):
+  try:
+    config = configparser.ConfigParser()
+    config.read('ftp.ini')
+    session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
+    file = open(file_name, 'rb')
+    session.storbinary('STOR ' + file_name, file)
+    file.close()
+    session.quit()
+  except Exception as exception:
+    print('error during FTP transfer -> {}'.format(exception))
+
+
+def scheduled_job(shared: shared_state.ThreadsSharedState):
+  print()
+  print('------ periodic render ------')
+  print('sample folder: {}'.format(shared.get_folder()))
+  print('current time cut: {}'.format(shared.get_current_cut()))
+  print('frame threshold: {}'.format(shared.get_nbr_of_frames()))
+  print('sample resolution: {}'.format(shared.get_sample_res()))
+  print('render resolution: {}'.format(shared.get_render_res()))
+  print('')
+
+  if os.path.exists(shared.get_folder()):
+    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
+    print('{} folder size: {}'.format(shared.get_folder(), folder_size))
+    print('proceed to time cut: {}'.format(shared.get_nbr_of_frames() < folder_size))
+    if shared.get_nbr_of_frames() < folder_size:
+      create_video_cut(shared)
+      shared.increment_cut()
+  else:
+    print('folder does not exist yet')
+
+  print('----- / periodic render -----')
+  print()
+  threading.Timer(120.0, scheduled_job, args=[shared]).start()
+
+
+def create_video_cut(shared: shared_state.ThreadsSharedState):
+  nbr_frames = shared.get_nbr_of_frames()
+  folder = shared.get_folder()
+  frames = [f for f in listdir(folder) if isfile(join(folder, f))]
+  frames.sort()
+  time_cut_folder = '{}_time_cut{:04d}'.format(shared.get_job_name(), shared.get_current_cut())
+  print('Time cut folder: {}'.format(time_cut_folder))
+  if not os.path.exists(time_cut_folder):
+    os.makedirs(time_cut_folder)
+  else:
+    print('warn: The time cut folder {} already exists'.format(time_cut_folder))
+  for f in frames[0:nbr_frames]:
+    src = shared.get_folder() + '/' + f
+    dest = time_cut_folder + '/' + f
+    print('moving from {} to {}'.format(src, dest))
+    os.rename(src, dest)
+  process_video(time_cut_folder, True, False, shared.get_sample_res(), shared.get_render_res())

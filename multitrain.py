@@ -1,12 +1,8 @@
-import configparser
 import datetime
-import ftplib
 import io
 import math
 import os.path
-import shutil
 import subprocess
-import threading
 import traceback
 from multiprocessing import Pool
 from multiprocessing.managers import BaseManager
@@ -16,58 +12,16 @@ from os.path import isfile, join
 import pandas as pd
 from PIL import Image
 
-
-class ThreadsSharedState:
-  def __init__(self):
-    self.sample_folder = None
-    self.job_name = None
-    self.nbr_of_frames = None
-    self.current_cut = None
-    self.sample_res = None
-    self.render_res = None
-
-  def get_folder(self):
-    return self.sample_folder
-
-  def set_folder(self, folder):
-    self.sample_folder = folder
-
-  def get_job_name(self):
-    return self.job_name
-
-  def set_job_name(self, job_name):
-    self.job_name = job_name
-
-  def get_nbr_of_frames(self):
-    return self.nbr_of_frames
-
-  def set_nbr_of_frames(self, nbr_frames):
-    self.nbr_of_frames = nbr_frames
-
-  def get_current_cut(self):
-    return self.current_cut
-
-  def increment_cut(self):
-    self.current_cut += 1
-
-  def get_sample_res(self):
-    return self.sample_res
-
-  def set_sample_res(self, res):
-    self.sample_res = res
-
-  def get_render_res(self):
-    return self.render_res
-
-  def set_render_res(self, res):
-    self.render_res = res
+import video_utils
+import images_utils
+import shared_state
 
 
 class MyManager(BaseManager):
   pass
 
 
-BaseManager.register('ThreadsSharedState', ThreadsSharedState)
+BaseManager.register('ThreadsSharedState', shared_state.ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
@@ -135,134 +89,6 @@ def build_dcgan_cmd(cmd_row):
   return dcgan_cmd
 
 
-# noinspection PyListCreation
-def render_video(images_folder):
-  ffmpeg_cmd = ['ffmpeg']
-  ffmpeg_cmd.append('-framerate')
-  ffmpeg_cmd.append('30')
-  ffmpeg_cmd.append('-f')
-  ffmpeg_cmd.append('image2')
-  ffmpeg_cmd.append('-i')
-  ffmpeg_cmd.append(images_folder + '/%*.png')
-  ffmpeg_cmd.append('-c:v')
-  ffmpeg_cmd.append('libx264')
-  ffmpeg_cmd.append('-profile:v')
-  ffmpeg_cmd.append('high')
-  ffmpeg_cmd.append('-crf')
-  ffmpeg_cmd.append('17')
-  ffmpeg_cmd.append('-pix_fmt')
-  ffmpeg_cmd.append('yuv420p')
-  ffmpeg_cmd.append(images_folder + '.mp4')
-  subprocess.run(ffmpeg_cmd)
-
-
-# noinspection PyShadowingNames
-def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
-  """ Render to video, upload to ftp """
-
-  if sample_res is None or render_res is None or sample_res == render_res:
-    render_video(images_folder)
-  else:
-    box_idx = 1
-    for box in get_boxes(sample_res, render_res):
-      box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
-      print('Box folder: {}'.format(box_folder_name))
-      if not os.path.exists(box_folder_name):
-        os.makedirs(box_folder_name)
-      else:
-        print('Error: The time cut folder {} already exists'.format(box_folder_name))
-      frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
-      frames.sort()
-      for f in frames:
-        src = images_folder + '/' + f
-        dest = box_folder_name + '/' + f
-        print('extracting {} with {} to {}'.format(src, box, dest))
-        region = Image.open(src).crop(box)
-        region.save(dest)
-      render_video(box_folder_name)
-      box_idx = +1
-
-  # TODO: move to a function
-  if upload_to_ftp:
-    try:
-      config = configparser.ConfigParser()
-      config.read('ftp.ini')
-      session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-      file = open(images_folder + '.mp4', 'rb')
-      session.storbinary('STOR ' + images_folder + '.mp4', file)
-      file.close()
-      session.quit()
-    except Exception as exception:
-      print('error during FTP transfer -> {}'.format(exception))
-
-  if delete_images:
-    shutil.rmtree(images_folder)
-
-
-def scheduled_job(shared: ThreadsSharedState):
-  print()
-  print('------ periodic render ------')
-  print('sample folder: {}'.format(shared.get_folder()))
-  print('current time cut: {}'.format(shared.get_current_cut()))
-  print('frame threshold: {}'.format(shared.get_nbr_of_frames()))
-  print('sample resolution: {}'.format(shared.get_sample_res()))
-  print('render resolution: {}'.format(shared.get_render_res()))
-  print('')
-
-  if os.path.exists(shared.get_folder()):
-    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
-    print('{} folder size: {}'.format(shared.get_folder(), folder_size))
-    print('proceed to time cut: {}'.format(shared.get_nbr_of_frames() < folder_size))
-    if shared.get_nbr_of_frames() < folder_size:
-      create_video_cut(shared)
-      shared.increment_cut()
-  else:
-    print('folder does not exist yet')
-
-  print('----- / periodic render -----')
-  print()
-  threading.Timer(120.0, scheduled_job, args=[shared]).start()
-
-
-def create_video_cut(shared: ThreadsSharedState):
-  nbr_frames = shared.get_nbr_of_frames()
-  folder = shared.get_folder()
-  frames = [f for f in listdir(folder) if isfile(join(folder, f))]
-  frames.sort()
-  time_cut_folder = '{}_time_cut{:04d}'.format(shared.get_job_name(), shared.get_current_cut())
-  print('Time cut folder: {}'.format(time_cut_folder))
-  if not os.path.exists(time_cut_folder):
-    os.makedirs(time_cut_folder)
-  else:
-    print('warn: The time cut folder {} already exists'.format(time_cut_folder))
-  for f in frames[0:nbr_frames]:
-    src = shared.get_folder() + '/' + f
-    dest = time_cut_folder + '/' + f
-    print('moving from {} to {}'.format(src, dest))
-    os.rename(src, dest)
-  process_video(time_cut_folder, True, False, shared.get_sample_res(), shared.get_render_res())
-
-
-# noinspection PyShadowingNames
-def get_boxes(sample_res, render_res):
-  if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
-    print('Error: Resolution not divisible: {}, {}'.format(sample_res, render_res))
-    exit(1)
-
-  boxes = []
-  x_cuts = int(sample_res[0] / render_res[0])
-  y_cuts = int(sample_res[1] / render_res[1])
-  for x in range(0, x_cuts):
-    for y in range(0, y_cuts):
-      x1 = x * render_res[0]
-      y1 = y * render_res[1]
-      x2 = (x + 1) * render_res[0]
-      y2 = (y + 1) * render_res[1]
-      boxes.append([x1, y1, x2, y2])
-
-  return boxes
-
-
 # defining constants
 fps = 30
 samples_prefix = 'samples_'
@@ -314,7 +140,7 @@ shared_state = None
 if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
   shared_state = manager.ThreadsSharedState()
-  pool.apply(scheduled_job, args=[shared_state])
+  pool.apply(video_utils.scheduled_job, args=[shared_state])
 
 # run the jobs
 for index, row in data.iterrows():
@@ -352,7 +178,7 @@ for index, row in data.iterrows():
     if row['render_res']:
       render_res = tuple([int(x) for x in row['render_res'].split("x")])
       print('render resolution: {}'.format(render_res))
-      print('boxes: {}'.format(get_boxes(sample_res, render_res)))
+      print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
       if auto_periodic_renders:
         shared_state.set_sample_res((sample_width, sample_height))
         shared_state.set_render_res(render_res)
@@ -370,7 +196,7 @@ for index, row in data.iterrows():
       sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
-      pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+      pool.apply_async(video_utils.process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())
