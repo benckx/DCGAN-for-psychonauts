@@ -19,10 +19,10 @@ from PIL import Image
 
 class ThreadsSharedState:
   def __init__(self):
-    self.sample_folder = ""
-    self.job_name = ""
-    self.nbr_of_frames = 0
-    self.current_cut = 1
+    self.sample_folder = None
+    self.job_name = None
+    self.nbr_of_frames = None
+    self.current_cut = None
     self.sample_res = None
     self.render_res = None
 
@@ -167,7 +167,6 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
     for box in get_boxes(sample_res, render_res):
       box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
       print('Box folder: {}'.format(box_folder_name))
-      os.makedirs(box_folder_name)
       if not os.path.exists(box_folder_name):
         os.makedirs(box_folder_name)
       else:
@@ -183,6 +182,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       render_video(box_folder_name)
       box_idx = +1
 
+  # TODO: move to a function
   if upload_to_ftp:
     try:
       config = configparser.ConfigParser()
@@ -204,7 +204,7 @@ def scheduled_job(shared: ThreadsSharedState):
   print('------ periodic render ------')
   print('sample folder: {}'.format(shared.get_folder()))
   print('current time cut: {}'.format(shared.get_current_cut()))
-  print('nbr_of_frames_to_process: {}'.format(shared.get_nbr_of_frames()))
+  print('frame threshold: {}'.format(shared.get_nbr_of_frames()))
   print('sample resolution: {}'.format(shared.get_sample_res()))
   print('render resolution: {}'.format(shared.get_render_res()))
   print('')
@@ -212,7 +212,7 @@ def scheduled_job(shared: ThreadsSharedState):
   if os.path.exists(shared.get_folder()):
     folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
     print('{} folder size: {}'.format(shared.get_folder(), folder_size))
-    print('we do: {}'.format(shared.get_nbr_of_frames() < folder_size))
+    print('proceed to time cut: {}'.format(shared.get_nbr_of_frames() < folder_size))
     if shared.get_nbr_of_frames() < folder_size:
       create_video_cut(shared)
       shared.increment_cut()
@@ -234,7 +234,7 @@ def create_video_cut(shared: ThreadsSharedState):
   if not os.path.exists(time_cut_folder):
     os.makedirs(time_cut_folder)
   else:
-    print('Error: The time cut folder {} already exists'.format(time_cut_folder))
+    print('warn: The time cut folder {} already exists'.format(time_cut_folder))
   for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
     dest = time_cut_folder + '/' + f
@@ -328,6 +328,7 @@ for index, row in data.iterrows():
     input_height = rgb_im.size[1]
     sample_width = row['grid_width'] * input_width
     sample_height = row['grid_height'] * input_height
+
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
     nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
