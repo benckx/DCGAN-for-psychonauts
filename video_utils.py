@@ -44,20 +44,17 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
     for box in images_utils.get_boxes(sample_res, render_res):
       box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
       print('Box folder: {}'.format(box_folder_name))
-      if not os.path.exists(box_folder_name):
-        os.makedirs(box_folder_name)
-      else:
-        print('Error: The box folder {} already exists'.format(box_folder_name))
-      frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
-      frames.sort()
-      for f in frames:
+      os.makedirs(box_folder_name)
+      original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
+      original_frames.sort()
+      for f in original_frames:
         src = images_folder + '/' + f
         dest = box_folder_name + '/' + f
-        print('extracting {} with {} to {}'.format(src, box, dest))
+        print('Extracting {} to {} with {}'.format(src, dest, box))
         region = Image.open(src).crop(box)
         region.save(dest)
       render_video(box_folder_name)
-      box_idx = +1
+      box_idx += 1
 
   if upload_to_ftp:
     upload_via_ftp(images_folder + '.mp4')
@@ -111,10 +108,7 @@ def create_video_cut(shared: shared_state.ThreadsSharedState):
   frames.sort()
   time_cut_folder = '{}_time_cut{:04d}'.format(shared.get_job_name(), shared.get_current_cut())
   print('Time cut folder: {}'.format(time_cut_folder))
-  if not os.path.exists(time_cut_folder):
-    os.makedirs(time_cut_folder)
-  else:
-    print('warn: The time cut folder {} already exists'.format(time_cut_folder))
+  os.makedirs(time_cut_folder)
   for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
     dest = time_cut_folder + '/' + f

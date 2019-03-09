@@ -3,7 +3,7 @@ class ThreadsSharedState:
     self.sample_folder = None
     self.job_name = None
     self.frames_threshold = None
-    self.current_cut = None
+    self.current_cut = 1
     self.sample_res = None
     self.render_res = None
 
