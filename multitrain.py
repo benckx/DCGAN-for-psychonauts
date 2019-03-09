@@ -16,6 +16,8 @@ from os.path import isfile, join
 import pandas as pd
 from PIL import Image
 
+from Pillow import Image as ImagePillow
+
 
 class MySharedClass:
   def __init__(self):
@@ -142,10 +144,15 @@ def render_video(name, images_folder):
   subprocess.run(ffmpeg_cmd)
 
 
-def process_video(video_name, images_folder, upload_to_ftp, delete_images):
+# noinspection PyShadowingNames
+def process_video(video_name, images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
   """ Render to video, upload to ftp """
 
-  render_video(video_name, images_folder)
+  if sample_res is None or render_res is None or sample_res == render_res:
+    render_video(video_name, images_folder)
+  else:
+    # TODO: cuts
+    render_video(video_name, images_folder)
 
   if upload_to_ftp:
     try:
@@ -198,6 +205,15 @@ def create_video_cut(shared: MySharedClass):
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
   process_video(video_name, video_name, True, False)
+
+
+def get_views(sample_res, render_res):
+  if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
+    print('resolution issues: {}, {}'.format(sample_res, render_res))
+    exit(1)
+  x_cuts = int(sample_res[0] / render_res[0])
+  y_cuts = int(sample_res[1] / render_res[1])
+  print("cuts: {}, {}".format(x_cuts, y_cuts))
 
 
 fps = 30
@@ -273,12 +289,16 @@ for index, row in data.iterrows():
       print('nbr of frames in periodic renders: {}'.format(inst.get_nbr_of_frames()))
       print('sample folder: {}'.format(inst.get_folder()))
 
-    print('sample resolution: {}x{}'.format(sample_width, sample_height))
     print('dataset size: {}'.format(dataset_size))
     print('total nbr. of frames: {}'.format(nbr_of_frames))
     print('length of final video: {} min.'.format((nbr_of_frames / fps) / 60))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
+    print('sample resolution: {}x{}'.format(sample_width, sample_height))
+    if row['render_res']:
+      render_res = [int(x) for x in row['render_res'].split("x")]
+      print('render resolution: {}'.format(render_res))
+      print('views: {}'.format(get_views((sample_width, sample_height), render_res)))
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
