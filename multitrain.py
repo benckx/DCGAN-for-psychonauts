@@ -172,7 +172,7 @@ def process_video(video_name, images_folder, upload_to_ftp, delete_images, sampl
       for f in frames:
         src = images_folder + '/' + f
         dest = box_folder_name + '/' + f
-        print('cutting {} to {}'.format(src, dest))
+        print('extracting {} with {} to {}'.format(src, box, dest))
         region = Image.open(src).crop(box)
         region.save(dest)
       render_video(box_folder_name, box_folder_name)
@@ -198,7 +198,7 @@ def scheduled_job(shared: MySharedClass):
   print()
   print('------ periodic render ------')
   print('sample folder: {}'.format(shared.get_folder()))
-  print('current cut: {}'.format(shared.get_current_cut()))
+  print('current time cut: {}'.format(shared.get_current_cut()))
   print('nbr_of_frames_to_process: {}'.format(shared.get_nbr_of_frames()))
   print('sample resolution: {}'.format(shared.get_sample_res()))
   print('render resolution: {}'.format(shared.get_render_res()))
@@ -224,7 +224,7 @@ def create_video_cut(shared: MySharedClass):
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
   frames.sort()
-  video_name = '{}_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
+  video_name = '{}_timecut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
   os.makedirs(video_name)
   for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
@@ -234,6 +234,7 @@ def create_video_cut(shared: MySharedClass):
   process_video(video_name, video_name, True, False, shared.get_sample_res(), shared.get_render_res())
 
 
+# noinspection PyShadowingNames
 def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('resolution issues: {}, {}'.format(sample_res, render_res))
