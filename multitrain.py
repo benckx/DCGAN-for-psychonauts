@@ -17,7 +17,7 @@ import pandas as pd
 from PIL import Image
 
 
-class MySharedClass:
+class ThreadsSharedState:
   def __init__(self):
     self.sample_folder = ""
     self.job_name = ""
@@ -67,7 +67,7 @@ class MyManager(BaseManager):
   pass
 
 
-BaseManager.register('MySharedClass', MySharedClass)
+BaseManager.register('ThreadsSharedState', ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
@@ -163,10 +163,15 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(images_folder)
   else:
-    box_idx = 0
+    box_idx = 1
     for box in get_boxes(sample_res, render_res):
-      box_folder_name = '{}_box{:03d}'.format(images_folder, box_idx)
+      box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
+      print('Box folder: {}'.format(box_folder_name))
       os.makedirs(box_folder_name)
+      if not os.path.exists(box_folder_name):
+        os.makedirs(box_folder_name)
+      else:
+        print('Error: The time cut folder {} already exists'.format(box_folder_name))
       frames = [f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))]
       frames.sort()
       for f in frames:
@@ -194,7 +199,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
     shutil.rmtree(images_folder)
 
 
-def scheduled_job(shared: MySharedClass):
+def scheduled_job(shared: ThreadsSharedState):
   print()
   print('------ periodic render ------')
   print('sample folder: {}'.format(shared.get_folder()))
@@ -219,13 +224,17 @@ def scheduled_job(shared: MySharedClass):
   threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 
-def create_video_cut(shared: MySharedClass):
+def create_video_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_nbr_of_frames()
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
   frames.sort()
-  time_cut_folder = '{}_time_cut{:02d}'.format(shared.get_job_name(), shared.get_current_cut())
-  os.makedirs(time_cut_folder)
+  time_cut_folder = '{}_time_cut{:04d}'.format(shared.get_job_name(), shared.get_current_cut())
+  print('Time cut folder: {}'.format(time_cut_folder))
+  if not os.path.exists(time_cut_folder):
+    os.makedirs(time_cut_folder)
+  else:
+    print('Error: The time cut folder {} already exists'.format(time_cut_folder))
   for f in frames[0:nbr_frames]:
     src = shared.get_folder() + '/' + f
     dest = time_cut_folder + '/' + f
@@ -237,7 +246,7 @@ def create_video_cut(shared: MySharedClass):
 # noinspection PyShadowingNames
 def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
-    print('resolution issues: {}, {}'.format(sample_res, render_res))
+    print('Error: Resolution not divisible: {}, {}'.format(sample_res, render_res))
     exit(1)
 
   boxes = []
@@ -301,10 +310,11 @@ for index, row in data.iterrows():
     auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
 
 # launch schedule job if needed
-inst = None
+shared_state = None
 if auto_periodic_renders:
-  inst = manager.MySharedClass()
-  pool.apply(scheduled_job, args=[inst])
+  # noinspection PyUnresolvedReferences
+  shared_state = manager.ThreadsSharedState()
+  pool.apply(scheduled_job, args=[shared_state])
 
 # run the jobs
 for index, row in data.iterrows():
@@ -327,15 +337,14 @@ for index, row in data.iterrows():
 
     print('')
     if auto_periodic_renders:
-      inst.set_folder(samples_prefix + row['name'])
-      inst.set_job_name(row['name'])
-      inst.set_nbr_of_frames(row['auto_render_period'] * fps)
-      print('nbr of frames in periodic renders: {}'.format(inst.get_nbr_of_frames()))
-      print('sample folder: {}'.format(inst.get_folder()))
+      shared_state.set_folder(samples_prefix + row['name'])
+      shared_state.set_job_name(row['name'])
+      shared_state.set_nbr_of_frames(row['auto_render_period'] * fps)
+      print('nbr of frames in periodic renders: {}'.format(shared_state.get_nbr_of_frames()))
+      print('sample folder: {}'.format(shared_state.get_folder()))
 
     print('dataset size: {}'.format(dataset_size))
-    print('video length: {} frames --> {}'.format(nbr_of_frames, video_length_in_min))
-    print('length of final video: {} min.'.format((nbr_of_frames / fps) / 60))
+    print('video length: {} frames --> {:0.2f} min.'.format(nbr_of_frames, video_length_in_min))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
@@ -344,8 +353,8 @@ for index, row in data.iterrows():
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(get_boxes(sample_res, render_res)))
       if auto_periodic_renders:
-        inst.set_sample_res((sample_width, sample_height))
-        inst.set_render_res(render_res)
+        shared_state.set_sample_res((sample_width, sample_height))
+        shared_state.set_render_res(render_res)
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
