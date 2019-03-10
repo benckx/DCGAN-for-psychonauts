@@ -20,7 +20,7 @@ class DCGAN(object):
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
-               activation_g="relu", activation_d="lrelu", nbr_g_updates=2):
+               activation_g="relu", activation_d="lrelu", nbr_g_updates=2, nbr_d_updates=1):
     """
 
     Args:
@@ -76,6 +76,7 @@ class DCGAN(object):
     self.activation_d = activation_d
 
     self.nbr_g_updates = nbr_g_updates
+    self.nbr_d_updates = nbr_d_updates
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
     imread_img = imread(self.data[0])
@@ -149,15 +150,17 @@ class DCGAN(object):
     print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
     print('self.activation_g: {}'.format(self.activation_g))
     print('self.activation_d: {}'.format(self.activation_d))
-    print("config.learning_rate: {}".format(config.learning_rate))
-    print("config.beta1: {}".format(config.beta1))
+    print("config.learning_rate_g: {}".format(config.learning_rate_g))
+    print("config.beta1_g: {}".format(config.beta1_g))
+    print("config.learning_rate_d: {}".format(config.learning_rate_d))
+    print("config.beta1_d: {}".format(config.beta1_d))
     print()
 
-    learning_rate_g = config.learning_rate
-    beta1_g = config.beta1
+    learning_rate_g = config.learning_rate_g
+    beta1_g = config.beta1_g
 
-    learning_rate_d = config.learning_rate
-    beta1_d = config.beta1
+    learning_rate_d = config.learning_rate_d
+    beta1_d = config.beta1_d
 
     d_optim = tf.train.AdamOptimizer(learning_rate_d, beta1=beta1_d).minimize(self.d_loss, var_list=self.d_vars)
     g_optim = tf.train.AdamOptimizer(learning_rate_g, beta1=beta1_g).minimize(self.g_loss, var_list=self.g_vars)
@@ -219,8 +222,9 @@ class DCGAN(object):
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
         # Update D network
-        _, summary_str = self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images, self.z: batch_z})
-        self.writer.add_summary(summary_str, counter)
+        for x in range(0, self.nbr_d_updates):
+          _, summary_str = self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images, self.z: batch_z})
+          self.writer.add_summary(summary_str, counter)
 
         # Update G network
         # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)

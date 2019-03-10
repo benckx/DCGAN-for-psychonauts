@@ -13,8 +13,10 @@ from utils import show_all_variables
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
-flags.DEFINE_float("learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
-flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
+flags.DEFINE_float("learning_rate_g", 0.0002, "Learning rate of for adam (G) [0.0002]")
+flags.DEFINE_float("beta1_g", 0.5, "Momentum term of adam (G) [0.5]")
+flags.DEFINE_float("learning_rate_d", 0.0002, "Learning rate of for adam (D) [0.0002]")
+flags.DEFINE_float("beta1_d", 0.5, "Momentum term of adam (D) [0.5]")
 flags.DEFINE_float("train_size", np.inf, "The size of train images [np.inf]")
 flags.DEFINE_integer("batch_size", None, "The size of batch images [64]")
 flags.DEFINE_integer("grid_height", 8, "Grid Height")
@@ -42,7 +44,8 @@ flags.DEFINE_boolean("batch_norm_g", False, "Batch normalization in Generator")
 flags.DEFINE_boolean("batch_norm_d", False, "Batch normalization in Discriminator")
 flags.DEFINE_string("activation_g", "relu", "Activation function in Generator")
 flags.DEFINE_string("activation_d", "lrelu", "Activation function in Discriminator")
-flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimizer")
+flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimizer (per iteration)")
+flags.DEFINE_integer("nbr_d_updates", 1, "Number of update of Discriminator optimizer (per iteration)")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -74,8 +77,6 @@ if (input_height is None and input_width is None) or (output_height is None and 
 def main(_):
   # pp.pprint(flags.FLAGS.__flags)
   print()
-  print("FLAGS.learning_rate: {}".format(FLAGS.learning_rate))
-  print("FLAGS.beta1: {}".format(FLAGS.beta1))
   print("FLAGS.nbr_of_layers_g: {}".format(FLAGS.nbr_of_layers_g))
   print("FLAGS.nbr_of_layers_d: {}".format(FLAGS.nbr_of_layers_d))
   print("FLAGS.dataset: {}".format(FLAGS.dataset))
@@ -85,6 +86,7 @@ def main(_):
   print("FLAGS.activation_g: {}".format(FLAGS.activation_g))
   print("FLAGS.activation_d: {}".format(FLAGS.activation_d))
   print("FLAGS.nbr_g_updates: {}".format(FLAGS.nbr_g_updates))
+  print("FLAGS.nbr_d_updates: {}".format(FLAGS.nbr_d_updates))
   print()
 
   if FLAGS.input_width is None:
@@ -130,7 +132,8 @@ def main(_):
       batch_norm_d=FLAGS.batch_norm_d,
       activation_g=FLAGS.activation_g,
       activation_d=FLAGS.activation_d,
-      nbr_g_updates=FLAGS.nbr_g_updates)
+      nbr_g_updates=FLAGS.nbr_g_updates,
+      nbr_d_updates=FLAGS.nbr_d_updates)
 
     show_all_variables()
 

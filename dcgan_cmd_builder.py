@@ -41,17 +41,29 @@ def build_dcgan_cmd(cmd_row):
     dcgan_cmd.append("--activation_d")
     dcgan_cmd.append(cmd_row['activation_d'])
 
-  if cmd_row['learning_rate'] and not math.isnan(cmd_row['learning_rate']):
-    dcgan_cmd.append("--learning_rate")
-    dcgan_cmd.append(str(cmd_row['learning_rate']))
+  if cmd_row['learning_rate_g'] and not math.isnan(cmd_row['learning_rate_g']):
+    dcgan_cmd.append("--learning_rate_g")
+    dcgan_cmd.append(str(cmd_row['learning_rate_g']))
 
-  if cmd_row['beta1'] and not math.isnan(cmd_row['beta1']):
-    dcgan_cmd.append("--beta1")
-    dcgan_cmd.append(str(cmd_row['beta1']))
+  if cmd_row['beta1_g'] and not math.isnan(cmd_row['beta1_g']):
+    dcgan_cmd.append("--beta1_g")
+    dcgan_cmd.append(str(cmd_row['beta1_g']))
+
+  if cmd_row['learning_rate_d'] and not math.isnan(cmd_row['learning_rate_d']):
+    dcgan_cmd.append("--learning_rate_d")
+    dcgan_cmd.append(str(cmd_row['learning_rate_d']))
+
+  if cmd_row['beta1_d'] and not math.isnan(cmd_row['beta1_d']):
+    dcgan_cmd.append("--beta1_d")
+    dcgan_cmd.append(str(cmd_row['beta1_d']))
 
   if cmd_row['nbr_g_updates'] and not math.isnan(cmd_row['nbr_g_updates']):
     dcgan_cmd.append('--nbr_g_updates')
     dcgan_cmd.append(str(int(cmd_row['nbr_g_updates'])))
+
+  if cmd_row['nbr_d_updates'] and not math.isnan(cmd_row['nbr_d_updates']):
+    dcgan_cmd.append('--nbr_d_updates')
+    dcgan_cmd.append(str(int(cmd_row['nbr_d_updates'])))
 
   if cmd_row['use_checkpoints']:
     dcgan_cmd.append("--use_checkpoints")
