@@ -8,6 +8,7 @@ import pprint
 import random
 from time import gmtime, strftime
 
+import cv2
 import numpy as np
 import scipy.misc
 import tensorflow as tf
@@ -32,11 +33,17 @@ def get_image(image_path, input_height, input_width,
 def save_images(images, size, image_path):
   return imsave(inverse_transform(images), size, image_path)
 
-def imread(path, grayscale = False):
-  if (grayscale):
-    return scipy.misc.imread(path, flatten = True).astype(np.float)
+
+def imread(path, grayscale=False):
+  if grayscale:
+    return scipy.misc.imread(path, flatten=True).astype(np.float)
   else:
-    return scipy.misc.imread(path).astype(np.float)
+    # Reference: https://github.com/carpedm20/DCGAN-tensorflow/issues/162#issuecomment-315519747
+    img_bgr = cv2.imread(path)
+    # Reference: https://stackoverflow.com/a/15074748/
+    img_rgb = img_bgr[..., ::-1]
+    return img_rgb.astype(np.float)
+
 
 def merge_images(images, size):
   return inverse_transform(images)

@@ -127,12 +127,13 @@ for index, row in data.iterrows():
     begin = datetime.datetime.now().replace(microsecond=0)
     job_cmd = build_dcgan_cmd(row)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
-    subprocess.run(job_cmd)
+    process = subprocess.run(job_cmd)
+    print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
     print('duration of the job: {}'.format(duration))
 
     # process video asynchronously
-    if not auto_periodic_renders and row['render_video']:
+    if not auto_periodic_renders and row['render_video'] and process.returncode == 0:
       sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']

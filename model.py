@@ -79,6 +79,7 @@ class DCGAN(object):
     self.nbr_d_updates = nbr_d_updates
 
     self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
+    np.random.shuffle(self.data)
     imread_img = imread(self.data[0])
     if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
       self.c_dim = imread(self.data[0]).shape[-1]
@@ -148,6 +149,7 @@ class DCGAN(object):
   def train(self, config):
     print()
     print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
+    print('self.nbr_d_updates: {}'.format(self.nbr_d_updates))
     print('self.activation_g: {}'.format(self.activation_g))
     print('self.activation_d: {}'.format(self.activation_d))
     print("config.learning_rate_g: {}".format(config.learning_rate_g))
@@ -196,6 +198,7 @@ class DCGAN(object):
 
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
+      # np.random.shuffle(self.data)
       batch_idxs = min(len(self.data), config.train_size) // self.batch_size
 
       for idx in xrange(0, batch_idxs):
