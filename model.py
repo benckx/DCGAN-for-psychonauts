@@ -7,6 +7,7 @@ from glob import glob
 from ops import *
 from utils import *
 
+
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
 
@@ -270,24 +271,18 @@ class DCGAN(object):
         output_dim = self.df_dim * (2 ** i)
         layer_name = 'd_h' + str(i) + '_conv'
         conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
+
         if self.batch_norm_d:
-          if self.activation_d == "relu":
-            previous_layer = tf.nn.relu(batch_norm(name='d_bn' + str(i))(conv_layer))
-          elif self.activation_d == "lrelu":
-            previous_layer = lrelu(batch_norm(name='d_bn' + str(i))(conv_layer))
-          elif self.activation_d == "elu":
-            previous_layer = tf.nn.elu(batch_norm(name='d_bn' + str(i))(conv_layer))
-          else:
-            exit(1)
+          conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
+
+        if self.activation_d == "relu":
+          previous_layer = tf.nn.relu(conv_layer)
+        elif self.activation_d == "lrelu":
+          previous_layer = lrelu(conv_layer)
+        elif self.activation_d == "elu":
+          previous_layer = tf.nn.elu(conv_layer)
         else:
-          if self.activation_d == "relu":
-            previous_layer = tf.nn.relu(conv_layer)
-          elif self.activation_d == "lrelu":
-            previous_layer = lrelu(conv_layer)
-          elif self.activation_d == "elu":
-            previous_layer = tf.nn.elu(conv_layer)
-          else:
-            exit(1)
+          exit(1)
 
       # last layer
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
@@ -330,24 +325,18 @@ class DCGAN(object):
         width = widths[nbr_layers - 1 - i]
         layer_name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
+
         if self.batch_norm_g:
-          if self.activation_g == "relu":
-            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer))
-          elif self.activation_g == "lrelu":
-            prev_layer = lrelu(batch_norm(name='g_bn' + str(i))(prev_layer))
-          elif self.activation_g == "elu":
-            prev_layer = tf.nn.elu(batch_norm(name='g_bn' + str(i))(prev_layer))
-          else:
-            exit(1)
+          prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
+
+        if self.activation_g == "relu":
+          prev_layer = tf.nn.relu(prev_layer)
+        elif self.activation_g == "lrelu":
+          prev_layer = lrelu(prev_layer)
+        elif self.activation_g == "elu":
+          prev_layer = tf.nn.elu(prev_layer)
         else:
-          if self.activation_g == "relu":
-            prev_layer = tf.nn.relu(prev_layer)
-          elif self.activation_g == "lrelu":
-            prev_layer = lrelu(prev_layer)
-          elif self.activation_g == "elu":
-            prev_layer = tf.nn.elu(prev_layer)
-          else:
-            exit(1)
+          exit(1)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
@@ -392,24 +381,18 @@ class DCGAN(object):
         w = widths[nbr_layers - i - 1]
         layer_name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
+
         if self.batch_norm_g:
-          if self.activation_g == "relu":
-            prev_layer = tf.nn.relu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
-          elif self.activation_g == "lrelu":
-            prev_layer = lrelu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
-          elif self.activation_g == "elu":
-            prev_layer = tf.nn.elu(batch_norm(name='g_bn' + str(i))(prev_layer, train=False))
-          else:
-            exit(1)
+          prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
+
+        if self.activation_g == "relu":
+          prev_layer = tf.nn.relu(prev_layer)
+        elif self.activation_g == "lrelu":
+          prev_layer = lrelu(prev_layer)
+        elif self.activation_g == "elu":
+          prev_layer = tf.nn.elu(prev_layer)
         else:
-          if self.activation_g == "relu":
-            prev_layer = tf.nn.relu(prev_layer)
-          elif self.activation_g == "lrelu":
-            prev_layer = lrelu(prev_layer)
-          elif self.activation_g == "elu":
-            prev_layer = tf.nn.elu(prev_layer)
-          else:
-            exit(1)
+          exit(1)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
