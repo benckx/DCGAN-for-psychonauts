@@ -1,6 +1,5 @@
 import datetime
 import io
-import math
 import os.path
 import subprocess
 import traceback
@@ -12,9 +11,10 @@ from os.path import isfile, join
 import pandas as pd
 from PIL import Image
 
-import video_utils
 import images_utils
 import shared_state
+import video_utils
+from dcgan_cmd_builder import *
 
 
 class MyManager(BaseManager):
@@ -25,70 +25,6 @@ BaseManager.register('ThreadsSharedState', shared_state.ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
-
-# noinspection PyListCreation
-def build_dcgan_cmd(cmd_row):
-  dcgan_cmd = ["python3", "main.py"]
-
-  dcgan_cmd.append("--epoch")
-  dcgan_cmd.append(str(cmd_row['epoch']))
-
-  dcgan_cmd.append("--name")
-  dcgan_cmd.append(cmd_row['name'])
-
-  dcgan_cmd.append("--dataset")
-  dcgan_cmd.append(cmd_row['dataset'])
-
-  dcgan_cmd.append("--grid_width")
-  dcgan_cmd.append(str(cmd_row['grid_width']))
-  dcgan_cmd.append("--grid_height")
-  dcgan_cmd.append(str(cmd_row['grid_height']))
-
-  if cmd_row['nbr_of_layers_g']:
-    dcgan_cmd.append("--nbr_of_layers_g")
-    dcgan_cmd.append(str(cmd_row['nbr_of_layers_g']))
-
-  if cmd_row['nbr_of_layers_d']:
-    dcgan_cmd.append("--nbr_of_layers_d")
-    dcgan_cmd.append(str(cmd_row['nbr_of_layers_d']))
-
-  if cmd_row['batch_norm_g'] == '' or cmd_row['batch_norm_g']:
-    dcgan_cmd.append("--batch_norm_g")
-
-  if cmd_row['batch_norm_g'] == '' or cmd_row['batch_norm_d']:
-    dcgan_cmd.append("--batch_norm_d")
-
-  if cmd_row['activation_g'] and str(cmd_row['activation_g']) != "nan":
-    dcgan_cmd.append("--activation_g")
-    dcgan_cmd.append(cmd_row['activation_g'])
-
-  if cmd_row['activation_d'] and str(cmd_row['activation_d']) != "nan":
-    dcgan_cmd.append("--activation_d")
-    dcgan_cmd.append(cmd_row['activation_d'])
-
-  if cmd_row['learning_rate'] and not math.isnan(cmd_row['learning_rate']):
-    dcgan_cmd.append("--learning_rate")
-    dcgan_cmd.append(str(cmd_row['learning_rate']))
-
-  if cmd_row['beta1'] and not math.isnan(cmd_row['beta1']):
-    dcgan_cmd.append("--beta1")
-    dcgan_cmd.append(str(cmd_row['beta1']))
-
-  if cmd_row['nbr_g_updates'] and not math.isnan(cmd_row['nbr_g_updates']):
-    dcgan_cmd.append('--nbr_g_updates')
-    dcgan_cmd.append(str(int(cmd_row['nbr_g_updates'])))
-
-  if cmd_row['use_checkpoints']:
-    dcgan_cmd.append("--use_checkpoints")
-
-  dcgan_cmd.append('--sample_rate')
-  dcgan_cmd.append('1')
-
-  dcgan_cmd.append('--train')
-
-  return dcgan_cmd
-
-
 # defining constants
 fps = 30
 samples_prefix = 'samples_'
@@ -98,9 +34,7 @@ csv_files.sort()
 
 pool = Pool(processes=10)
 
-# determine if we do automatic periodic renders
-auto_periodic_renders = False
-
+# validate csv config file
 if len(csv_files) == 0:
   print('Error: no csv file')
   exit(1)
@@ -130,6 +64,9 @@ for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
     print('Error: dataset ' + row['dataset'] + ' not found!')
     exit(1)
+
+# determine if we do automatic periodic renders
+auto_periodic_renders = False
 
 for index, row in data.iterrows():
   if not auto_periodic_renders:
@@ -167,6 +104,8 @@ for index, row in data.iterrows():
       shared_state.set_folder(samples_prefix + row['name'])
       shared_state.set_job_name(row['name'])
       shared_state.set_frames_threshold(row['auto_render_period'] * fps)
+      shared_state.set_upload_to_ftp(row['upload_to_ftp'])
+      shared_state.set_delete_at_the_end(row['delete_images_after_render'])
       print('frames threshold: {}'.format(shared_state.get_frames_threshold()))
       print('sample folder: {}'.format(shared_state.get_folder()))
 

@@ -35,7 +35,7 @@ def render_video(images_folder):
 
 
 def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
-  """ Render to video, upload to ftp """
+  """ Crop images, render to video, upload to ftp """
 
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(images_folder)
@@ -123,7 +123,8 @@ def create_video_time_cut(shared: shared_state.ThreadsSharedState):
     print('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
 
-  upload_to_ftp = shared_state.is_upload_to_ftp()
-  sample_res = shared_state.get_sample_res()
-  render_res = shared_state.get_render_res()
-  process_video(time_cut_folder, upload_to_ftp, True, sample_res, render_res)
+  upload_to_ftp = shared.is_upload_to_ftp()
+  delete_at_the_end = shared.is_delete_at_the_end()
+  sample_res = shared.get_sample_res()
+  render_res = shared.get_render_res()
+  process_video(time_cut_folder, upload_to_ftp, delete_at_the_end, sample_res, render_res)

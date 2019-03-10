@@ -1,5 +1,5 @@
 import math
-import numpy as np 
+import numpy as np
 import tensorflow as tf
 
 from tensorflow.python.framework import ops
@@ -26,6 +26,7 @@ else:
   def concat(tensors, axis, *args, **kwargs):
     return tf.concat(tensors, axis, *args, **kwargs)
 
+
 # batch normalization : deals with poor initialization helps gradient flow
 class batch_norm(object):
   def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
@@ -36,12 +37,13 @@ class batch_norm(object):
 
   def __call__(self, x, train=True):
     return tf.contrib.layers.batch_norm(x,
-                      decay=self.momentum, 
+                      decay=self.momentum,
                       updates_collections=None,
                       epsilon=self.epsilon,
                       scale=True,
                       is_training=train,
                       scope=self.name)
+
 
 def conv_cond_concat(x, y):
   """Concatenate conditioning vector on feature map axis."""
@@ -50,7 +52,8 @@ def conv_cond_concat(x, y):
   return concat([
     x, y*tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])], 3)
 
-def conv2d(input_, output_dim, 
+
+def conv2d(input_, output_dim,
        k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
        name="conv2d"):
   with tf.variable_scope(name):
@@ -63,6 +66,7 @@ def conv2d(input_, output_dim,
 
     return conv
 
+
 def deconv2d(input_, output_shape,
        k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
        name="deconv2d", with_w=False):
@@ -70,7 +74,7 @@ def deconv2d(input_, output_shape,
     # filter : [height, width, output_channels, in_channels]
     w = tf.get_variable('w', [k_h, k_w, output_shape[-1], input_.get_shape()[-1]],
               initializer=tf.random_normal_initializer(stddev=stddev))
-    
+
     try:
       deconv = tf.nn.conv2d_transpose(input_, w, output_shape=output_shape,
                 strides=[1, d_h, d_w, 1])
@@ -87,9 +91,12 @@ def deconv2d(input_, output_shape,
       return deconv, w, biases
     else:
       return deconv
-     
+
+
+# FIXME: replace by tf.nn.leaky_relu?
 def lrelu(x, leak=0.2, name="lrelu"):
   return tf.maximum(x, leak*x)
+
 
 def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
   shape = input_.get_shape().as_list()

@@ -7,6 +7,7 @@ class ThreadsSharedState:
     self.sample_res = None
     self.render_res = None
     self.upload_to_ftp = False
+    self.delete_at_the_end = False
 
   def get_folder(self):
     return self.sample_folder
@@ -49,3 +50,9 @@ class ThreadsSharedState:
 
   def set_upload_to_ftp(self, upload_to_ftp):
     self.upload_to_ftp = upload_to_ftp
+
+  def is_delete_at_the_end(self):
+    return self.delete_at_the_end
+
+  def set_delete_at_the_end(self, upload_to_ftp):
+    self.delete_at_the_end = upload_to_ftp
