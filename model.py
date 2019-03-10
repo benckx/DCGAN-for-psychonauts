@@ -156,14 +156,8 @@ class DCGAN(object):
     print("config.beta1_d: {}".format(config.beta1_d))
     print()
 
-    learning_rate_g = config.learning_rate_g
-    beta1_g = config.beta1_g
-
-    learning_rate_d = config.learning_rate_d
-    beta1_d = config.beta1_d
-
-    d_optim = tf.train.AdamOptimizer(learning_rate_d, beta1=beta1_d).minimize(self.d_loss, var_list=self.d_vars)
-    g_optim = tf.train.AdamOptimizer(learning_rate_g, beta1=beta1_g).minimize(self.g_loss, var_list=self.g_vars)
+    g_optim = adam(config.learning_rate_g, config.beta1_g).minimize(self.g_loss, var_list=self.g_vars)
+    d_optim = adam(config.learning_rate_d, config.beta1_d).minimize(self.d_loss, var_list=self.d_vars)
 
     try:
       tf.global_variables_initializer().run()
@@ -431,3 +425,8 @@ class DCGAN(object):
     else:
       print(" [*] Failed to find a checkpoint")
       return False, 0
+
+
+def adam(learning_rate, beta1):
+  """ Syntactic sugar """
+  return tf.train.AdamOptimizer(learning_rate, beta1=beta1)
