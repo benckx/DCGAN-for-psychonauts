@@ -198,7 +198,7 @@ class DCGAN(object):
 
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
-      # np.random.shuffle(self.data)
+      np.random.shuffle(self.data)
       batch_idxs = min(len(self.data), config.train_size) // self.batch_size
 
       for idx in xrange(0, batch_idxs):
