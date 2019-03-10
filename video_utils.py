@@ -87,25 +87,29 @@ def upload_via_ftp(file_name):
 def scheduled_job(shared: shared_state.ThreadsSharedState):
   print()
   print('------ periodic render ------')
-  print('sample folder: {}'.format(shared.get_folder()))
-  print('current time cut: {}'.format(shared.get_current_cut()))
-  print('frame threshold: {}'.format(shared.get_frames_threshold()))
-  print('sample resolution: {}'.format(shared.get_sample_res()))
-  print('render resolution: {}'.format(shared.get_render_res()))
-  print('')
+  if shared is not None:
+    print('sample folder: {}'.format(shared.get_folder()))
+    print('current time cut: {}'.format(shared.get_current_cut()))
+    print('frame threshold: {}'.format(shared.get_frames_threshold()))
+    print('sample resolution: {}'.format(shared.get_sample_res()))
+    print('render resolution: {}'.format(shared.get_render_res()))
+    print('')
 
-  if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
-    folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
-    print('{} folder size: {}'.format(shared.get_folder(), folder_size))
-    print('proceed to time cut: {}'.format(shared.get_frames_threshold() < folder_size))
-    if shared.get_frames_threshold() < folder_size:
-      create_video_time_cut(shared)
-      shared.increment_cut()
+    if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
+      folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
+      print('{} folder size: {}'.format(shared.get_folder(), folder_size))
+      print('proceed to time cut: {}'.format(shared.get_frames_threshold() < folder_size))
+      if shared.get_frames_threshold() < folder_size:
+        create_video_time_cut(shared)
+        shared.increment_cut()
+    else:
+      print('folder does not exist yet')
   else:
-    print('folder does not exist yet')
+    print('shared state not defined yet')
 
   print('----- / periodic render -----')
   print()
+
   threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 

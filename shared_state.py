@@ -30,6 +30,9 @@ class ThreadsSharedState:
   def get_current_cut(self):
     return self.current_cut
 
+  def init_current_cut(self):
+    self.current_cut = 1
+
   def increment_cut(self):
     self.current_cut += 1
 

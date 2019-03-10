@@ -1,3 +1,6 @@
+import math
+
+
 # noinspection PyListCreation
 def build_dcgan_cmd(cmd_row):
   dcgan_cmd = ["python3", "main.py"]

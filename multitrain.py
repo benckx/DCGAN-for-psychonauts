@@ -100,7 +100,8 @@ for index, row in data.iterrows():
     video_length_in_min = ((nbr_of_frames / fps) / 60)
 
     print('')
-    if auto_periodic_renders:
+    if auto_periodic_renders and row['render_video']:
+      shared_state.init_current_cut()
       shared_state.set_folder(samples_prefix + row['name'])
       shared_state.set_job_name(row['name'])
       shared_state.set_frames_threshold(row['auto_render_period'] * fps)
