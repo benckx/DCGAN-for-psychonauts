@@ -276,14 +276,16 @@ class DCGAN(object):
         if self.batch_norm_d:
           conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
 
-        if self.activation_d == "relu":
-          previous_layer = tf.nn.relu(conv_layer)
-        elif self.activation_d == "lrelu":
-          previous_layer = lrelu(conv_layer)
-        elif self.activation_d == "elu":
-          previous_layer = tf.nn.elu(conv_layer)
-        else:
-          exit(1)
+        previous_layer = add_activation(self.activation_d, conv_layer)
+
+        # if self.activation_d == "relu":
+        #   previous_layer = tf.nn.relu(conv_layer)
+        # elif self.activation_d == "lrelu":
+        #   previous_layer = lrelu(conv_layer)
+        # elif self.activation_d == "elu":
+        #   previous_layer = tf.nn.elu(conv_layer)
+        # else:
+        #   exit(1)
 
       # last layer
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
@@ -433,3 +435,19 @@ class DCGAN(object):
 def adam(learning_rate, beta1):
   """ Syntactic sugar """
   return tf.train.AdamOptimizer(learning_rate, beta1=beta1)
+
+
+def add_activation(activation, layer):
+  if activation == "relu":
+    return tf.nn.relu(layer)
+  elif activation == "lrelu":
+    return tf.nn.leaky_relu(layer)
+  elif activation == "elu":
+    return tf.nn.elu(layer)
+  elif activation == "tanh":
+    return tf.nn.tanh(layer)
+  elif activation == "sigmoid":
+    return tf.nn.sigmoid(layer)
+  else:
+    print('Unknown activation ' + activation)
+    exit(1)
