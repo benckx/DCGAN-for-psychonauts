@@ -265,27 +265,17 @@ class DCGAN(object):
       print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
       # layer 0
-      previous_layer = lrelu(conv2d(image, self.df_dim, name='d_h0_conv'))
+      previous_layer = conv2d(image, self.df_dim, name='d_h0_conv')
+      previous_layer = add_activation(self.activation_d, previous_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
         output_dim = self.df_dim * (2 ** i)
         layer_name = 'd_h' + str(i) + '_conv'
         conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
-
         if self.batch_norm_d:
           conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
-
         previous_layer = add_activation(self.activation_d, conv_layer)
-
-        # if self.activation_d == "relu":
-        #   previous_layer = tf.nn.relu(conv_layer)
-        # elif self.activation_d == "lrelu":
-        #   previous_layer = lrelu(conv_layer)
-        # elif self.activation_d == "elu":
-        #   previous_layer = tf.nn.elu(conv_layer)
-        # else:
-        #   exit(1)
 
       # last layer
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
@@ -317,9 +307,8 @@ class DCGAN(object):
       z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
       prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
       if self.batch_norm_g:
-        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer))
-      else:
-        prev_layer = tf.nn.relu(prev_layer)
+        prev_layer = batch_norm(name='g_bn0')(prev_layer)
+      prev_layer = add_activation(self.activation_g, prev_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
@@ -328,18 +317,9 @@ class DCGAN(object):
         width = widths[nbr_layers - 1 - i]
         layer_name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
-
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
-
-        if self.activation_g == "relu":
-          prev_layer = tf.nn.relu(prev_layer)
-        elif self.activation_g == "lrelu":
-          prev_layer = lrelu(prev_layer)
-        elif self.activation_g == "elu":
-          prev_layer = tf.nn.elu(prev_layer)
-        else:
-          exit(1)
+        prev_layer = add_activation(self.activation_g, prev_layer)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
@@ -373,9 +353,9 @@ class DCGAN(object):
         [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
 
       if self.batch_norm_g:
-        prev_layer = tf.nn.relu(batch_norm(name='g_bn0')(prev_layer, train=False))
-      else:
-        prev_layer = tf.nn.relu(prev_layer)
+        prev_layer = batch_norm(name='g_bn0')(prev_layer, train=False)
+
+      prev_layer = add_activation(self.activation_g, prev_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
@@ -384,18 +364,9 @@ class DCGAN(object):
         w = widths[nbr_layers - i - 1]
         layer_name = 'g_h' + str(i)
         prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
-
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
-
-        if self.activation_g == "relu":
-          prev_layer = tf.nn.relu(prev_layer)
-        elif self.activation_g == "lrelu":
-          prev_layer = lrelu(prev_layer)
-        elif self.activation_g == "elu":
-          prev_layer = tf.nn.elu(prev_layer)
-        else:
-          exit(1)
+        prev_layer = add_activation(self.activation_g, prev_layer)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
