@@ -81,6 +81,7 @@ if auto_periodic_renders:
 
 # run the jobs
 for index, row in data.iterrows():
+  print('----------------------------------------------')
   print(str(row))
   try:
     data_path = 'data/' + row['dataset']
@@ -130,7 +131,8 @@ for index, row in data.iterrows():
     process = subprocess.run(job_cmd)
     print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
-    print('duration of the job: {}'.format(duration))
+    print('duration of the job {} -> {}'.format(row['name'], duration))
+    print('----------------------------------------------')
 
     # process video asynchronously
     if not auto_periodic_renders and row['render_video'] and process.returncode == 0:
