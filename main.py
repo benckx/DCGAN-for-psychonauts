@@ -145,7 +145,7 @@ def main(_):
 
     # Below is codes for visualization
     # OPTION = 1
-    # visualize(sess, dcgan, FLAGS, batch_size, OPTION)
+    # visualize(sess, dcgan, FLAGS, batch_size, OPTION, FLAGS.name)
 
 
 if __name__ == '__main__':

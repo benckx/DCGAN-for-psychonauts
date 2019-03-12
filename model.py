@@ -1,6 +1,5 @@
 from __future__ import division
 
-import os
 import time
 from glob import glob
 
@@ -239,7 +238,7 @@ class DCGAN(object):
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
               % (epoch, idx, batch_idxs, time.time() - start_time, errD_fake + errD_real, errG))
 
-        self.build_frame(self.nbr_d_updates + self.nbr_g_updates + 1, epoch, idx, sample_z, sample_inputs)
+        self.build_frame(self.nbr_d_updates + self.nbr_g_updates, epoch, idx, sample_z, sample_inputs)
 
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
