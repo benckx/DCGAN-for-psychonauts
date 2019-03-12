@@ -81,7 +81,7 @@ if auto_periodic_renders:
 
 # run the jobs
 for index, row in data.iterrows():
-  print('----------------------------------------------')
+  print('--------------------------------------------------------------------------------------------')
   print(str(row))
   try:
     data_path = 'data/' + row['dataset']
@@ -95,7 +95,14 @@ for index, row in data.iterrows():
 
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
-    frames_per_iteration = 1 + row['nbr_d_updates'] + row['nbr_g_updates']
+    frames_per_iteration = 1
+
+    if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
+      frames_per_iteration += int(row['nbr_g_updates'])
+
+    if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
+      frames_per_iteration += int(row['nbr_d_updates'])
+
     nbr_of_frames = frames_per_iteration * int(dataset_size / batch_size) * row['epoch']
     sample_res = (sample_width, sample_height)
     render_res = None
@@ -133,7 +140,7 @@ for index, row in data.iterrows():
     print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
     print('duration of the job {} -> {}'.format(row['name'], duration))
-    print('----------------------------------------------')
+    print('--------------------------------------------------------------------------------------------')
 
     # process video asynchronously
     if not auto_periodic_renders and row['render_video'] and process.returncode == 0:
