@@ -95,7 +95,8 @@ for index, row in data.iterrows():
 
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
-    nbr_of_frames = int(dataset_size / batch_size) * row['epoch']
+    frames_per_iteration = 1 + row['nbr_d_updates'] + row['nbr_g_updates']
+    nbr_of_frames = frames_per_iteration * int(dataset_size / batch_size) * row['epoch']
     sample_res = (sample_width, sample_height)
     render_res = None
     video_length_in_min = ((nbr_of_frames / fps) / 60)
