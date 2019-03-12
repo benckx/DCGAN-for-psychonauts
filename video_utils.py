@@ -17,7 +17,7 @@ import shared_state
 def render_video(images_folder):
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
-  ffmpeg_cmd.append('30')
+  ffmpeg_cmd.append('60')
   ffmpeg_cmd.append('-f')
   ffmpeg_cmd.append('image2')
   ffmpeg_cmd.append('-i')

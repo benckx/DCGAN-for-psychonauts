@@ -26,7 +26,7 @@ manager = BaseManager()
 manager.start()
 
 # defining constants
-fps = 30
+fps = 60
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
