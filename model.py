@@ -219,15 +219,17 @@ class DCGAN(object):
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
         # Update D network
-        for x in range(0, self.nbr_d_updates):
+        for i in range(0, self.nbr_d_updates):
           _, summary_str = self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images, self.z: batch_z})
           self.writer.add_summary(summary_str, counter)
+          self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
         # Update G network
         # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-        for x in range(0, self.nbr_g_updates):
+        for i in range(0, self.nbr_g_updates):
           _, summary_str = self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
           self.writer.add_summary(summary_str, counter)
+          self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
         errD_fake = self.d_loss_fake.eval({self.z: batch_z})
         errD_real = self.d_loss_real.eval({self.inputs: batch_images})
@@ -238,23 +240,25 @@ class DCGAN(object):
               % (epoch, idx, batch_idxs,
                  time.time() - start_time, errD_fake + errD_real, errG))
 
-        if self.sample_rate is not None and (self.sample_rate == 1 or np.mod(counter, self.sample_rate) == 1):
-          try:
-            samples, d_loss, g_loss = self.sess.run(
-              [self.sampler, self.d_loss, self.g_loss],
-              feed_dict={
-                self.z: sample_z,
-                self.inputs: sample_inputs,
-              },
-            )
-            file_name = './{}/train_{:06d}_{:06d}.png'.format(self.sample_dir, epoch, idx)
-            save_images(samples, (self.grid_height, self.grid_width), file_name)
-            print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
-          except:
-            print("one pic error!...")
+        self.build_frame(self.nbr_d_updates + self.nbr_g_updates + 1, epoch, idx, sample_z, sample_inputs)
 
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           self.save(config.checkpoint_dir, counter)
+
+  def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
+    try:
+      samples, d_loss, g_loss = self.sess.run(
+        [self.sampler, self.d_loss, self.g_loss],
+        feed_dict={
+          self.z: sample_z,
+          self.inputs: sample_inputs,
+        },
+      )
+      file_name = './{}/train_{:06d}_{:06d}_{:03d}.png'.format(self.sample_dir, epoch, idx, suffix)
+      save_images(samples, (self.grid_height, self.grid_width), file_name)
+      print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+    except Exception as e:
+      print("one pic error! --> {}".format(e))
 
   def discriminator(self, image, reuse=False):
     with tf.variable_scope("discriminator") as scope:
