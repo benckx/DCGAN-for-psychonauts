@@ -95,7 +95,7 @@ for index, row in data.iterrows():
 
     dataset_size = len(listdir(data_path))
     batch_size = row['grid_width'] * row['grid_height']
-    frames_per_iteration = 1
+    frames_per_iteration = 0
 
     if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
       frames_per_iteration += int(row['nbr_g_updates'])
