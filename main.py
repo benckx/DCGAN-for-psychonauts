@@ -10,6 +10,7 @@ from PIL import Image
 
 from model import DCGAN
 from utils import show_all_variables
+from utils import visualize
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
@@ -35,7 +36,7 @@ flags.DEFINE_integer("sample_rate", None, "If == 5, it will take a sample image 
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
-flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [100]")
+flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [0]")
 flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
 flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
 flags.DEFINE_boolean("use_checkpoints", False, "Save and load checkpoints")
@@ -144,8 +145,9 @@ def main(_):
         raise Exception("[!] Train a model first, then run test mode")
 
     # Below is codes for visualization
-    # OPTION = 1
-    # visualize(sess, dcgan, FLAGS, batch_size, OPTION, FLAGS.name)
+    if FLAGS.generate_test_images > 0:
+      OPTION = 1
+      visualize(sess, dcgan, FLAGS, batch_size, OPTION, FLAGS.name)
 
 
 if __name__ == '__main__':
