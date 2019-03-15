@@ -1,5 +1,6 @@
 from __future__ import division
 
+import datetime
 import time
 from glob import glob
 
@@ -240,8 +241,11 @@ class DCGAN(object):
 
         # self.build_frame(self.nbr_d_updates + self.nbr_g_updates, epoch, idx, sample_z, sample_inputs)
 
-        if self.use_checkpoints and np.mod(counter, 500) == 2:
+        if self.use_checkpoints and np.mod(counter, 100) == 2:
+          begin = datetime.datetime.now().replace(microsecond=0)
           self.save(config.checkpoint_dir, counter)
+          duration = datetime.datetime.now().replace(microsecond=0) - begin
+          print('duration of checkpoint saving: {}'.format(duration))
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

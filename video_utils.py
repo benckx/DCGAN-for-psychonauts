@@ -1,5 +1,3 @@
-import configparser
-import ftplib
 import os.path
 import shutil
 import subprocess
@@ -11,6 +9,7 @@ from PIL import Image
 
 import images_utils
 import shared_state
+from files_utils import upload_via_ftp
 
 
 # noinspection PyListCreation
@@ -69,19 +68,6 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
 
   if delete_images:
     shutil.rmtree(images_folder)
-
-
-def upload_via_ftp(file_name):
-  try:
-    config = configparser.ConfigParser()
-    config.read('ftp.ini')
-    session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-    file = open(file_name, 'rb')
-    session.storbinary('STOR ' + file_name, file)
-    file.close()
-    session.quit()
-  except Exception as exception:
-    print('error during FTP transfer -> {}'.format(exception))
 
 
 def scheduled_job(shared: shared_state.ThreadsSharedState):

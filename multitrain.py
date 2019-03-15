@@ -32,7 +32,7 @@ data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
 csv_files.sort()
 
-pool = Pool(processes=10)
+pool = Pool(processes=5)
 
 # validate csv config file
 if len(csv_files) == 0:
@@ -62,7 +62,7 @@ if (len(names)) != len(set(names)):
 # validate datasets
 for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
-    print('Error: dataset ' + row['dataset'] + ' not found!')
+    print('Error: dataset {} not found!'.format(row['dataset']))
     exit(1)
 
 # determine if we do automatic periodic renders
@@ -124,7 +124,7 @@ for index, row in data.iterrows():
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
-    if row['render_res']:
+    if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
       render_res = tuple([int(x) for x in row['render_res'].split('x')])
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
