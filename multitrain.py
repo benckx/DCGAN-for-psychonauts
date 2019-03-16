@@ -129,7 +129,7 @@ for index, row in data.iterrows():
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
       if auto_periodic_renders:
-        shared_state.set_sample_res((sample_width, sample_height))
+        shared_state.set_sample_res(sample_res)
         shared_state.set_render_res(render_res)
     print('')
 
@@ -160,6 +160,9 @@ for index, row in data.iterrows():
         tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
         tmp_shared_state.set_delete_at_the_end(delete_after)
         tmp_shared_state.set_current_cut(shared_state.get_current_cut())
+        if row['render_res']:
+          shared_state.set_sample_res(sample_res)
+          shared_state.set_render_res(render_res)
         scheduled_job(tmp_shared_state, loop=False)
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
