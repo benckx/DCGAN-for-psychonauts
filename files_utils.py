@@ -26,6 +26,7 @@ def upload_via_ftp_sync(file_name):
       session.storbinary('STOR ' + file_name, file)
       file.close()
       session.quit()
+      print('{} correctly uploaded to ftp'.format(file_name))
     else:
       print('Warn: ftp.ini not found, file {} can not be sent to ftp'.format(file_name))
   except Exception as exception:
@@ -40,7 +41,7 @@ def zip_folder(folder, zip_file_name):
   zipf.close()
 
 
-def save_checkpoint(checkpoint_name):
+def backup_checkpoint(checkpoint_name):
   print("auto_save_checkpoint_scheduled")
   checkpoint_dir = 'checkpoint/' + checkpoint_name
   if os.path.exists(checkpoint_dir):
@@ -49,6 +50,6 @@ def save_checkpoint(checkpoint_name):
     zip_file_name = checkpoint_name + "_" + timestamp + ".zip"
     zip_folder('checkpoint/' + checkpoint_name, zip_file_name)
     print('created zip: {}'.format(zip_file_name))
-    # upload_via_ftp(zip_file_name)
+    upload_via_ftp(zip_file_name)
   else:
     print("{} doesn't exist yet".format(checkpoint_dir))

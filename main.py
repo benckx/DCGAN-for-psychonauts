@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from files_utils import save_checkpoint
+from files_utils import backup_checkpoint
 from model import DCGAN
 from utils import show_all_variables
 from utils import visualize
@@ -143,7 +143,7 @@ def main(_):
     if FLAGS.train:
       pool = Pool(processes=5)
       if FLAGS.use_checkpoints:
-        pool.apply(save_checkpoint, args=[True, FLAGS.name])
+        pool.apply(backup_checkpoint, args=[True, FLAGS.name])
       dcgan.train(FLAGS)
       pool.close()
     else:
