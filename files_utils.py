@@ -16,16 +16,20 @@ def upload_via_ftp(file_name):
 
 
 def upload_via_ftp_sync(file_name):
+  print('uploading {} to ftp'.format(file_name))
   try:
-    config = configparser.ConfigParser()
-    config.read('ftp.ini')
-    session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-    file = open(file_name, 'rb')
-    session.storbinary('STOR ' + file_name, file)
-    file.close()
-    session.quit()
+    if os.path.isfile('ftp.ini'):
+      config = configparser.ConfigParser()
+      config.read('ftp.ini')
+      session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
+      file = open(file_name, 'rb')
+      session.storbinary('STOR ' + file_name, file)
+      file.close()
+      session.quit()
+    else:
+      print('Warn: ftp.ini not found, file {} can not be sent to ftp'.format(file_name))
   except Exception as exception:
-    print('error during FTP transfer -> {}'.format(exception))
+    print('Error during FTP transfer -> {}'.format(exception))
 
 
 def zip_folder(folder, zip_file_name):
