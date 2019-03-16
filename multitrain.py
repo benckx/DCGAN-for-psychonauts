@@ -62,7 +62,7 @@ if (len(names)) != len(set(names)):
 # validate datasets
 for index, row in data.iterrows():
   if row['dataset'] not in data_folders:
-    print('Error: dataset ' + row['dataset'] + ' not found!')
+    print('Error: dataset {} not found!'.format(row['dataset']))
     exit(1)
 
 # determine if we do automatic periodic renders

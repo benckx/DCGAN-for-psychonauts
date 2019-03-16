@@ -1,6 +1,7 @@
 import configparser
 import ftplib
 import os.path
+import os.path
 import shutil
 import subprocess
 import threading
@@ -11,9 +12,11 @@ from os.path import isfile, join
 from PIL import Image
 
 import images_utils
+from files_utils import upload_via_ftp
 from shared_state import ThreadsSharedState
 
 ftp_threads_pool = Pool(processes=5)
+
 
 
 # noinspection PyListCreation

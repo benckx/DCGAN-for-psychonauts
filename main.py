@@ -1,6 +1,7 @@
 import io
 import os
 import os.path
+from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 
@@ -8,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+from files_utils import auto_save_checkpoint_scheduled
 from model import DCGAN
 from utils import show_all_variables
 from utils import visualize
@@ -139,7 +141,11 @@ def main(_):
     show_all_variables()
 
     if FLAGS.train:
+      pool = Pool(processes=5)
+      if FLAGS.use_checkpoints:
+        pool.apply(auto_save_checkpoint_scheduled, args=[True, FLAGS.name])
       dcgan.train(FLAGS)
+      pool.close()
     else:
       if not dcgan.load(FLAGS.checkpoint_dir)[0]:
         raise Exception("[!] Train a model first, then run test mode")
