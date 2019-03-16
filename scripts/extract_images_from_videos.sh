@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 for f in $(ls *.mp4); do
- ffmpeg -i $f -vf fps=1/10 ${f}_thumb%05d.jpg -hide_banner
+ # 1/5 -> every 5 sec.
+ ffmpeg -i $f -vf fps=1/4 ${f}_thumb%06d.jpg -hide_banner
 done
