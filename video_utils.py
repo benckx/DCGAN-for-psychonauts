@@ -4,6 +4,7 @@ import os.path
 import shutil
 import subprocess
 import threading
+from multiprocessing import Pool
 from os import listdir
 from os.path import isfile, join
 
@@ -11,6 +12,8 @@ from PIL import Image
 
 import images_utils
 from shared_state import ThreadsSharedState
+
+ftp_threads_pool = Pool(processes=5)
 
 
 # noinspection PyListCreation
@@ -72,6 +75,10 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
 
 
 def upload_via_ftp(file_name):
+  ftp_threads_pool.apply(upload_via_ftp_sync, args=[file_name])
+
+
+def upload_via_ftp_sync(file_name):
   try:
     config = configparser.ConfigParser()
     config.read('ftp.ini')
