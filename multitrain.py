@@ -12,8 +12,8 @@ import pandas as pd
 from PIL import Image
 
 import images_utils
-import shared_state
 from dcgan_cmd_builder import *
+from shared_state import ThreadsSharedState
 from video_utils import process_video, scheduled_job
 
 
@@ -21,7 +21,7 @@ class MyManager(BaseManager):
   pass
 
 
-BaseManager.register('ThreadsSharedState', shared_state.ThreadsSharedState)
+BaseManager.register('ThreadsSharedState', ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
@@ -99,9 +99,13 @@ for index, row in data.iterrows():
 
     if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
       frames_per_iteration += int(row['nbr_g_updates'])
+    else:
+      frames_per_iteration += 2
 
     if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
       frames_per_iteration += int(row['nbr_d_updates'])
+    else:
+      frames_per_iteration += 1
 
     nbr_of_frames = frames_per_iteration * int(dataset_size / batch_size) * row['epoch']
     sample_res = (sample_width, sample_height)
@@ -124,7 +128,7 @@ for index, row in data.iterrows():
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
-    if row['render_res']:
+    if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
       render_res = tuple([int(x) for x in row['render_res'].split('x')])
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
@@ -160,7 +164,7 @@ for index, row in data.iterrows():
         tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
         tmp_shared_state.set_delete_at_the_end(delete_after)
         tmp_shared_state.set_current_cut(shared_state.get_current_cut())
-        if row['render_res']:
+        if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
           shared_state.set_sample_res(sample_res)
           shared_state.set_render_res(render_res)
         scheduled_job(tmp_shared_state, loop=False)

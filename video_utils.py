@@ -10,7 +10,7 @@ from os.path import isfile, join
 from PIL import Image
 
 import images_utils
-import shared_state
+from shared_state import ThreadsSharedState
 
 
 # noinspection PyListCreation
@@ -84,7 +84,7 @@ def upload_via_ftp(file_name):
     print('error during FTP transfer -> {}'.format(exception))
 
 
-def scheduled_job(shared: shared_state.ThreadsSharedState, loop=True):
+def scheduled_job(shared: ThreadsSharedState, loop=True):
   print()
   print('------ periodic render ------')
   if shared is not None:
@@ -115,7 +115,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState, loop=True):
     threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 
-def create_video_time_cut(shared: shared_state.ThreadsSharedState):
+def create_video_time_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
