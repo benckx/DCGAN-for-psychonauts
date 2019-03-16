@@ -33,7 +33,7 @@ data_folders = [f for f in listdir('data/')]
 csv_files = [f for f in listdir('.') if (isfile(join('.', f)) and f.endswith(".csv"))]
 csv_files.sort()
 
-pool = Pool(processes=5)
+pool = Pool(processes=10)
 
 # validate csv config file
 if len(csv_files) == 0:

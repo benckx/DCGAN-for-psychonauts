@@ -8,7 +8,7 @@ import time
 import zipfile
 from multiprocessing import Pool
 
-ftp_threads_pool = Pool(processes=5)
+ftp_threads_pool = Pool(processes=10)
 
 
 def upload_via_ftp(file_name):
@@ -42,14 +42,17 @@ def zip_folder(folder, zip_file_name):
 
 
 def backup_checkpoint(checkpoint_name):
-  print("backing up checkpoint...")
-  checkpoint_dir = 'checkpoint/' + checkpoint_name
-  if os.path.exists(checkpoint_dir):
-    ts = time.time()
-    timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M')
-    zip_file_name = checkpoint_name + "_" + timestamp + ".zip"
-    zip_folder('checkpoint/' + checkpoint_name, zip_file_name)
-    print('created zip: {}'.format(zip_file_name))
-    upload_via_ftp(zip_file_name)
-  else:
-    print('{} does not exist'.format(checkpoint_dir))
+  try:
+    print('backing up checkpoint...')
+    checkpoint_dir = 'checkpoint/' + checkpoint_name
+    if os.path.exists(checkpoint_dir):
+      ts = time.time()
+      timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M')
+      zip_file_name = checkpoint_name + "_" + timestamp + ".zip"
+      zip_folder('checkpoint/' + checkpoint_name, zip_file_name)
+      print('created zip: {}'.format(zip_file_name))
+      upload_via_ftp(zip_file_name)
+    else:
+      print('{} does not exist'.format(checkpoint_dir))
+  except Exception as e:
+    print('Error during checkpoint backup: {}'.format(e))
