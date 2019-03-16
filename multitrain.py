@@ -13,8 +13,8 @@ from PIL import Image
 
 import images_utils
 import shared_state
-import video_utils
 from dcgan_cmd_builder import *
+from video_utils import process_video, scheduled_job
 
 
 class MyManager(BaseManager):
@@ -77,7 +77,7 @@ shared_state = None
 if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
   shared_state = manager.ThreadsSharedState()
-  pool.apply(video_utils.scheduled_job, args=[shared_state])
+  pool.apply(scheduled_job, args=[shared_state, True])
 
 # run the jobs
 for index, row in data.iterrows():
@@ -143,11 +143,24 @@ for index, row in data.iterrows():
     print('--------------------------------------------------------------------------------------------')
 
     # process video asynchronously
-    if not auto_periodic_renders and row['render_video'] and process.returncode == 0:
+    if row['render_video'] and process.returncode == 0:
       sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
-      pool.apply_async(video_utils.process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+
+      if not auto_periodic_renders:
+        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+      else:
+        print('render last video bit')
+        # noinspection PyUnresolvedReferences
+        tmp_shared_state = manager.ThreadsSharedState()
+        tmp_shared_state.set_folder(samples_prefix + row['name'])
+        tmp_shared_state.set_job_name(row['name'])
+        tmp_shared_state.set_frames_threshold(0)
+        tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
+        tmp_shared_state.set_delete_at_the_end(delete_after)
+        tmp_shared_state.set_current_cut(shared_state.get_current_cut())
+        scheduled_job(tmp_shared_state, loop=False)
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())

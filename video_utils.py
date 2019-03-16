@@ -84,7 +84,7 @@ def upload_via_ftp(file_name):
     print('error during FTP transfer -> {}'.format(exception))
 
 
-def scheduled_job(shared: shared_state.ThreadsSharedState):
+def scheduled_job(shared: shared_state.ThreadsSharedState, loop=True):
   print()
   print('------ periodic render ------')
   if shared is not None:
@@ -93,6 +93,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
     print('frame threshold: {}'.format(shared.get_frames_threshold()))
     print('sample resolution: {}'.format(shared.get_sample_res()))
     print('render resolution: {}'.format(shared.get_render_res()))
+    print('loop at the end: {}'.format(loop))
     print('')
 
     if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
@@ -110,7 +111,8 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
   print('----- / periodic render -----')
   print()
 
-  threading.Timer(120.0, scheduled_job, args=[shared]).start()
+  if loop:
+    threading.Timer(120.0, scheduled_job, args=[shared]).start()
 
 
 def create_video_time_cut(shared: shared_state.ThreadsSharedState):
