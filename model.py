@@ -4,6 +4,7 @@ import datetime
 import time
 from glob import glob
 
+from files_utils import save_checkpoint
 from ops import *
 from utils import *
 
@@ -196,6 +197,7 @@ class DCGAN(object):
       else:
         print(" [!] Load failed...")
 
+    last_checkpoint_save = int(time.time())
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
       np.random.shuffle(self.data)
@@ -241,11 +243,17 @@ class DCGAN(object):
 
         # self.build_frame(self.nbr_d_updates + self.nbr_g_updates, epoch, idx, sample_z, sample_inputs)
 
-        if self.use_checkpoints and np.mod(counter, 100) == 2:
+        if self.use_checkpoints and np.mod(counter, 500) == 2:
           begin = datetime.datetime.now().replace(microsecond=0)
           self.save(config.checkpoint_dir, counter)
           duration = datetime.datetime.now().replace(microsecond=0) - begin
           print('duration of checkpoint saving: {}'.format(duration))
+          current_time = int(time.time())
+          last_checkpoint_save_minutes_ago = (current_time - last_checkpoint_save) * 60
+          if last_checkpoint_save_minutes_ago > 60:
+            print('time to save the thing')
+            save_checkpoint(self.name)
+            last_checkpoint_save = current_time
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

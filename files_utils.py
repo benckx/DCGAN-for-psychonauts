@@ -2,12 +2,20 @@ import configparser
 import datetime
 import ftplib
 import os
-import threading
+import os.path
+import os.path
 import time
 import zipfile
+from multiprocessing import Pool
+
+ftp_threads_pool = Pool(processes=5)
 
 
 def upload_via_ftp(file_name):
+  ftp_threads_pool.apply(upload_via_ftp_sync, args=[file_name])
+
+
+def upload_via_ftp_sync(file_name):
   try:
     config = configparser.ConfigParser()
     config.read('ftp.ini')
@@ -28,20 +36,15 @@ def zip_folder(folder, zip_file_name):
   zipf.close()
 
 
-def auto_save_checkpoint_scheduled(first_exec, checkpoint_name):
+def save_checkpoint(checkpoint_name):
   print("auto_save_checkpoint_scheduled")
-
-  if not first_exec:
-    checkpoint_dir = 'checkpoint/' + checkpoint_name
-    if os.path.exists(checkpoint_dir):
-      ts = time.time()
-      timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M')
-      zip_file_name = checkpoint_name + "_" + timestamp + ".zip"
-      zip_folder('checkpoint/' + checkpoint_name, zip_file_name)
-      print('created zip: {}'.format(zip_file_name))
-    else:
-      print("{} doesn't exist yet".format(checkpoint_dir))
+  checkpoint_dir = 'checkpoint/' + checkpoint_name
+  if os.path.exists(checkpoint_dir):
+    ts = time.time()
+    timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M')
+    zip_file_name = checkpoint_name + "_" + timestamp + ".zip"
+    zip_folder('checkpoint/' + checkpoint_name, zip_file_name)
+    print('created zip: {}'.format(zip_file_name))
+    # upload_via_ftp(zip_file_name)
   else:
-    print("first exec, do nothing, wait some time")
-
-  threading.Timer(360.0, auto_save_checkpoint_scheduled, args=[False, checkpoint_name]).start()
+    print("{} doesn't exist yet".format(checkpoint_dir))

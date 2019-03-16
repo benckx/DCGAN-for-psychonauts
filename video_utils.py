@@ -1,5 +1,3 @@
-import configparser
-import ftplib
 import os.path
 import os.path
 import shutil
@@ -16,7 +14,6 @@ from files_utils import upload_via_ftp
 from shared_state import ThreadsSharedState
 
 ftp_threads_pool = Pool(processes=5)
-
 
 
 # noinspection PyListCreation
@@ -75,23 +72,6 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
 
   if delete_images:
     shutil.rmtree(images_folder)
-
-
-def upload_via_ftp(file_name):
-  ftp_threads_pool.apply(upload_via_ftp_sync, args=[file_name])
-
-
-def upload_via_ftp_sync(file_name):
-  try:
-    config = configparser.ConfigParser()
-    config.read('ftp.ini')
-    session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-    file = open(file_name, 'rb')
-    session.storbinary('STOR ' + file_name, file)
-    file.close()
-    session.quit()
-  except Exception as exception:
-    print('error during FTP transfer -> {}'.format(exception))
 
 
 def scheduled_job(shared: ThreadsSharedState, loop=True):
