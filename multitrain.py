@@ -26,7 +26,7 @@ BaseManager.register('ThreadsSharedState', ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
-# defining constants
+# define constants
 fps = 60
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
