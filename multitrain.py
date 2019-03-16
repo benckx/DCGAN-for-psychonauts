@@ -13,6 +13,7 @@ from PIL import Image
 
 import images_utils
 from dcgan_cmd_builder import *
+from files_utils import backup_checkpoint
 from shared_state import ThreadsSharedState
 from video_utils import process_video, scheduled_job
 
@@ -45,14 +46,14 @@ print()
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
 # validate ftp
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   if row['upload_to_ftp'] and not os.path.exists('ftp.ini'):
     print('option upload_to_ftp == true but ftp.ini file was not found')
     exit(1)
 
 # validate names
 names = []
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   names.append(row['name'])
 
 if (len(names)) != len(set(names)):
@@ -60,7 +61,7 @@ if (len(names)) != len(set(names)):
   exit(1)
 
 # validate datasets
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   if row['dataset'] not in data_folders:
     print('Error: dataset {} not found!'.format(row['dataset']))
     exit(1)
@@ -80,8 +81,7 @@ if auto_periodic_renders:
   pool.apply(scheduled_job, args=[shared_state, True])
 
 # run the jobs
-for index, row in data.iterrows():
-  print('--------------------------------------------------------------------------------------------')
+for _, row in data.iterrows():
   print(str(row))
   try:
     data_path = 'data/' + row['dataset']
@@ -144,30 +144,35 @@ for index, row in data.iterrows():
     print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
     print('duration of the job {} -> {}'.format(row['name'], duration))
-    print('--------------------------------------------------------------------------------------------')
 
-    # process video asynchronously
-    if row['render_video'] and process.returncode == 0:
+    if process.returncode == 0:
       sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
 
-      if not auto_periodic_renders:
-        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
-      else:
-        print('render last video bit')
-        # noinspection PyUnresolvedReferences
-        tmp_shared_state = manager.ThreadsSharedState()
-        tmp_shared_state.set_folder(samples_prefix + row['name'])
-        tmp_shared_state.set_job_name(row['name'])
-        tmp_shared_state.set_frames_threshold(0)
-        tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
-        tmp_shared_state.set_delete_at_the_end(delete_after)
-        tmp_shared_state.set_current_cut(shared_state.get_current_cut())
-        if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
-          shared_state.set_sample_res(sample_res)
-          shared_state.set_render_res(render_res)
-        scheduled_job(tmp_shared_state, loop=False)
+      if row['render_video']:
+        if not auto_periodic_renders:
+          # process video async
+          pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+        else:
+          # process the last bit of video if scheduled render is enabled
+          print('render last video bit')
+          # noinspection PyUnresolvedReferences
+          tmp_shared_state = manager.ThreadsSharedState()
+          tmp_shared_state.set_folder(samples_prefix + row['name'])
+          tmp_shared_state.set_job_name(row['name'])
+          tmp_shared_state.set_frames_threshold(0)
+          tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
+          tmp_shared_state.set_delete_at_the_end(delete_after)
+          tmp_shared_state.set_current_cut(shared_state.get_current_cut())
+          if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+            shared_state.set_sample_res(sample_res)
+            shared_state.set_render_res(render_res)
+          pool.apply_async(scheduled_job, (tmp_shared_state, False))
+
+      # backup checkpoint one last time
+      if upload_to_ftp and row['use_checkpoint']:
+        backup_checkpoint(row['name'])
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())

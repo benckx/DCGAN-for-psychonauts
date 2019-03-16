@@ -42,7 +42,7 @@ def zip_folder(folder, zip_file_name):
 
 
 def backup_checkpoint(checkpoint_name):
-  print("auto_save_checkpoint_scheduled")
+  print("backing up checkpoint...")
   checkpoint_dir = 'checkpoint/' + checkpoint_name
   if os.path.exists(checkpoint_dir):
     ts = time.time()
@@ -52,4 +52,4 @@ def backup_checkpoint(checkpoint_name):
     print('created zip: {}'.format(zip_file_name))
     upload_via_ftp(zip_file_name)
   else:
-    print("{} doesn't exist yet".format(checkpoint_dir))
+    print('{} does not exist'.format(checkpoint_dir))
