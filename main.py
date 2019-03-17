@@ -131,8 +131,8 @@ def main(_):
       use_checkpoints=FLAGS.use_checkpoints,
       batch_norm_g=FLAGS.batch_norm_g,
       batch_norm_d=FLAGS.batch_norm_d,
-      activation_g=FLAGS.activation_g,
-      activation_d=FLAGS.activation_d,
+      activation_g=FLAGS.activation_g.split(','),
+      activation_d=FLAGS.activation_d.split(','),
       nbr_g_updates=FLAGS.nbr_g_updates,
       nbr_d_updates=FLAGS.nbr_d_updates)
 
