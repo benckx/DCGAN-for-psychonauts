@@ -252,14 +252,14 @@ class DCGAN(object):
             if must_backup_checkpoint():
               current_time = int(time.time())
               last_checkpoint_backup_min_ago = (current_time - last_checkpoint_backup) / 60
-              print('last checkpoint backup: {} min. ago'.format(last_checkpoint_backup_min_ago))
+              print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
               if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
                 print('time to save the thing')
                 backup_checkpoint(self.name)
                 last_checkpoint_backup = int(time.time())
               else:
                 min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
-                print('wait {} more minutes before making a checkpoint backup'.format(min_before_next_backup))
+                print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
           except Exception as e:
             print('Error during checkpoint saving: {}'.format(e))
 
