@@ -59,3 +59,15 @@ def backup_checkpoint(checkpoint_name):
       print('{} does not exist'.format(checkpoint_dir))
   except Exception as e:
     print('Error during checkpoint backup: {}'.format(e))
+
+
+def must_backup_checkpoint():
+  try:
+    if os.path.isfile('ftp.ini'):
+      config = configparser.ConfigParser()
+      config.read('ftp.ini')
+      return config['checkpoint']['backup']
+  except Exception as e:
+    print('Error {}'.format(e))
+
+  return False

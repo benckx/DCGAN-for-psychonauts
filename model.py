@@ -1,11 +1,10 @@
 from __future__ import division
 
-import configparser
 import datetime
 import time
 from glob import glob
 
-from files_utils import backup_checkpoint
+from files_utils import backup_checkpoint, must_backup_checkpoint
 from ops import *
 from utils import *
 
@@ -250,7 +249,7 @@ class DCGAN(object):
             self.save(config.checkpoint_dir, counter)
             duration = datetime.datetime.now().replace(microsecond=0) - begin
             print('duration of checkpoint saving: {}'.format(duration))
-            if self.must_backup_checkpoint():
+            if must_backup_checkpoint():
               current_time = int(time.time())
               last_checkpoint_backup_min_ago = (current_time - last_checkpoint_backup) / 60
               print('last checkpoint backup: {} min. ago'.format(last_checkpoint_backup_min_ago))
@@ -263,17 +262,6 @@ class DCGAN(object):
                 print('wait {} more minutes before making a checkpoint backup'.format(min_before_next_backup))
           except Exception as e:
             print('Error during checkpoint saving: {}'.format(e))
-
-  def must_backup_checkpoint(self):
-    try:
-      if os.path.isfile('ftp.ini'):
-        config = configparser.ConfigParser()
-        config.read('ftp.ini')
-        return config['checkpoint']['backup']
-    except Exception as e:
-      print('Error {}'.format(e))
-
-    return False
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

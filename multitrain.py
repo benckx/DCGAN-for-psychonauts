@@ -13,7 +13,7 @@ from PIL import Image
 
 import images_utils
 from dcgan_cmd_builder import *
-from files_utils import backup_checkpoint
+from files_utils import backup_checkpoint, must_backup_checkpoint
 from shared_state import ThreadsSharedState
 from video_utils import process_video, scheduled_job
 
@@ -171,7 +171,7 @@ for _, row in data.iterrows():
           pool.apply_async(scheduled_job, (tmp_shared_state, False))
 
       # backup checkpoint one last time
-      if upload_to_ftp and row['use_checkpoint']:
+      if must_backup_checkpoint() and row['use_checkpoint']:
         backup_checkpoint(row['name'])
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
