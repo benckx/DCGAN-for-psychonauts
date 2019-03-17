@@ -126,9 +126,13 @@ class DCGAN(object):
       except:
         return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
 
-    self.d_loss_real = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D)))
-    self.d_loss_fake = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_)))
-    self.g_loss = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_)))
+    d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D))
+    d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_))
+    g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_))
+
+    self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
+    self.d_loss_fake = tf.reduce_mean(d_loss_fake_input_tensor)
+    self.g_loss = tf.reduce_mean(g_loss_input_tensor)
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
@@ -413,14 +417,26 @@ def adam(learning_rate, beta1):
 def add_activation(activation, layer):
   if activation == "relu":
     return tf.nn.relu(layer)
+  if activation == "relu6":
+    return tf.nn.relu6(layer)
   elif activation == "lrelu":
     return tf.nn.leaky_relu(layer)
   elif activation == "elu":
     return tf.nn.elu(layer)
+  elif activation == "crelu":
+    return tf.nn.crelu(layer)
+  elif activation == "selu":
+    return tf.nn.selu(layer)
   elif activation == "tanh":
     return tf.nn.tanh(layer)
   elif activation == "sigmoid":
     return tf.nn.sigmoid(layer)
+  elif activation == "softplus":
+    return tf.nn.softplus(layer)
+  elif activation == "softsign":
+    return tf.nn.softsign(layer)
+  elif activation == "softmax":
+    return tf.nn.softmax(layer)
   else:
     print('Unknown activation ' + activation)
     exit(1)
