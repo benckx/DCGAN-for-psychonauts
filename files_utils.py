@@ -68,6 +68,19 @@ def must_backup_checkpoint():
       config.read('ftp.ini')
       return config['checkpoint']['backup']
   except Exception as e:
-    print('Error {}'.format(e))
+    print('Error: {}'.format(e))
 
   return False
+
+
+def get_checkpoint_backup_delay():
+  """ In minutes """
+  try:
+    if os.path.isfile('ftp.ini'):
+      config = configparser.ConfigParser()
+      config.read('ftp.ini')
+      return config['checkpoint']['backup_delay']
+  except Exception as e:
+    print('Error: {}'.format(e))
+
+  return 4 * 60

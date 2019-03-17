@@ -4,7 +4,7 @@ import datetime
 import time
 from glob import glob
 
-from files_utils import backup_checkpoint, must_backup_checkpoint
+from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from ops import *
 from utils import *
 
@@ -198,7 +198,7 @@ class DCGAN(object):
         print(" [!] Load failed...")
 
     last_checkpoint_backup = int(time.time())
-    checkpoint_backup_delay_in_min = 3 * 60
+    checkpoint_backup_delay_in_min = get_checkpoint_backup_delay()
 
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
