@@ -11,13 +11,6 @@ from multiprocessing import Pool
 ftp_threads_pool = Pool(processes=10)
 
 
-def upload_via_ftp(file_name):
-  try:
-    ftp_threads_pool.apply_async(upload_via_ftp_sync, file_name)
-  except Exception as e:
-    print('Error during FTP thread pool queuing of file {} -> {}'.format(file_name, e))
-
-
 def upload_via_ftp_sync(file_name):
   print('uploading {} to ftp'.format(file_name))
   try:
@@ -34,6 +27,13 @@ def upload_via_ftp_sync(file_name):
       print('Warn: ftp.ini not found, file {} can not be sent to ftp'.format(file_name))
   except Exception as e:
     print('Error during FTP transfer of file {} -> {}'.format(file_name, e))
+
+
+def upload_via_ftp(file_name):
+  try:
+    ftp_threads_pool.apply_async(upload_via_ftp_sync, args=(file_name))
+  except Exception as e:
+    print('Error during FTP thread pool queuing of file {} -> {}'.format(file_name, e))
 
 
 def zip_folder(folder, zip_file_name):
