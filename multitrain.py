@@ -158,17 +158,17 @@ for _, row in data.iterrows():
           # process the last bit of video if scheduled render is enabled
           print('render last video bit')
           # noinspection PyUnresolvedReferences
-          tmp_shared_state = manager.ThreadsSharedState()
-          tmp_shared_state.set_folder(samples_prefix + row['name'])
-          tmp_shared_state.set_job_name(row['name'])
-          tmp_shared_state.set_frames_threshold(0)
-          tmp_shared_state.set_upload_to_ftp(upload_to_ftp)
-          tmp_shared_state.set_delete_at_the_end(delete_after)
-          tmp_shared_state.set_current_cut(shared_state.get_current_cut())
+          last_bit_shared_state = manager.ThreadsSharedState()
+          last_bit_shared_state.set_folder(samples_prefix + row['name'])
+          last_bit_shared_state.set_job_name(row['name'])
+          last_bit_shared_state.set_frames_threshold(0)
+          last_bit_shared_state.set_upload_to_ftp(upload_to_ftp)
+          last_bit_shared_state.set_delete_at_the_end(delete_after)
+          last_bit_shared_state.set_current_cut(shared_state.get_current_cut())
           if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
             shared_state.set_sample_res(sample_res)
             shared_state.set_render_res(render_res)
-          pool.apply_async(scheduled_job, (tmp_shared_state, False))
+          pool.apply_async(scheduled_job, (last_bit_shared_state, False))
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
