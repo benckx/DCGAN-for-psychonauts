@@ -31,7 +31,7 @@ def upload_via_ftp_sync(file_name):
 
 def upload_via_ftp(file_name):
   try:
-    ftp_threads_pool.apply_async(upload_via_ftp_sync, args=(file_name))
+    ftp_threads_pool.apply_async(upload_via_ftp_sync, (file_name))
   except Exception as e:
     print('Error during FTP thread pool queuing of file {} -> {}'.format(file_name, e))
 
@@ -79,7 +79,7 @@ def get_checkpoint_backup_delay():
     if os.path.isfile('ftp.ini'):
       config = configparser.ConfigParser()
       config.read('ftp.ini')
-      return config['checkpoint']['backup_delay']
+      return int(config['checkpoint']['backup_delay'])
   except Exception as e:
     print('Error: {}'.format(e))
 
