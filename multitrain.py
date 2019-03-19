@@ -168,7 +168,7 @@ for _, row in data.iterrows():
           if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
             shared_state.set_sample_res(sample_res)
             shared_state.set_render_res(render_res)
-          pool.apply_async(periodic_render_job, (last_bit_shared_state, False))
+          pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
