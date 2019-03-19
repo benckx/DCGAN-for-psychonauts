@@ -15,7 +15,7 @@ import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
 from shared_state import ThreadsSharedState
-from video_utils import process_video, scheduled_job
+from video_utils import process_video, periodic_render_job
 
 
 class MyManager(BaseManager):
@@ -78,7 +78,7 @@ shared_state = None
 if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
   shared_state = manager.ThreadsSharedState()
-  pool.apply(scheduled_job, args=[shared_state, True])
+  pool.apply(periodic_render_job, args=[shared_state, True])
 
 # run the jobs
 for _, row in data.iterrows():
@@ -168,7 +168,7 @@ for _, row in data.iterrows():
           if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
             shared_state.set_sample_res(sample_res)
             shared_state.set_render_res(render_res)
-          pool.apply_async(scheduled_job, (last_bit_shared_state, False))
+          pool.apply_async(periodic_render_job, (last_bit_shared_state, False))
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:

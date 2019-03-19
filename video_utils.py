@@ -40,6 +40,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(images_folder)
     if upload_to_ftp:
+      print('Sending {}.mp4 to ftp'.format(images_folder))
       upload_via_ftp(images_folder + '.mp4')
   else:
     box_idx = 1
@@ -60,6 +61,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       render_video(box_folder_name)
 
       if upload_to_ftp:
+        print('Sending {}.mp4 to ftp'.format(box_folder_name))
         upload_via_ftp(box_folder_name + '.mp4')
 
       if delete_images:
@@ -71,7 +73,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
     shutil.rmtree(images_folder)
 
 
-def scheduled_job(shared: ThreadsSharedState, loop=True):
+def periodic_render_job(shared: ThreadsSharedState, loop=True):
   print()
   print('------ periodic render ------')
   if shared is not None:
@@ -99,7 +101,7 @@ def scheduled_job(shared: ThreadsSharedState, loop=True):
   print()
 
   if loop:
-    threading.Timer(120.0, scheduled_job, args=[shared]).start()
+    threading.Timer(120.0, periodic_render_job, args=[shared]).start()
 
 
 def create_video_time_cut(shared: ThreadsSharedState):

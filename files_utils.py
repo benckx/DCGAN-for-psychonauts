@@ -31,7 +31,8 @@ def upload_via_ftp_sync(file_name):
 
 def upload_via_ftp(file_name):
   try:
-    ftp_threads_pool.apply_async(upload_via_ftp_sync, (file_name))
+    print('Before adding {} to ftp thread pool'.format(file_name))
+    ftp_threads_pool.apply_async(upload_via_ftp_sync, args=[file_name])
   except Exception as e:
     print('Error during FTP thread pool queuing of file {} -> {}'.format(file_name, e))
 
