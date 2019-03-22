@@ -287,7 +287,7 @@ class DCGAN(object):
       last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
       return tf.nn.sigmoid(last_layer), last_layer
 
-  def generator(self, device, z):
+  def generator(self, z, device):
     with tf.variable_scope("generator") as scope:
       nbr_layers = self.nbr_of_layers_g
       print('init generator with ' + str(nbr_layers) + ' layers ...')
@@ -332,7 +332,7 @@ class DCGAN(object):
 
       return tf.nn.tanh(last_layer)
 
-  def sampler(self, device, z):
+  def sampler(self, z, device):
     with tf.variable_scope("generator") as scope:
       scope.reuse_variables()
 
