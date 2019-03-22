@@ -124,7 +124,7 @@ for index, row in data.iterrows():
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(sample_res))
-    if row['render_res']:
+    if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
       render_res = tuple([int(x) for x in row['render_res'].split('x')])
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
