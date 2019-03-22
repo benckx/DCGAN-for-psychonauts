@@ -14,4 +14,6 @@ class GpuIterator:
       self.idx += 1
     else:
       self.idx = 0
+
+    print('assigning load to {}'.format(selected_device.name))
     return selected_device.name
