@@ -4,7 +4,7 @@ from tensorflow.python.client import device_lib
 class GpuIterator:
   def __init__(self):
     self.idx = 0
-    self.devices = device_lib.list_local_devices()
+    self.devices = [x.name for x in device_lib.list_local_devices() if x.device_type == 'GPU']
     for device in self.devices:
       print(str(device))
 
