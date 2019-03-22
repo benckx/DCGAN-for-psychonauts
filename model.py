@@ -270,7 +270,7 @@ class DCGAN(object):
       print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
       # layer 0
-      previous_layer = conv2d(image, self.df_dim, name='d_h0_conv')
+      previous_layer = conv2d(image, self.df_dim, device, name='d_h0_conv')
       previous_layer = add_activation(self.activation_d, previous_layer)
 
       # middle layers
