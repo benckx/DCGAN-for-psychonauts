@@ -10,7 +10,6 @@ from os.path import isfile, join
 
 import pandas as pd
 from PIL import Image
-from tensorflow.python.client import device_lib
 
 import images_utils
 import shared_state
@@ -79,11 +78,6 @@ if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
   shared_state = manager.ThreadsSharedState()
   pool.apply(video_utils.scheduled_job, args=[shared_state])
-
-# log gpu
-local_device_protos = device_lib.list_local_devices()
-for device in local_device_protos:
-  print(str(device))
 
 # run the jobs
 for index, row in data.iterrows():
