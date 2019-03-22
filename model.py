@@ -3,6 +3,7 @@ from __future__ import division
 import time
 from glob import glob
 
+from gpu_devices import GpuIterator
 from ops import *
 from utils import *
 
@@ -111,10 +112,12 @@ class DCGAN(object):
     self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
     self.z_sum = histogram_summary("z", self.z)
 
-    self.G = self.generator(self.z)
-    self.D, self.D_logits = self.discriminator(inputs, reuse=False)
-    self.sampler = self.sampler(self.z)
-    self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
+    gpu_iterator = GpuIterator()
+
+    self.G = self.generator(self.z, gpu_iterator.next())
+    self.D, self.D_logits = self.discriminator(inputs, gpu_iterator.next(), reuse=False)
+    self.sampler = self.sampler(self.z, gpu_iterator.next())
+    self.D_, self.D_logits_ = self.discriminator(self.G, gpu_iterator.next(), reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
     self.d__sum = histogram_summary("d_", self.D_)
@@ -258,7 +261,7 @@ class DCGAN(object):
     except Exception as e:
       print("one pic error! --> {}".format(e))
 
-  def discriminator(self, image, reuse=False):
+  def discriminator(self, image, device, reuse=False):
     with tf.variable_scope("discriminator") as scope:
       if reuse:
         scope.reuse_variables()
@@ -274,7 +277,7 @@ class DCGAN(object):
       for i in range(1, nbr_layers - 1):
         output_dim = self.df_dim * (2 ** i)
         layer_name = 'd_h' + str(i) + '_conv'
-        conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
+        conv_layer = conv2d(previous_layer, output_dim, device, name=layer_name)
         if self.batch_norm_d:
           conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
         previous_layer = add_activation(self.activation_d, conv_layer)
@@ -284,7 +287,7 @@ class DCGAN(object):
       last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
       return tf.nn.sigmoid(last_layer), last_layer
 
-  def generator(self, z):
+  def generator(self, device, z):
     with tf.variable_scope("generator") as scope:
       nbr_layers = self.nbr_of_layers_g
       print('init generator with ' + str(nbr_layers) + ' layers ...')
@@ -318,7 +321,7 @@ class DCGAN(object):
         height = heights[nbr_layers - 1 - i]
         width = widths[nbr_layers - 1 - i]
         layer_name = 'g_h' + str(i)
-        prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
+        prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], device, name=layer_name)
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
         prev_layer = add_activation(self.activation_g, prev_layer)
@@ -329,7 +332,7 @@ class DCGAN(object):
 
       return tf.nn.tanh(last_layer)
 
-  def sampler(self, z):
+  def sampler(self, device, z):
     with tf.variable_scope("generator") as scope:
       scope.reuse_variables()
 
@@ -365,14 +368,14 @@ class DCGAN(object):
         h = heights[nbr_layers - i - 1]
         w = widths[nbr_layers - i - 1]
         layer_name = 'g_h' + str(i)
-        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
+        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], device, name=layer_name)
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
         prev_layer = add_activation(self.activation_g, prev_layer)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
-      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
+      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], device, name=layer_name)
       return tf.nn.tanh(last_layer)
 
   @property
