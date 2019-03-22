@@ -14,4 +14,4 @@ class GpuIterator:
       self.idx += 1
     else:
       self.idx = 0
-    return selected_device
+    return selected_device.name
