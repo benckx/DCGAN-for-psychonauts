@@ -9,8 +9,8 @@ class GpuIterator:
       print(str(device))
 
   def next(self):
-    selected_device = self.devices(self.idx)
-    if self.idx < len(self.devices):
+    selected_device = self.devices[self.idx]
+    if self.idx < len(self.devices) - 1:
       self.idx += 1
     else:
       self.idx = 0
