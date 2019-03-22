@@ -33,13 +33,14 @@ class batch_norm(object):
       self.name = name
 
   def __call__(self, x, train=True):
-    return tf.contrib.layers.batch_norm(x,
-                      decay=self.momentum,
-                      updates_collections=None,
-                      epsilon=self.epsilon,
-                      scale=True,
-                      is_training=train,
-                      scope=self.name)
+    with tf.device(gpu_iterator.next()):
+      return tf.contrib.layers.batch_norm(x,
+                        decay=self.momentum,
+                        updates_collections=None,
+                        epsilon=self.epsilon,
+                        scale=True,
+                        is_training=train,
+                        scope=self.name)
 
 
 def conv_cond_concat(x, y):
