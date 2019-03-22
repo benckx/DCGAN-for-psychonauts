@@ -20,7 +20,7 @@ class DCGAN(object):
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
-               activation_g="relu", activation_d="lrelu", nbr_g_updates=2, nbr_d_updates=1):
+               activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1):
     """
 
     Args:
@@ -72,8 +72,8 @@ class DCGAN(object):
     self.batch_norm_g = batch_norm_g
     self.batch_norm_d = batch_norm_d
 
-    self.activation_g = activation_g
-    self.activation_d = activation_d
+    self.activation_g = extend_array_to(activation_g, nbr_of_layers_g - 1)
+    self.activation_d = extend_array_to(activation_d, nbr_of_layers_d - 1)
 
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
@@ -129,9 +129,13 @@ class DCGAN(object):
       except:
         return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
 
-    self.d_loss_real = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D)))
-    self.d_loss_fake = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_)))
-    self.g_loss = tf.reduce_mean(sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_)))
+    d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D))
+    d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_))
+    g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_))
+
+    self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
+    self.d_loss_fake = tf.reduce_mean(d_loss_fake_input_tensor)
+    self.g_loss = tf.reduce_mean(g_loss_input_tensor)
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
@@ -280,7 +284,7 @@ class DCGAN(object):
         conv_layer = conv2d(previous_layer, output_dim, device, name=layer_name)
         if self.batch_norm_d:
           conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
-        previous_layer = add_activation(self.activation_d, conv_layer)
+        previous_layer = add_activation(self.activation_d[i], conv_layer)
 
       # last layer
       layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
@@ -313,7 +317,7 @@ class DCGAN(object):
       prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
       if self.batch_norm_g:
         prev_layer = batch_norm(name='g_bn0')(prev_layer)
-      prev_layer = add_activation(self.activation_g, prev_layer)
+      prev_layer = add_activation(self.activation_g[0], prev_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
@@ -324,7 +328,7 @@ class DCGAN(object):
         prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], device, name=layer_name)
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
-        prev_layer = add_activation(self.activation_g, prev_layer)
+        prev_layer = add_activation(self.activation_g[i], prev_layer)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
@@ -360,7 +364,7 @@ class DCGAN(object):
       if self.batch_norm_g:
         prev_layer = batch_norm(name='g_bn0')(prev_layer, train=False)
 
-      prev_layer = add_activation(self.activation_g, prev_layer)
+      prev_layer = add_activation(self.activation_g[0], prev_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
@@ -371,7 +375,7 @@ class DCGAN(object):
         prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], device, name=layer_name)
         if self.batch_norm_g:
           prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
-        prev_layer = add_activation(self.activation_g, prev_layer)
+        prev_layer = add_activation(self.activation_g[i], prev_layer)
 
       # last layer
       layer_name = 'g_h' + str(nbr_layers - 1)
@@ -413,17 +417,36 @@ def adam(learning_rate, beta1):
   return tf.train.AdamOptimizer(learning_rate, beta1=beta1)
 
 
+def extend_array_to(input_array, nbr):
+  result_array = input_array
+  while len(input_array) < nbr:
+    input_array.extend(input_array)
+  return result_array[0:nbr]
+
+
 def add_activation(activation, layer):
   if activation == "relu":
     return tf.nn.relu(layer)
+  if activation == "relu6":
+    return tf.nn.relu6(layer)
   elif activation == "lrelu":
     return tf.nn.leaky_relu(layer)
   elif activation == "elu":
     return tf.nn.elu(layer)
+  elif activation == "crelu":
+    return tf.nn.crelu(layer)
+  elif activation == "selu":
+    return tf.nn.selu(layer)
   elif activation == "tanh":
     return tf.nn.tanh(layer)
   elif activation == "sigmoid":
     return tf.nn.sigmoid(layer)
+  elif activation == "softplus":
+    return tf.nn.softplus(layer)
+  elif activation == "softsign":
+    return tf.nn.softsign(layer)
+  elif activation == "softmax":
+    return tf.nn.softmax(layer)
   else:
     print('Unknown activation ' + activation)
     exit(1)
