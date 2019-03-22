@@ -275,7 +275,7 @@ class DCGAN(object):
 
       # layer 0
       previous_layer = conv2d(image, self.df_dim, device, name='d_h0_conv')
-      previous_layer = add_activation(self.activation_d, previous_layer)
+      previous_layer = add_activation(self.activation_d[0], previous_layer)
 
       # middle layers
       for i in range(1, nbr_layers - 1):
