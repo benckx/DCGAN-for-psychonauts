@@ -114,9 +114,9 @@ class DCGAN(object):
 
     gpu_iterator = GpuIterator()
 
-    self.G = self.generator(self.z, '/device:GPU:{}'.format(4))
-    self.D, self.D_logits = self.discriminator(inputs, '/device:GPU:{}'.format(3), reuse=False)
-    self.sampler = self.sampler(self.z, '/device:GPU:{}'.format(2))
+    self.G = self.generator(self.z, '/device:GPU:{}'.format(3))
+    self.D, self.D_logits = self.discriminator(inputs, '/device:GPU:{}'.format(2), reuse=False)
+    self.sampler = self.sampler(self.z, '/device:GPU:{}'.format(1))
     self.D_, self.D_logits_ = self.discriminator(self.G, '/device:GPU:{}'.format(1), reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
