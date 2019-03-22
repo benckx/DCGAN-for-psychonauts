@@ -448,5 +448,5 @@ def add_activation(activation, layer):
   elif activation == "softmax":
     return tf.nn.softmax(layer)
   else:
-    print('Unknown activation ' + activation)
+    print('Unknown activation {}'.format(activation))
     exit(1)
