@@ -213,6 +213,7 @@ class DCGAN(object):
       batch_idxs = min(len(self.data), config.train_size) // self.batch_size
 
       for idx in xrange(0, batch_idxs):
+        begin = datetime.datetime.now()
         batch_files = self.data[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch = [
           get_image(batch_file,
@@ -228,6 +229,9 @@ class DCGAN(object):
           batch_images = np.array(batch).astype(np.float32)
 
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
+
+        duration = ((datetime.datetime.now() - begin).microseconds) / 1000
+        print('duration of loading images: {} ms.'.format(duration))
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
