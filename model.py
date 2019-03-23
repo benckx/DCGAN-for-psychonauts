@@ -252,9 +252,12 @@ class DCGAN(object):
           # self.writer.add_summary(summary_str, counter)
           self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
+        begin = datetime.datetime.now()
         errD_fake = self.d_loss_fake.eval({self.z: batch_z})
         errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
         errG = self.g_loss.eval({self.z: batch_z})
+        duration = (datetime.datetime.now() - begin).microseconds / 1000
+        print('duration of computing loss: {} ms. (np)'.format(duration))
 
         counter += 1
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
