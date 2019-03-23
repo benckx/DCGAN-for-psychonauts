@@ -215,6 +215,7 @@ class DCGAN(object):
 
     batch_cache = []
     for idx in xrange(0, nbr_of_batches):
+      print('caching batch {}/{}'.format(idx, nbr_of_batches))
       image_data = [
         get_image(batch_file,
                   input_height=self.input_height,
