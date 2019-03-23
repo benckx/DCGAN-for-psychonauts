@@ -225,7 +225,7 @@ class DCGAN(object):
                   grayscale=self.grayscale) for batch_file in
         self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
 
-      batch_cache[idx] = np.array(image_data).astype(np.float32)
+      batch_cache.append(np.array(image_data).astype(np.float32))
 
     # all_batch_images = [
     #   get_image(batch_file,
