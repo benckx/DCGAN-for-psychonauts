@@ -212,14 +212,29 @@ class DCGAN(object):
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
     begin = datetime.datetime.now()
-    all_batch_images = [
-      get_image(batch_file,
-                input_height=self.input_height,
-                input_width=self.input_width,
-                resize_height=self.output_height,
-                resize_width=self.output_width,
-                crop=self.crop,
-                grayscale=self.grayscale) for batch_file in self.data]
+
+    batch_cache = []
+    for idx in xrange(0, nbr_of_batches):
+      image_data = [
+        get_image(batch_file,
+                  input_height=self.input_height,
+                  input_width=self.input_width,
+                  resize_height=self.output_height,
+                  resize_width=self.output_width,
+                  crop=self.crop,
+                  grayscale=self.grayscale) for batch_file in
+        self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+
+      batch_cache[idx] = np.array(image_data).astype(np.float32)
+
+    # all_batch_images = [
+    #   get_image(batch_file,
+    #             input_height=self.input_height,
+    #             input_width=self.input_width,
+    #             resize_height=self.output_height,
+    #             resize_width=self.output_width,
+    #             crop=self.crop,
+    #             grayscale=self.grayscale) for batch_file in self.data]
 
     # if self.grayscale:
     #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
@@ -231,26 +246,27 @@ class DCGAN(object):
 
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
-        begin = datetime.datetime.now()
-        batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
-        batch_images_np = np.array(batch_images).astype(np.float32)
+        # begin = datetime.datetime.now()
+        # batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
+        # batch_images_np = np.array(batch_images).astype(np.float32)
         # batch_images_np = all_batch_images_np[idx * self.batch_size:(idx + 1) * self.batch_size]
+        # batch_images_np = batch_cache[idx]
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
-        duration = (datetime.datetime.now() - begin).microseconds / 1000
-        print('duration of loading images: {} ms. (np)'.format(duration))
+        # duration = (datetime.datetime.now() - begin).microseconds / 1000
+        # print('duration of loading images: {} ms. (np)'.format(duration))
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
-          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images_np, self.z: batch_z})
+          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_cache[idx], self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
-          # self.build_frame(i, epoch, idx, sample_z, sample_inputs)
+          self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
         # Update G network
         # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
         for i in range(0, self.nbr_g_updates):
           self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
-          # self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
+          self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
         # begin = datetime.datetime.now()
         # errD_fake = self.d_loss_fake.eval({self.z: batch_z})
