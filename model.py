@@ -195,7 +195,6 @@ class DCGAN(object):
       sample_inputs = np.array(sample).astype(np.float32)
 
     counter = 1
-    start_time = time.time()
     if self.use_checkpoints:
       could_load, checkpoint_counter = self.load(self.checkpoint_dir)
       if could_load:
@@ -222,10 +221,10 @@ class DCGAN(object):
                 crop=self.crop,
                 grayscale=self.grayscale) for batch_file in self.data]
 
-    # if self.grayscale:
-    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
-    # else:
-    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)
+    if self.grayscale:
+      all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
+    else:
+      all_batch_images_np = np.array(all_batch_images).astype(np.float32)
 
     duration = (datetime.datetime.now() - begin).seconds
     print('duration of pre-loading all batch images: {} sec.'.format(duration))
@@ -233,8 +232,9 @@ class DCGAN(object):
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
         begin = datetime.datetime.now()
-        batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
-        batch_images_np = np.array(batch_images).astype(np.float32)
+        # batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
+        # batch_images_np = np.array(batch_images).astype(np.float32)
+        batch_images_np = all_batch_images_np[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
         duration = (datetime.datetime.now() - begin).microseconds / 1000
         print('duration of loading images: {} ms. (np)'.format(duration))
@@ -252,16 +252,16 @@ class DCGAN(object):
           # self.writer.add_summary(summary_str, counter)
           self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
-        begin = datetime.datetime.now()
-        errD_fake = self.d_loss_fake.eval({self.z: batch_z})
-        errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
-        errG = self.g_loss.eval({self.z: batch_z})
-        duration = (datetime.datetime.now() - begin).microseconds / 1000
-        print('duration of computing loss: {} ms.'.format(duration))
-
-        counter += 1
-        print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
-              % (epoch, idx, nbr_of_batches, time.time() - start_time, errD_fake + errD_real, errG))
+        # begin = datetime.datetime.now()
+        # errD_fake = self.d_loss_fake.eval({self.z: batch_z})
+        # errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
+        # errG = self.g_loss.eval({self.z: batch_z})
+        # duration = (datetime.datetime.now() - begin).microseconds / 1000
+        # print('duration of computing loss: {} ms.'.format(duration))
+        #
+        # counter += 1
+        # print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
+        #       % (epoch, idx, nbr_of_batches, time.time() - start_time, errD_fake + errD_real, errG))
 
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           try:
@@ -285,6 +285,7 @@ class DCGAN(object):
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:
+      begin = datetime.datetime.now()
       samples, d_loss, g_loss = self.sess.run(
         [self.sampler, self.d_loss, self.g_loss],
         feed_dict={
@@ -294,6 +295,8 @@ class DCGAN(object):
       )
       file_name = './{}/train_{:06d}_{:06d}_{:03d}.png'.format(self.sample_dir, epoch, idx, suffix)
       save_images(samples, (self.grid_height, self.grid_width), file_name)
+      duration = (datetime.datetime.now() - begin).microseconds / 1000
+      print('frame saved in {} ms.'.format(duration))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     except Exception as e:
       print("one pic error! --> {}".format(e))
