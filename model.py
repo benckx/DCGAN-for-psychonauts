@@ -195,6 +195,8 @@ class DCGAN(object):
       sample_inputs = np.array(sample).astype(np.float32)
 
     counter = 1
+    start_time = time.time()
+
     if self.use_checkpoints:
       could_load, checkpoint_counter = self.load(self.checkpoint_dir)
       if could_load:
@@ -215,7 +217,7 @@ class DCGAN(object):
 
     batch_cache = []
     for idx in xrange(0, nbr_of_batches):
-      print('caching batch {}/{}'.format(idx, nbr_of_batches))
+      print('caching batch {}/{}'.format((idx + 1), nbr_of_batches))
       image_data = [
         get_image(batch_file,
                   input_height=self.input_height,
@@ -228,57 +230,28 @@ class DCGAN(object):
 
       batch_cache.append(np.array(image_data).astype(np.float32))
 
-    # all_batch_images = [
-    #   get_image(batch_file,
-    #             input_height=self.input_height,
-    #             input_width=self.input_width,
-    #             resize_height=self.output_height,
-    #             resize_width=self.output_width,
-    #             crop=self.crop,
-    #             grayscale=self.grayscale) for batch_file in self.data]
-
-    # if self.grayscale:
-    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
-    # else:
-    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)
-
     duration = (datetime.datetime.now() - begin).seconds
     print('duration of pre-loading all batch images: {} sec.'.format(duration))
 
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
-        # begin = datetime.datetime.now()
-        # batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
-        # batch_images_np = np.array(batch_images).astype(np.float32)
-        # batch_images_np = all_batch_images_np[idx * self.batch_size:(idx + 1) * self.batch_size]
-        # batch_images_np = batch_cache[idx]
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
-        # duration = (datetime.datetime.now() - begin).microseconds / 1000
-        # print('duration of loading images: {} ms. (np)'.format(duration))
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
           self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_cache[idx], self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
-          # self.build_frame(i, epoch, idx, sample_z, sample_inputs)
+          self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
         # Update G network
         # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
         for i in range(0, self.nbr_g_updates):
           self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
-          # self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
+          self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
-        # begin = datetime.datetime.now()
-        # errD_fake = self.d_loss_fake.eval({self.z: batch_z})
-        # errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
-        # errG = self.g_loss.eval({self.z: batch_z})
-        # duration = (datetime.datetime.now() - begin).microseconds / 1000
-        # print('duration of computing loss: {} ms.'.format(duration))
-        #
-        # counter += 1
-        # print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
-        #       % (epoch, idx, nbr_of_batches, time.time() - start_time, errD_fake + errD_real, errG))
+        counter += 1
+        print("Epoch: [%2d] [%4d/%4d] time: %4.4f" % (epoch, idx, nbr_of_batches, time.time() - start_time))
 
         if self.use_checkpoints and np.mod(counter, 500) == 2:
           try:
