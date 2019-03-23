@@ -257,7 +257,7 @@ class DCGAN(object):
         errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
         errG = self.g_loss.eval({self.z: batch_z})
         duration = (datetime.datetime.now() - begin).microseconds / 1000
-        print('duration of computing loss: {} ms. (np)'.format(duration))
+        print('duration of computing loss: {} ms.'.format(duration))
 
         counter += 1
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
