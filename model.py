@@ -1,8 +1,10 @@
 from __future__ import division
 
+import datetime
 import time
 from glob import glob
 
+from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuIterator
 from ops import *
 from utils import *
@@ -202,6 +204,9 @@ class DCGAN(object):
       else:
         print(" [!] Load failed...")
 
+    last_checkpoint_backup = int(time.time())
+    checkpoint_backup_delay_in_min = get_checkpoint_backup_delay()
+
     for epoch in xrange(config.epoch):
       self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
       np.random.shuffle(self.data)
@@ -245,10 +250,25 @@ class DCGAN(object):
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
               % (epoch, idx, batch_idxs, time.time() - start_time, errD_fake + errD_real, errG))
 
-        # self.build_frame(self.nbr_d_updates + self.nbr_g_updates, epoch, idx, sample_z, sample_inputs)
-
         if self.use_checkpoints and np.mod(counter, 500) == 2:
-          self.save(config.checkpoint_dir, counter)
+          try:
+            begin = datetime.datetime.now().replace(microsecond=0)
+            self.save(config.checkpoint_dir, counter)
+            duration = datetime.datetime.now().replace(microsecond=0) - begin
+            print('duration of checkpoint saving: {}'.format(duration))
+            if must_backup_checkpoint():
+              current_time = int(time.time())
+              last_checkpoint_backup_min_ago = (current_time - last_checkpoint_backup) / 60
+              print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
+              if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
+                print('time to save the thing')
+                backup_checkpoint(self.name)
+                last_checkpoint_backup = int(time.time())
+              else:
+                min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
+                print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
+          except Exception as e:
+            print('Error during checkpoint saving: {}'.format(e))
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

@@ -1,5 +1,4 @@
-import configparser
-import ftplib
+import os.path
 import os.path
 import shutil
 import subprocess
@@ -10,7 +9,8 @@ from os.path import isfile, join
 from PIL import Image
 
 import images_utils
-import shared_state
+from files_utils import upload_via_ftp
+from shared_state import ThreadsSharedState
 
 
 # noinspection PyListCreation
@@ -40,6 +40,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
   if sample_res is None or render_res is None or sample_res == render_res:
     render_video(images_folder)
     if upload_to_ftp:
+      print('Sending {}.mp4 to ftp'.format(images_folder))
       upload_via_ftp(images_folder + '.mp4')
   else:
     box_idx = 1
@@ -60,6 +61,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       render_video(box_folder_name)
 
       if upload_to_ftp:
+        print('Sending {}.mp4 to ftp'.format(box_folder_name))
         upload_via_ftp(box_folder_name + '.mp4')
 
       if delete_images:
@@ -71,20 +73,7 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
     shutil.rmtree(images_folder)
 
 
-def upload_via_ftp(file_name):
-  try:
-    config = configparser.ConfigParser()
-    config.read('ftp.ini')
-    session = ftplib.FTP(config['ftp']['host'], config['ftp']['user'], config['ftp']['password'])
-    file = open(file_name, 'rb')
-    session.storbinary('STOR ' + file_name, file)
-    file.close()
-    session.quit()
-  except Exception as exception:
-    print('error during FTP transfer -> {}'.format(exception))
-
-
-def scheduled_job(shared: shared_state.ThreadsSharedState):
+def periodic_render_job(shared: ThreadsSharedState, loop=True):
   print()
   print('------ periodic render ------')
   if shared is not None:
@@ -93,6 +82,7 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
     print('frame threshold: {}'.format(shared.get_frames_threshold()))
     print('sample resolution: {}'.format(shared.get_sample_res()))
     print('render resolution: {}'.format(shared.get_render_res()))
+    print('loop at the end: {}'.format(loop))
     print('')
 
     if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
@@ -110,10 +100,11 @@ def scheduled_job(shared: shared_state.ThreadsSharedState):
   print('----- / periodic render -----')
   print()
 
-  threading.Timer(120.0, scheduled_job, args=[shared]).start()
+  if loop:
+    threading.Timer(120.0, periodic_render_job, args=[shared]).start()
 
 
-def create_video_time_cut(shared: shared_state.ThreadsSharedState):
+def create_video_time_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]

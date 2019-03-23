@@ -12,20 +12,21 @@ import pandas as pd
 from PIL import Image
 
 import images_utils
-import shared_state
-import video_utils
 from dcgan_cmd_builder import *
+from files_utils import backup_checkpoint, must_backup_checkpoint
+from shared_state import ThreadsSharedState
+from video_utils import process_video, periodic_render_job
 
 
 class MyManager(BaseManager):
   pass
 
 
-BaseManager.register('ThreadsSharedState', shared_state.ThreadsSharedState)
+BaseManager.register('ThreadsSharedState', ThreadsSharedState)
 manager = BaseManager()
 manager.start()
 
-# defining constants
+# define constants
 fps = 60
 samples_prefix = 'samples_'
 data_folders = [f for f in listdir('data/')]
@@ -45,14 +46,14 @@ print()
 data = pd.read_csv(csv_files[0], encoding='UTF-8')
 
 # validate ftp
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   if row['upload_to_ftp'] and not os.path.exists('ftp.ini'):
     print('option upload_to_ftp == true but ftp.ini file was not found')
     exit(1)
 
 # validate names
 names = []
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   names.append(row['name'])
 
 if (len(names)) != len(set(names)):
@@ -60,9 +61,9 @@ if (len(names)) != len(set(names)):
   exit(1)
 
 # validate datasets
-for index, row in data.iterrows():
+for _, row in data.iterrows():
   if row['dataset'] not in data_folders:
-    print('Error: dataset ' + row['dataset'] + ' not found!')
+    print('Error: dataset {} not found!'.format(row['dataset']))
     exit(1)
 
 # determine if we do automatic periodic renders
@@ -77,11 +78,10 @@ shared_state = None
 if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
   shared_state = manager.ThreadsSharedState()
-  pool.apply(video_utils.scheduled_job, args=[shared_state])
+  pool.apply(periodic_render_job, args=[shared_state, True])
 
 # run the jobs
-for index, row in data.iterrows():
-  print('--------------------------------------------------------------------------------------------')
+for _, row in data.iterrows():
   print(str(row))
   try:
     data_path = 'data/' + row['dataset']
@@ -99,9 +99,13 @@ for index, row in data.iterrows():
 
     if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
       frames_per_iteration += int(row['nbr_g_updates'])
+    else:
+      frames_per_iteration += 2
 
     if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
       frames_per_iteration += int(row['nbr_d_updates'])
+    else:
+      frames_per_iteration += 1
 
     nbr_of_frames = frames_per_iteration * int(dataset_size / batch_size) * row['epoch']
     sample_res = (sample_width, sample_height)
@@ -129,7 +133,7 @@ for index, row in data.iterrows():
       print('render resolution: {}'.format(render_res))
       print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
       if auto_periodic_renders:
-        shared_state.set_sample_res((sample_width, sample_height))
+        shared_state.set_sample_res(sample_res)
         shared_state.set_render_res(render_res)
     print('')
 
@@ -140,14 +144,35 @@ for index, row in data.iterrows():
     print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
     print('duration of the job {} -> {}'.format(row['name'], duration))
-    print('--------------------------------------------------------------------------------------------')
 
-    # process video asynchronously
-    if not auto_periodic_renders and row['render_video'] and process.returncode == 0:
+    if process.returncode == 0:
       sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
-      pool.apply_async(video_utils.process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+
+      if row['render_video']:
+        if not auto_periodic_renders:
+          # process video async
+          pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+        else:
+          # process the last bit of video if scheduled render is enabled
+          print('render last video bit')
+          # noinspection PyUnresolvedReferences
+          last_bit_shared_state = manager.ThreadsSharedState()
+          last_bit_shared_state.set_folder(samples_prefix + row['name'])
+          last_bit_shared_state.set_job_name(row['name'])
+          last_bit_shared_state.set_frames_threshold(0)
+          last_bit_shared_state.set_upload_to_ftp(upload_to_ftp)
+          last_bit_shared_state.set_delete_at_the_end(delete_after)
+          last_bit_shared_state.set_current_cut(shared_state.get_current_cut())
+          if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+            shared_state.set_sample_res(sample_res)
+            shared_state.set_render_res(render_res)
+          pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
+
+      # backup checkpoint one last time
+      if must_backup_checkpoint() and row['use_checkpoint']:
+        backup_checkpoint(row['name'])
   except Exception as e:
     print('error during process of {} -> {}'.format(row['name'], e))
     print(traceback.format_exc())
