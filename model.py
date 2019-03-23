@@ -221,10 +221,10 @@ class DCGAN(object):
                 crop=self.crop,
                 grayscale=self.grayscale) for batch_file in self.data]
 
-    if self.grayscale:
-      all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
-    else:
-      all_batch_images_np = np.array(all_batch_images).astype(np.float32)
+    # if self.grayscale:
+    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
+    # else:
+    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)
 
     duration = (datetime.datetime.now() - begin).seconds
     print('duration of pre-loading all batch images: {} sec.'.format(duration))
@@ -232,9 +232,9 @@ class DCGAN(object):
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
         begin = datetime.datetime.now()
-        # batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
-        # batch_images_np = np.array(batch_images).astype(np.float32)
-        batch_images_np = all_batch_images_np[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_images_np = np.array(batch_images).astype(np.float32)
+        # batch_images_np = all_batch_images_np[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
         duration = (datetime.datetime.now() - begin).microseconds / 1000
         print('duration of loading images: {} ms. (np)'.format(duration))
