@@ -213,7 +213,7 @@ class DCGAN(object):
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
     begin = datetime.datetime.now()
-    batch = [
+    all_batch_images = [
       get_image(batch_file,
                 input_height=self.input_height,
                 input_width=self.input_width,
@@ -221,25 +221,27 @@ class DCGAN(object):
                 resize_width=self.output_width,
                 crop=self.crop,
                 grayscale=self.grayscale) for batch_file in self.data]
-    if self.grayscale:
-      all_batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
-    else:
-      all_batch_images = np.array(batch).astype(np.float32)
+
+    # if self.grayscale:
+    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)[:, :, :, None]
+    # else:
+    #   all_batch_images_np = np.array(all_batch_images).astype(np.float32)
 
     duration = (datetime.datetime.now() - begin).seconds
-    print('duration of loading all batch images: {} sec.'.format(duration))
+    print('duration of pre-loading all batch images: {} sec.'.format(duration))
 
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
         begin = datetime.datetime.now()
         batch_images = all_batch_images[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_images_np = np.array(batch_images).astype(np.float32)
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
         duration = (datetime.datetime.now() - begin).microseconds / 1000
-        print('duration of loading images: {} ms.'.format(duration))
+        print('duration of loading images: {} ms. (np)'.format(duration))
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
-          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images, self.z: batch_z})
+          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_images_np, self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
           self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
@@ -251,7 +253,7 @@ class DCGAN(object):
           self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
         errD_fake = self.d_loss_fake.eval({self.z: batch_z})
-        errD_real = self.d_loss_real.eval({self.inputs: batch_images})
+        errD_real = self.d_loss_real.eval({self.inputs: batch_images_np})
         errG = self.g_loss.eval({self.z: batch_z})
 
         counter += 1
