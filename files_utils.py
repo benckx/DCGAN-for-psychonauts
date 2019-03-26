@@ -67,7 +67,7 @@ def must_backup_checkpoint():
     if os.path.isfile('ftp.ini'):
       config = configparser.ConfigParser()
       config.read('ftp.ini')
-      return config['checkpoint']['backup']
+      return config['checkpoint']['backup'] == 'True'
   except Exception as e:
     print('Error: {}'.format(e))
 

@@ -92,6 +92,8 @@ class DCGAN(object):
       raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
     self.grayscale = (self.c_dim == 1)
+    self.frames_count = 0
+    self.frames_last_timestamps = []
 
     self.build_model()
 
@@ -233,6 +235,8 @@ class DCGAN(object):
     duration = (datetime.datetime.now() - begin).seconds
     print('duration of pre-loading all batch images: {} sec.'.format(duration))
 
+    self.job_start = datetime.datetime.now()
+
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
@@ -288,8 +292,27 @@ class DCGAN(object):
       duration = (datetime.datetime.now() - begin).microseconds / 1000
       print('frame saved in {} ms.'.format(duration))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
+      self.log_frame_rate()
     except Exception as e:
       print("one pic error! --> {}".format(e))
+
+  def log_frame_rate(self):
+    # global
+    print()
+    self.frames_count += 1
+    now = datetime.datetime.now()
+    minutes_since_job_started = ((now - self.job_start).seconds / 60)
+    print('frames/min (total): {:0.2f}'.format(self.frames_count / minutes_since_job_started))
+
+    # on last 3 min.
+    self.frames_last_timestamps.append(now)
+    for value in self.frames_last_timestamps:
+      delta = (now - value).seconds
+      if delta >= 3 * 60:
+        self.frames_last_timestamps.remove(value)
+
+    if minutes_since_job_started >= 3:
+      print('frames/min (3 min): {:0.2f}'.format(len(self.frames_last_timestamps) / 3))
 
   def discriminator(self, image, device, reuse=False):
     with tf.variable_scope("discriminator") as scope:
