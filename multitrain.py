@@ -150,7 +150,11 @@ for _, row in data.iterrows():
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
 
+      print("render video: {}".format(row['render_video']))
+      print("auto_periodic_renders: {}".format(auto_periodic_renders))
+
       if row['render_video']:
+        print("render video")
         if not auto_periodic_renders:
           # process video async
           pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
@@ -168,7 +172,9 @@ for _, row in data.iterrows():
           if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
             shared_state.set_sample_res(sample_res)
             shared_state.set_render_res(render_res)
-          pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
+          # pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
+          # TODO: do this async
+          periodic_render_job(last_bit_shared_state, False)
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
