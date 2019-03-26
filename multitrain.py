@@ -155,26 +155,26 @@ for _, row in data.iterrows():
 
       if row['render_video']:
         print("render video")
-        if not auto_periodic_renders:
-          # process video async
-          pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
-        else:
-          # process the last bit of video if scheduled render is enabled
-          print('render last video bit')
-          # noinspection PyUnresolvedReferences
-          last_bit_shared_state = manager.ThreadsSharedState()
-          last_bit_shared_state.set_folder(samples_prefix + row['name'])
-          last_bit_shared_state.set_job_name(row['name'])
-          last_bit_shared_state.set_frames_threshold(0)
-          last_bit_shared_state.set_upload_to_ftp(upload_to_ftp)
-          last_bit_shared_state.set_delete_at_the_end(delete_after)
-          last_bit_shared_state.set_current_cut(shared_state.get_current_cut())
-          if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
-            shared_state.set_sample_res(sample_res)
-            shared_state.set_render_res(render_res)
-          # pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
-          # TODO: do this async
-          periodic_render_job(last_bit_shared_state, False)
+        # if not auto_periodic_renders:
+        # process video async
+        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+        # else:
+        #   # process the last bit of video if scheduled render is enabled
+        #   print('render last video bit')
+        #   # noinspection PyUnresolvedReferences
+        #   last_bit_shared_state = manager.ThreadsSharedState()
+        #   last_bit_shared_state.set_folder(sample_folder)
+        #   last_bit_shared_state.set_job_name(row['name'])
+        #   last_bit_shared_state.set_frames_threshold(0)
+        #   last_bit_shared_state.set_upload_to_ftp(upload_to_ftp)
+        #   last_bit_shared_state.set_delete_at_the_end(delete_after)
+        #   last_bit_shared_state.set_current_cut(shared_state.get_current_cut())
+        #   if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+        #     shared_state.set_sample_res(sample_res)
+        #     shared_state.set_render_res(render_res)
+        #   # pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
+        #   # TODO: do this async
+        #   periodic_render_job(last_bit_shared_state, False)
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
