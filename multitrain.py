@@ -169,6 +169,7 @@ for _, row in data.iterrows():
             shared_state.set_sample_res(sample_res)
             shared_state.set_render_res(render_res)
           # pool.apply_async(periodic_render_job, args=[last_bit_shared_state, False])
+          # TODO: do this async
           periodic_render_job(last_bit_shared_state, False)
 
       # backup checkpoint one last time
