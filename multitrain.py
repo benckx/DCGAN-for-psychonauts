@@ -2,6 +2,7 @@ import datetime
 import io
 import os.path
 import subprocess
+import sys
 import traceback
 from multiprocessing import Pool
 from multiprocessing.managers import BaseManager
@@ -35,15 +36,33 @@ csv_files.sort()
 
 pool = Pool(processes=10)
 
-# validate csv config file
-if len(csv_files) == 0:
-  print('Error: no csv file')
-  exit(1)
+csv_file = None
+gpu_idx = None
 
-print('found config file: ' + csv_files[0])
+if len(sys.argv) > 1:
+  params = sys.argv[0:]
+  for idx, param in enumerate(params):
+    if param == '--config':
+      csv_file = params[idx + 1]
+      print('csv file == {}'.format(params[idx + 1]))
+    if param == '--gpu_idx':
+      gpu_idx = params[idx + 1]
+      print('gpu_idx == {}'.format(params[idx + 1]))
+
+# validate csv config file
+if csv_file is None:
+  if len(csv_files) == 0:
+    print('Error: no csv file')
+    exit(1)
+
+  csv_file = csv_files[0]
+  print('found config file: ' + csv_file)
+else:
+  print('config file passed in param: ' + csv_file)
+
 print()
 
-data = pd.read_csv(csv_files[0], encoding='UTF-8')
+data = pd.read_csv(csv_file, encoding='UTF-8')
 
 # validate ftp
 for _, row in data.iterrows():
@@ -138,7 +157,7 @@ for _, row in data.iterrows():
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
-    job_cmd = build_dcgan_cmd(row)
+    job_cmd = build_dcgan_cmd(row, gpu_idx)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
     process = subprocess.run(job_cmd)
     print('return code: {}'.format(process.returncode))

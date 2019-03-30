@@ -2,7 +2,7 @@ import math
 
 
 # noinspection PyListCreation
-def build_dcgan_cmd(cmd_row):
+def build_dcgan_cmd(cmd_row, gpu_idx):
   dcgan_cmd = ["python3", "main.py"]
 
   dcgan_cmd.append("--epoch")
@@ -70,6 +70,10 @@ def build_dcgan_cmd(cmd_row):
 
   dcgan_cmd.append('--sample_rate')
   dcgan_cmd.append('1')
+
+  if gpu_idx is not None:
+    dcgan_cmd.append("--gpu_idx")
+    dcgan_cmd.append(str(gpu_idx))
 
   dcgan_cmd.append('--train')
 

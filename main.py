@@ -47,6 +47,7 @@ flags.DEFINE_string("activation_g", "relu", "Activation function in Generator")
 flags.DEFINE_string("activation_d", "lrelu", "Activation function in Discriminator")
 flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimizer (per iteration)")
 flags.DEFINE_integer("nbr_d_updates", 1, "Number of update of Discriminator optimizer (per iteration)")
+flags.DEFINE_integer("gpu_idx", None, "Index of GPU")
 FLAGS = flags.FLAGS
 
 # default batch_size
@@ -135,7 +136,8 @@ def main(_):
       activation_g=FLAGS.activation_g.split(','),
       activation_d=FLAGS.activation_d.split(','),
       nbr_g_updates=FLAGS.nbr_g_updates,
-      nbr_d_updates=FLAGS.nbr_d_updates)
+      nbr_d_updates=FLAGS.nbr_d_updates,
+      gpu_idx=FLAGS.gpu_idx)
 
     show_all_variables()
 

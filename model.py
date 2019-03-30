@@ -5,7 +5,7 @@ import time
 from glob import glob
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
-from gpu_devices import GpuIterator
+from gpu_devices import GpuAllocator
 from ops import *
 from utils import *
 
@@ -22,7 +22,7 @@ class DCGAN(object):
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
-               activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1):
+               activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1, gpu_idx=None):
     """
 
     Args:
@@ -95,14 +95,16 @@ class DCGAN(object):
     self.frames_count = 0
     self.frames_last_timestamps = []
 
+    self.gpu_allocator = GpuAllocator(gpu_idx)
+    self.g_device = self.gpu_allocator.generator_device()
+    self.d_device = self.gpu_allocator.discriminator_device()
+
+    print('g device: {}'.format(self.g_device))
+    print('d device: {}'.format(self.d_device))
+
     self.build_model()
 
   def build_model(self):
-    gpu_iterator = GpuIterator()
-
-    self.g_device = '/device:GPU:1'
-    self.d_device = '/device:GPU:2'
-
     if self.y_dim:
       with tf.device('/device:GPU:1'):
         self.y = tf.placeholder(tf.float32, [self.batch_size, self.y_dim], name='y')
