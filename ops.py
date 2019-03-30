@@ -1,42 +1,45 @@
 from utils import *
 
-try:
-  image_summary = tf.image_summary
-  scalar_summary = tf.scalar_summary
-  histogram_summary = tf.histogram_summary
-  merge_summary = tf.merge_summary
-  SummaryWriter = tf.train.SummaryWriter
-except:
-  image_summary = tf.summary.image
-  scalar_summary = tf.summary.scalar
-  histogram_summary = tf.summary.histogram
-  merge_summary = tf.summary.merge
-  SummaryWriter = tf.summary.FileWriter
+with tf.device('/device:GPU:1'):
+  try:
+    image_summary = tf.image_summary
+    scalar_summary = tf.scalar_summary
+    histogram_summary = tf.histogram_summary
+    merge_summary = tf.merge_summary
+    SummaryWriter = tf.train.SummaryWriter
+  except:
+    image_summary = tf.summary.image
+    scalar_summary = tf.summary.scalar
+    histogram_summary = tf.summary.histogram
+    merge_summary = tf.summary.merge
+    SummaryWriter = tf.summary.FileWriter
 
-if "concat_v2" in dir(tf):
-  def concat(tensors, axis, *args, **kwargs):
-    return tf.concat_v2(tensors, axis, *args, **kwargs)
-else:
-  def concat(tensors, axis, *args, **kwargs):
-    return tf.concat(tensors, axis, *args, **kwargs)
+  if "concat_v2" in dir(tf):
+    def concat(tensors, axis, *args, **kwargs):
+      return tf.concat_v2(tensors, axis, *args, **kwargs)
+  else:
+    def concat(tensors, axis, *args, **kwargs):
+      return tf.concat(tensors, axis, *args, **kwargs)
 
 
 # batch normalization : deals with poor initialization helps gradient flow
 class batch_norm(object):
-  def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
+  def __init__(self, device, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
     with tf.variable_scope(name):
       self.epsilon  = epsilon
       self.momentum = momentum
       self.name = name
+      self.device = device
 
   def __call__(self, x, train=True):
-    return tf.contrib.layers.batch_norm(x,
-                      decay=self.momentum,
-                      updates_collections=None,
-                      epsilon=self.epsilon,
-                      scale=True,
-                      is_training=train,
-                      scope=self.name)
+    with tf.device(self.device):
+      return tf.contrib.layers.batch_norm(x,
+                        decay=self.momentum,
+                        updates_collections=None,
+                        epsilon=self.epsilon,
+                        scale=True,
+                        is_training=train,
+                        scope=self.name)
 
 
 def conv_cond_concat(x, y):
@@ -94,15 +97,16 @@ def lrelu(x, leak=0.2, name="lrelu"):
     return tf.maximum(x, leak*x)
 
 
-def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
+def linear(input_, output_size, device, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
   shape = input_.get_shape().as_list()
 
-  with tf.variable_scope(scope or "Linear"):
-    matrix = tf.get_variable("Matrix", [shape[1], output_size], tf.float32,
-                 tf.random_normal_initializer(stddev=stddev))
-    bias = tf.get_variable("bias", [output_size],
-      initializer=tf.constant_initializer(bias_start))
-    if with_w:
-      return tf.matmul(input_, matrix) + bias, matrix, bias
-    else:
-      return tf.matmul(input_, matrix) + bias
+  with tf.device(device):
+    with tf.variable_scope(scope or "Linear"):
+      matrix = tf.get_variable("Matrix", [shape[1], output_size], tf.float32,
+                   tf.random_normal_initializer(stddev=stddev))
+      bias = tf.get_variable("bias", [output_size],
+        initializer=tf.constant_initializer(bias_start))
+      if with_w:
+        return tf.matmul(input_, matrix) + bias, matrix, bias
+      else:
+        return tf.matmul(input_, matrix) + bias

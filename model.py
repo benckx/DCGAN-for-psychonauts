@@ -98,8 +98,14 @@ class DCGAN(object):
     self.build_model()
 
   def build_model(self):
+    gpu_iterator = GpuIterator()
+
+    self.g_device = '/device:GPU:1'
+    self.d_device = '/device:GPU:2'
+
     if self.y_dim:
-      self.y = tf.placeholder(tf.float32, [self.batch_size, self.y_dim], name='y')
+      with tf.device('/device:GPU:1'):
+        self.y = tf.placeholder(tf.float32, [self.batch_size, self.y_dim], name='y')
     else:
       self.y = None
 
@@ -108,38 +114,46 @@ class DCGAN(object):
     else:
       image_dims = [self.input_height, self.input_width, self.c_dim]
 
-    self.inputs = tf.placeholder(
-      tf.float32, [self.batch_size] + image_dims, name='real_images')
+    with tf.device(self.d_device):
+      self.inputs = tf.placeholder(
+        tf.float32, [self.batch_size] + image_dims, name='real_images')
 
     inputs = self.inputs
 
-    self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
-    self.z_sum = histogram_summary("z", self.z)
+    with tf.device(self.g_device):
+      self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
+      self.z_sum = histogram_summary("z", self.z)
 
-    gpu_iterator = GpuIterator()
-
-    self.G = self.generator(self.z, '/device:GPU:{}'.format(3))
-    self.D, self.D_logits = self.discriminator(inputs, '/device:GPU:{}'.format(2), reuse=False)
-    self.sampler = self.sampler(self.z, '/device:GPU:{}'.format(1))
-    self.D_, self.D_logits_ = self.discriminator(self.G, '/device:GPU:{}'.format(1), reuse=True)
+    self.G = self.generator(self.z, self.g_device)
+    self.D, self.D_logits = self.discriminator(inputs, self.d_device, reuse=False)
+    self.sampler = self.sampler(self.z, self.g_device)
+    self.D_, self.D_logits_ = self.discriminator(self.G, self.d_device, reuse=True)
 
     self.d_sum = histogram_summary("d", self.D)
     self.d__sum = histogram_summary("d_", self.D_)
     self.G_sum = image_summary("G", self.G)
 
-    def sigmoid_cross_entropy_with_logits(x, y):
+    def sigmoid_cross_entropy_with_logits(x, y, device):
       try:
-        return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, labels=y)
+        with tf.device(device):
+          return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, labels=y)
       except:
-        return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
+        with tf.device(device):
+          return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
 
-    d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D))
-    d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_))
-    g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_))
+    with tf.device(self.d_device):
+      d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D), self.d_device)
+      d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_), self.d_device)
 
-    self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
-    self.d_loss_fake = tf.reduce_mean(d_loss_fake_input_tensor)
-    self.g_loss = tf.reduce_mean(g_loss_input_tensor)
+    with tf.device(self.g_device):
+      g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_), self.g_device)
+
+    with tf.device(self.d_device):
+      self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
+      self.d_loss_fake = tf.reduce_mean(d_loss_fake_input_tensor)
+
+    with tf.device(self.g_device):
+      self.g_loss = tf.reduce_mean(g_loss_input_tensor)
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
@@ -154,7 +168,8 @@ class DCGAN(object):
     self.d_vars = [var for var in t_vars if 'd_' in var.name]
     self.g_vars = [var for var in t_vars if 'g_' in var.name]
 
-    self.saver = tf.train.Saver()
+    with tf.device('/device:GPU:1'):
+      self.saver = tf.train.Saver()
 
   def train(self, config):
     print()
@@ -168,8 +183,11 @@ class DCGAN(object):
     print("config.beta1_d: {}".format(config.beta1_d))
     print()
 
-    g_optim = adam(config.learning_rate_g, config.beta1_g).minimize(self.g_loss, var_list=self.g_vars)
-    d_optim = adam(config.learning_rate_d, config.beta1_d).minimize(self.d_loss, var_list=self.d_vars)
+    with tf.device(self.g_device):
+      g_optim = adam(config.learning_rate_g, config.beta1_g).minimize(self.g_loss, var_list=self.g_vars)
+
+    with tf.device(self.d_device):
+      d_optim = adam(config.learning_rate_d, config.beta1_d).minimize(self.d_loss, var_list=self.d_vars)
 
     try:
       tf.global_variables_initializer().run()
@@ -315,121 +333,124 @@ class DCGAN(object):
       print('frames/min (3 min): {:0.2f}'.format(len(self.frames_last_timestamps) / 3))
 
   def discriminator(self, image, device, reuse=False):
-    with tf.variable_scope("discriminator") as scope:
-      if reuse:
-        scope.reuse_variables()
+    with tf.device(device):
+      with tf.variable_scope("discriminator") as scope:
+        if reuse:
+          scope.reuse_variables()
 
-      nbr_layers = self.nbr_of_layers_d
-      print('init discriminator with ' + str(nbr_layers) + ' layers ...')
+        nbr_layers = self.nbr_of_layers_d
+        print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
-      # layer 0
-      previous_layer = conv2d(image, self.df_dim, device, name='d_h0_conv')
-      previous_layer = add_activation(self.activation_d[0], previous_layer)
+        # layer 0
+        previous_layer = conv2d(image, self.df_dim, device, name='d_h0_conv')
+        previous_layer = add_activation(self.activation_d[0], previous_layer)
 
-      # middle layers
-      for i in range(1, nbr_layers - 1):
-        output_dim = self.df_dim * (2 ** i)
-        layer_name = 'd_h' + str(i) + '_conv'
-        conv_layer = conv2d(previous_layer, output_dim, device, name=layer_name)
-        if self.batch_norm_d:
-          conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
-        previous_layer = add_activation(self.activation_d[i], conv_layer)
+        # middle layers
+        for i in range(1, nbr_layers - 1):
+          output_dim = self.df_dim * (2 ** i)
+          layer_name = 'd_h' + str(i) + '_conv'
+          conv_layer = conv2d(previous_layer, output_dim, device, name=layer_name)
+          if self.batch_norm_d:
+            conv_layer = batch_norm(device, name='d_bn{}'.format(i))(conv_layer)
+          previous_layer = add_activation(self.activation_d[i], conv_layer)
 
-      # last layer
-      layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
-      last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, layer_name)
-      return tf.nn.sigmoid(last_layer), last_layer
+        # last layer
+        layer_name = 'd_h' + str(nbr_layers - 1) + '_lin'
+        last_layer = linear(tf.reshape(previous_layer, [self.batch_size, -1]), 1, device, layer_name)
+        return tf.nn.sigmoid(last_layer), last_layer
 
   def generator(self, z, device):
-    with tf.variable_scope("generator") as scope:
-      nbr_layers = self.nbr_of_layers_g
-      print('init generator with ' + str(nbr_layers) + ' layers ...')
+    with tf.device(device):
+      with tf.variable_scope("generator") as scope:
+        nbr_layers = self.nbr_of_layers_g
+        print('init generator with ' + str(nbr_layers) + ' layers ...')
 
-      heights = []
-      widths = []
+        heights = []
+        widths = []
 
-      prev_h, prev_w = self.output_height, self.output_width
-      heights.append(prev_h)
-      widths.append(prev_w)
-
-      for i in range(1, nbr_layers):
-        prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+        prev_h, prev_w = self.output_height, self.output_width
         heights.append(prev_h)
         widths.append(prev_w)
 
-      mul = 2 ** (nbr_layers - 2)
+        for i in range(1, nbr_layers):
+          prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+          heights.append(prev_h)
+          widths.append(prev_w)
 
-      # layer 0
-      height = heights[nbr_layers - 1]
-      width = widths[nbr_layers - 1]
-      z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
-      prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-      if self.batch_norm_g:
-        prev_layer = batch_norm(name='g_bn0')(prev_layer)
-      prev_layer = add_activation(self.activation_g[0], prev_layer)
+        mul = 2 ** (nbr_layers - 2)
 
-      # middle layers
-      for i in range(1, nbr_layers - 1):
-        mul = mul // 2
-        height = heights[nbr_layers - 1 - i]
-        width = widths[nbr_layers - 1 - i]
-        layer_name = 'g_h' + str(i)
-        prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], device, name=layer_name)
+        # layer 0
+        height = heights[nbr_layers - 1]
+        width = widths[nbr_layers - 1]
+        z_ = linear(z, self.gf_dim * mul * height * width, device, 'g_h0_lin')
+        prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
         if self.batch_norm_g:
-          prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
-        prev_layer = add_activation(self.activation_g[i], prev_layer)
+          prev_layer = batch_norm(device, name='g_bn0')(prev_layer)
+        prev_layer = add_activation(self.activation_g[0], prev_layer)
 
-      # last layer
-      layer_name = 'g_h' + str(nbr_layers - 1)
-      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], device, name=layer_name)
+        # middle layers
+        for i in range(1, nbr_layers - 1):
+          mul = mul // 2
+          height = heights[nbr_layers - 1 - i]
+          width = widths[nbr_layers - 1 - i]
+          layer_name = 'g_h' + str(i)
+          prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], device, name=layer_name)
+          if self.batch_norm_g:
+            prev_layer = batch_norm(device, name='g_bn' + str(i))(prev_layer)
+          prev_layer = add_activation(self.activation_g[i], prev_layer)
 
-      return tf.nn.tanh(last_layer)
+        # last layer
+        layer_name = 'g_h' + str(nbr_layers - 1)
+        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], device, name=layer_name)
+
+        return tf.nn.tanh(last_layer)
 
   def sampler(self, z, device):
-    with tf.variable_scope("generator") as scope:
-      scope.reuse_variables()
+    with tf.device(device):
+      with tf.variable_scope("generator") as scope:
+        scope.reuse_variables()
 
-      nbr_layers = self.nbr_of_layers_g
+        nbr_layers = self.nbr_of_layers_g
 
-      heights = []
-      widths = []
+        heights = []
+        widths = []
 
-      prev_h, prev_w = self.output_height, self.output_width
-      heights.append(prev_h)
-      widths.append(prev_w)
-
-      for i in range(1, nbr_layers):
-        prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+        prev_h, prev_w = self.output_height, self.output_width
         heights.append(prev_h)
         widths.append(prev_w)
 
-      mul = 2 ** (nbr_layers - 2)
+        for i in range(1, nbr_layers):
+          prev_h, prev_w = conv_out_size_same(prev_h, 2), conv_out_size_same(prev_w, 2)
+          heights.append(prev_h)
+          widths.append(prev_w)
 
-      # layer 0
-      prev_layer = tf.reshape(
-        linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'),
-        [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
+        mul = 2 ** (nbr_layers - 2)
 
-      if self.batch_norm_g:
-        prev_layer = batch_norm(name='g_bn0')(prev_layer, train=False)
+        # layer 0
+        prev_layer = tf.reshape(
+          linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], device, 'g_h0_lin'),
+          [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
 
-      prev_layer = add_activation(self.activation_g[0], prev_layer)
-
-      # middle layers
-      for i in range(1, nbr_layers - 1):
-        mul = mul // 2
-        h = heights[nbr_layers - i - 1]
-        w = widths[nbr_layers - i - 1]
-        layer_name = 'g_h' + str(i)
-        prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], device, name=layer_name)
         if self.batch_norm_g:
-          prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
-        prev_layer = add_activation(self.activation_g[i], prev_layer)
+          prev_layer = batch_norm(device, name='g_bn0')(prev_layer, train=False)
 
-      # last layer
-      layer_name = 'g_h' + str(nbr_layers - 1)
-      last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], device, name=layer_name)
-      return tf.nn.tanh(last_layer)
+        prev_layer = add_activation(self.activation_g[0], prev_layer)
+
+        # middle layers
+        for i in range(1, nbr_layers - 1):
+          mul = mul // 2
+          h = heights[nbr_layers - i - 1]
+          w = widths[nbr_layers - i - 1]
+          layer_name = 'g_h' + str(i)
+          prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], device, name=layer_name)
+          if self.batch_norm_g:
+            prev_layer = batch_norm(device, name='g_bn' + str(i))(prev_layer, train=False)
+          prev_layer = add_activation(self.activation_g[i], prev_layer)
+
+        # last layer
+        layer_name = 'g_h' + str(nbr_layers - 1)
+        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], device, name=layer_name)
+        return tf.nn.tanh(last_layer)
 
   @property
   def model_dir(self):
