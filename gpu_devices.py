@@ -52,3 +52,9 @@ class GpuAllocator:
       return self.devices[0].name
     elif self.nbr_devices == 2:
       return self.devices[0].name
+
+  def other_things_device(self):
+    if self.gpu_idx is not None:
+      return self.devices[self.gpu_idx].name
+    else:
+      return self.devices[len(self.devices) - 1]
