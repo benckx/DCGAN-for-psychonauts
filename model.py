@@ -1,8 +1,8 @@
 from __future__ import division
 
 import datetime
+import glob
 import time
-from glob import glob
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
@@ -80,7 +80,15 @@ class DCGAN(object):
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
 
-    self.data = glob(os.path.join("./data", self.dataset_name, self.input_fname_pattern))
+    # load folders and sub-folders
+    image_folder = "./data/" + self.dataset_name
+    self.data = []
+    self.data.extend(glob.iglob(image_folder + '/**/*.jpg', recursive=True))
+    self.data.extend(glob.iglob(image_folder + '/**/*.jpeg', recursive=True))
+    self.data.extend(glob.iglob(image_folder + '/**/*.png', recursive=True))
+
+    print('dataset size: {}'.format(len(self.data)))
+
     np.random.shuffle(self.data)
     imread_img = imread(self.data[0])
     if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
@@ -229,7 +237,6 @@ class DCGAN(object):
     checkpoint_backup_delay_in_min = get_checkpoint_backup_delay()
 
     # cache batch images
-    self.data = glob(os.path.join("./data", config.dataset, self.input_fname_pattern))
     np.random.shuffle(self.data)
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
