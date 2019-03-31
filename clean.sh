@@ -2,5 +2,5 @@
 rm -rf samples_*
 rm -rf logs
 rm -rf checkpoint
-rm -rf nohup.out
+rm -rf *.out
 killall -9 python3

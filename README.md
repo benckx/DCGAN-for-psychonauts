@@ -1,7 +1,7 @@
 # About
 The idea is to:
 * Tinker a bit with the [the original project](https://github.com/carpedm20/DCGAN-tensorflow) 
-* Understand how it works
+* And understand how it works
 * Interface with [another project](https://github.com/benckx/dnn-movie-posters) about movies posters
 * Create psychedelic videos (portfolio can be found [here](https://www.avloops.com/users/benckx) and [here](https://www.vjloops.com/users/20585.html))
 
