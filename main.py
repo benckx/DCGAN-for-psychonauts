@@ -1,13 +1,12 @@
 import io
 import os
 import os.path
-from os import listdir
-from os.path import isfile, join
 
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+from images_utils import get_images_recursively
 from model import DCGAN
 from utils import show_all_variables
 from utils import visualize
@@ -66,8 +65,8 @@ output_height = FLAGS.output_height
 
 if (input_height is None and input_width is None) or (output_height is None and output_width is None):
   data_path = 'data/' + FLAGS.dataset
-  first_image = [f for f in listdir(data_path) if isfile(join(data_path, f))][0]
-  image_data = open(data_path + '/' + first_image, "rb").read()
+  first_image = get_images_recursively(data_path)[0]
+  image_data = open(first_image, "rb").read()
   image = Image.open(io.BytesIO(image_data))
   rgb_im = image.convert('RGB')
   input_width = rgb_im.size[0]

@@ -15,6 +15,7 @@ from PIL import Image
 import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
+from images_utils import get_images_recursively
 from shared_state import ThreadsSharedState
 from video_utils import process_video, periodic_render_job
 
@@ -104,8 +105,8 @@ for _, row in data.iterrows():
   print(str(row))
   try:
     data_path = 'data/' + row['dataset']
-    first_image = [f for f in listdir(data_path) if isfile(join(data_path, f))][0]
-    image = Image.open(io.BytesIO(open(data_path + '/' + first_image, "rb").read()))
+    first_image = get_images_recursively(data_path)[0]
+    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
     rgb_im = image.convert('RGB')
     input_width = rgb_im.size[0]
     input_height = rgb_im.size[1]

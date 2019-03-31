@@ -1,3 +1,6 @@
+import glob
+
+
 def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('Error: Resolution not divisible: {}, {}'.format(sample_res, render_res))
@@ -15,3 +18,11 @@ def get_boxes(sample_res, render_res):
       boxes.append([x1, y1, x2, y2])
 
   return boxes
+
+
+def get_images_recursively(image_folder):
+  images = []
+  images.extend(glob.iglob(image_folder + '/**/*.jpg', recursive=True))
+  images.extend(glob.iglob(image_folder + '/**/*.jpeg', recursive=True))
+  images.extend(glob.iglob(image_folder + '/**/*.png', recursive=True))
+  return images

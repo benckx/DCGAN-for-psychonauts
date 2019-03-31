@@ -1,11 +1,11 @@
 from __future__ import division
 
 import datetime
-import glob
 import time
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
+from images_utils import get_images_recursively
 from ops import *
 from utils import *
 
@@ -80,13 +80,7 @@ class DCGAN(object):
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
 
-    # load folders and sub-folders
-    image_folder = "./data/" + self.dataset_name
-    self.data = []
-    self.data.extend(glob.iglob(image_folder + '/**/*.jpg', recursive=True))
-    self.data.extend(glob.iglob(image_folder + '/**/*.jpeg', recursive=True))
-    self.data.extend(glob.iglob(image_folder + '/**/*.png', recursive=True))
-
+    self.data = get_images_recursively("./data/" + self.dataset_name)
     print('dataset size: {}'.format(len(self.data)))
 
     np.random.shuffle(self.data)
