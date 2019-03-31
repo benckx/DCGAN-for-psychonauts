@@ -519,6 +519,8 @@ def add_activation(activation, layer):
     return tf.nn.softsign(layer)
   elif activation == "softmax":
     return tf.nn.softmax(layer)
+  elif activation == "swish":
+    return tf.nn.swish(layer)
   else:
     print('Unknown activation {}'.format(activation))
     exit(1)
