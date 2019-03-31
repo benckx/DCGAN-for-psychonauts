@@ -10,6 +10,8 @@ import pprint
 import random
 from time import gmtime, strftime
 
+import datetime
+
 import cv2
 import numpy as np
 import scipy.misc
@@ -72,8 +74,12 @@ def merge(images, size):
                      'must have dimensions: HxW or HxWx3 or HxWx4')
 
 def imsave(images, size, path):
+  begin = datetime.datetime.now()
   image = np.squeeze(merge(images, size))
-  return scipy.misc.imsave(path, image)
+  result = scipy.misc.imsave(path, image)
+  duration = (datetime.datetime.now() - begin).microseconds / 1000
+  print('frame saved in {} ms.'.format(duration))
+  return result
 
 def center_crop(x, crop_h, crop_w,
                 resize_h=64, resize_w=64):

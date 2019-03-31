@@ -1,5 +1,7 @@
 from __future__ import division
 
+from multiprocessing import Pool
+
 import datetime
 import time
 
@@ -9,6 +11,7 @@ from images_utils import get_images_recursively
 from ops import *
 from utils import *
 
+frames_saving_pool = Pool(processes=20)
 
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
@@ -308,10 +311,7 @@ class DCGAN(object):
         },
       )
       file_name = './{}/train_{:06d}_{:06d}_{:03d}.png'.format(self.sample_dir, epoch, idx, suffix)
-      begin = datetime.datetime.now()
-      save_images(samples, (self.grid_height, self.grid_width), file_name)
-      duration = (datetime.datetime.now() - begin).microseconds / 1000
-      print('frame saved in {} ms.'.format(duration))
+      frames_saving_pool.apply_async(save_images, (samples, (self.grid_height, self.grid_width), file_name))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
       self.log_frame_rate()
     except Exception as e:
