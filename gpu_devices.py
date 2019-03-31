@@ -70,4 +70,5 @@ class GpuAllocator:
     elif self.gpu_idx is not None:
       return self.gpu_devices[self.gpu_idx].name
     else:
-      return self.gpu_devices[len(self.gpu_devices) - 1]
+      return self.gpu_devices[len(self.gpu_devices) - 1].name
+
