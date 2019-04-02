@@ -300,7 +300,7 @@ class DCGAN(object):
             print('Error during checkpoint saving: {}'.format(e))
 
   def load_images_batch(self, idx, nbr_of_batches):
-    print('caching batch {}/{}'.format((idx + 1), nbr_of_batches))
+    print('loading batch {}/{}'.format((idx + 1), nbr_of_batches))
     image_data = [
       get_image(batch_file,
                 input_height=self.input_height,
