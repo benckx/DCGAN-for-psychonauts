@@ -1,9 +1,7 @@
 from __future__ import division
 
-from multiprocessing import Pool
-
-import datetime
 import time
+from multiprocessing import Pool
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
@@ -237,25 +235,25 @@ class DCGAN(object):
     np.random.shuffle(self.data)
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
-    begin = datetime.datetime.now()
-
-    batch_cache = []
-    for idx in xrange(0, nbr_of_batches):
-      print('caching batch {}/{}'.format((idx + 1), nbr_of_batches))
-      image_data = [
-        get_image(batch_file,
-                  input_height=self.input_height,
-                  input_width=self.input_width,
-                  resize_height=self.output_height,
-                  resize_width=self.output_width,
-                  crop=self.crop,
-                  grayscale=self.grayscale) for batch_file in
-        self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
-
-      batch_cache.append(np.array(image_data).astype(np.float32))
-
-    duration = (datetime.datetime.now() - begin).seconds
-    print('duration of pre-loading all batch images: {} sec.'.format(duration))
+    # begin = datetime.datetime.now()
+    #
+    # batch_cache = []
+    # for idx in xrange(0, nbr_of_batches):
+    #   print('caching batch {}/{}'.format((idx + 1), nbr_of_batches))
+    #   image_data = [
+    #     get_image(batch_file,
+    #               input_height=self.input_height,
+    #               input_width=self.input_width,
+    #               resize_height=self.output_height,
+    #               resize_width=self.output_width,
+    #               crop=self.crop,
+    #               grayscale=self.grayscale) for batch_file in
+    #     self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+    #
+    #   batch_cache.append(np.array(image_data).astype(np.float32))
+    #
+    # duration = (datetime.datetime.now() - begin).seconds
+    # print('duration of pre-loading all batch images: {} sec.'.format(duration))
 
     self.job_start = datetime.datetime.now()
     total_number_of_iterations = config.epoch * nbr_of_batches
@@ -267,7 +265,7 @@ class DCGAN(object):
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
-          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_cache[idx], self.z: batch_z})
+          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: self.load_images_batch(idx, nbr_of_batches), self.z: batch_z})
           # self.writer.add_summary(summary_str, counter)
           self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
@@ -300,6 +298,20 @@ class DCGAN(object):
                 print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
           except Exception as e:
             print('Error during checkpoint saving: {}'.format(e))
+
+  def load_images_batch(self, idx, nbr_of_batches):
+    print('caching batch {}/{}'.format((idx + 1), nbr_of_batches))
+    image_data = [
+      get_image(batch_file,
+                input_height=self.input_height,
+                input_width=self.input_width,
+                resize_height=self.output_height,
+                resize_width=self.output_width,
+                crop=self.crop,
+                grayscale=self.grayscale) for batch_file in
+      self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+
+    return np.array(image_data).astype(np.float32)
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:
