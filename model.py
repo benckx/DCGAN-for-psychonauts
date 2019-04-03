@@ -284,7 +284,7 @@ class DCGAN(object):
             print('Error during checkpoint saving: {}'.format(e))
 
   def get_batch_data(self, idx):
-    if idx in self.data_cache:
+    if len(self.data_cache) > 0:
       return self.data_cache[idx]
     else:
       return self.load_images_batch(idx)
@@ -293,13 +293,14 @@ class DCGAN(object):
     begin = datetime.datetime.now()
 
     for idx in xrange(0, nbr_of_batches):
-      print('caching data {}/{}'.format((idx + 1), nbr_of_batches))
+      print('caching data {}/{}'.format(idx, nbr_of_batches - 1))
       self.data_cache.append(self.load_images_batch(idx))
 
     duration = (datetime.datetime.now() - begin).seconds
     print('total duration of caching: {} sec.'.format(duration))
 
   def load_images_batch(self, idx):
+    print('loading data {}'.format(idx))
     image_data = [imread(image_path) for image_path in self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
     return np.array(image_data).astype(np.float32)
 
