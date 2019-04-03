@@ -39,6 +39,7 @@ pool = Pool(processes=10)
 
 csv_file = None
 gpu_idx = None
+enable_cache = True
 
 if len(sys.argv) > 1:
   params = sys.argv[0:]
@@ -49,6 +50,8 @@ if len(sys.argv) > 1:
     if param == '--gpu_idx':
       gpu_idx = params[idx + 1]
       print('gpu_idx == {}'.format(params[idx + 1]))
+    if param == '--disable_cache':
+      enable_cache = False
 
 # validate csv config file
 if csv_file is None:
@@ -158,7 +161,7 @@ for _, row in data.iterrows():
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
-    job_cmd = build_dcgan_cmd(row, gpu_idx)
+    job_cmd = build_dcgan_cmd(row, gpu_idx, enable_cache)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
     process = subprocess.run(job_cmd)
     print('return code: {}'.format(process.returncode))

@@ -2,7 +2,7 @@ import math
 
 
 # noinspection PyListCreation
-def build_dcgan_cmd(cmd_row, gpu_idx):
+def build_dcgan_cmd(cmd_row, gpu_idx, enable_cache):
   dcgan_cmd = ["python3", "main.py"]
 
   dcgan_cmd.append("--epoch")
@@ -74,6 +74,9 @@ def build_dcgan_cmd(cmd_row, gpu_idx):
   if gpu_idx is not None:
     dcgan_cmd.append("--gpu_idx")
     dcgan_cmd.append(str(gpu_idx))
+
+  if not enable_cache:
+    dcgan_cmd.append("--disable_cache")
 
   dcgan_cmd.append('--train')
 
