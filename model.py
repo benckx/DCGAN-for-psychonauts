@@ -301,7 +301,16 @@ class DCGAN(object):
 
   def load_images_batch(self, idx):
     print('loading data {}'.format(idx))
-    image_data = [imread(image_path) for image_path in self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+    image_data = [
+      get_image(batch_file,
+                input_height=self.input_height,
+                input_width=self.input_width,
+                resize_height=self.output_height,
+                resize_width=self.output_width,
+                crop=self.crop,
+                grayscale=self.grayscale) for batch_file in
+      self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+
     return np.array(image_data).astype(np.float32)
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
