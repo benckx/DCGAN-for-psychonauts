@@ -3,16 +3,16 @@ Some codes from https://github.com/Newmu/dcgan_code
 """
 from __future__ import division
 
-import math
+import colorsys
+import datetime
 import os
 import os.path
 import pprint
 import random
 from time import gmtime, strftime
 
-import datetime
-
 import cv2
+import math
 import numpy as np
 import scipy.misc
 import tensorflow as tf
@@ -46,7 +46,20 @@ def imread(path, grayscale=False):
     img_bgr = cv2.imread(path)
     # Reference: https://stackoverflow.com/a/15074748/
     img_rgb = img_bgr[..., ::-1]
-    return img_rgb.astype(np.float)
+    img_hsl = convert_to_hsl(img_rgb)
+    return img_hsl.astype(np.float)
+
+
+def convert_to_hsl(image):
+  result = np.zeros(shape=image.shape)
+  for x, row in enumerate(image):
+    for y, p in enumerate(row):
+      h, l, s = colorsys.rgb_to_hls(p[0].astype(np.float), p[1].astype(np.float), p[2].astype(np.float))
+      result[x][y][0] = h
+      result[x][y][1] = l
+      result[x][y][2] = s
+
+  return result
 
 
 def merge_images(images, size):
@@ -99,7 +112,7 @@ def transform(image, input_height, input_width,
       resize_height, resize_width)
   else:
     cropped_image = scipy.misc.imresize(image, [resize_height, resize_width])
-  return np.array(cropped_image)/127.5 - 1.
+  return np.array(cropped_image)#/127.5 - 1.
 
 def inverse_transform(images):
   return (images+1.)/2.
