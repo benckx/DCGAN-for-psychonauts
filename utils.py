@@ -46,8 +46,8 @@ def imread(path, grayscale=False):
     img_bgr = cv2.imread(path)
     # Reference: https://stackoverflow.com/a/15074748/
     img_rgb = img_bgr[..., ::-1]
-    img_hsl = convert_to_hsl(img_rgb)
-    return img_hsl.astype(np.float)
+    # img_hsl = convert_to_hsl(img_rgb)
+    return img_rgb.astype(np.float)
 
 
 def convert_to_hsl(image):
