@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
-from images_utils import get_images_recursively
+from images_utils import get_images_recursively, DataSetManager
 from ops import *
 from utils import *
 
@@ -95,8 +95,8 @@ class DCGAN(object):
     if len(self.data) < self.batch_size:
       raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
-    self.enable_cache = enable_cache
-    self.data_cache = []
+    # self.enable_cache = enable_cache
+    # self.data_cache = []
 
     self.grayscale = (self.c_dim == 1)
     self.frames_count = 0
@@ -106,6 +106,8 @@ class DCGAN(object):
 
     print('generator device: {}'.format(self.gpu_allocator.generator_device()))
     print('discriminator device: {}'.format(self.gpu_allocator.discriminator_device()))
+
+    self.data_set_manager = DataSetManager(self.dataset_name, enable_cache, 'rgb')
 
     self.build_model()
 
@@ -207,19 +209,21 @@ class DCGAN(object):
 
     sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
 
-    sample_files = self.data[0:self.sample_num]
-    sample = [
-      get_image(sample_file,
-                input_height=self.input_height,
-                input_width=self.input_width,
-                resize_height=self.output_height,
-                resize_width=self.output_width,
-                crop=self.crop,
-                grayscale=self.grayscale) for sample_file in sample_files]
-    if self.grayscale:
-      sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-    else:
-      sample_inputs = np.array(sample).astype(np.float32)
+    # sample_files = self.data[0:self.sample_num]
+    # sample = [
+    #   get_image(sample_file,
+    #             input_height=self.input_height,
+    #             input_width=self.input_width,
+    #             resize_height=self.output_height,
+    #             resize_width=self.output_width,
+    #             crop=self.crop,
+    #             grayscale=self.grayscale) for sample_file in sample_files]
+    # if self.grayscale:
+    #   sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
+    # else:
+    #   sample_inputs = np.array(sample).astype(np.float32)
+
+    sample_inputs = self.data_set_manager.get_random_images(self.sample_num)
 
     counter = 1
     start_time = time.time()
@@ -238,20 +242,19 @@ class DCGAN(object):
     np.random.shuffle(self.data)
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
-    if self.enable_cache:
-        self.fill_data_cache(nbr_of_batches)
+    # if self.enable_cache:
+    #     self.fill_data_cache(nbr_of_batches)
 
     self.job_start = datetime.datetime.now()
-    total_number_of_iterations = config.epoch * nbr_of_batches
 
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
-        # TODO: do before?
         batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
         # Update D network
         for i in range(0, self.nbr_d_updates):
-          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: self.get_batch_data(idx), self.z: batch_z})
+          batch_data = self.data_set_manager.get_random_images(self.batch_size)
+          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
           self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
         # Update G network
@@ -283,35 +286,35 @@ class DCGAN(object):
           except Exception as e:
             print('Error during checkpoint saving: {}'.format(e))
 
-  def get_batch_data(self, idx):
-    if len(self.data_cache) > 0:
-      return self.data_cache[idx]
-    else:
-      return self.load_images_batch(idx)
-
-  def fill_data_cache(self, nbr_of_batches):
-    begin = datetime.datetime.now()
-
-    for idx in xrange(0, nbr_of_batches):
-      print('caching data {}/{}'.format(idx, nbr_of_batches - 1))
-      self.data_cache.append(self.load_images_batch(idx))
-
-    duration = (datetime.datetime.now() - begin).seconds
-    print('total duration of caching: {} sec.'.format(duration))
-
-  def load_images_batch(self, idx):
-    print('loading data {}'.format(idx))
-    image_data = [
-      get_image(batch_file,
-                input_height=self.input_height,
-                input_width=self.input_width,
-                resize_height=self.output_height,
-                resize_width=self.output_width,
-                crop=self.crop,
-                grayscale=self.grayscale) for batch_file in
-      self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
-
-    return np.array(image_data).astype(np.float32)
+  # def get_batch_data(self, idx):
+  #   if len(self.data_cache) > 0:
+  #     return self.data_cache[idx]
+  #   else:
+  #     return self.load_images_batch(idx)
+  #
+  # def fill_data_cache(self, nbr_of_batches):
+  #   begin = datetime.datetime.now()
+  #
+  #   for idx in xrange(0, nbr_of_batches):
+  #     print('caching data {}/{}'.format(idx, nbr_of_batches - 1))
+  #     self.data_cache.append(self.load_images_batch(idx))
+  #
+  #   duration = (datetime.datetime.now() - begin).seconds
+  #   print('total duration of caching: {} sec.'.format(duration))
+  #
+  # def load_images_batch(self, idx):
+  #   print('loading data {}'.format(idx))
+  #   image_data = [
+  #     get_image(batch_file,
+  #               input_height=self.input_height,
+  #               input_width=self.input_width,
+  #               resize_height=self.output_height,
+  #               resize_width=self.output_width,
+  #               crop=self.crop,
+  #               grayscale=self.grayscale) for batch_file in
+  #     self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
+  #
+  #   return np.array(image_data).astype(np.float32)
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

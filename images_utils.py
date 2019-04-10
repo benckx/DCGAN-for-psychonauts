@@ -49,18 +49,27 @@ class DataSetManager:
     self.base_folder = base_folder
     self.enable_cache = enable_cache
     self.color_model = color_model
-    self.rgb_np_file_folder = 'data/' + base_folder + '-rgb'
-    self.hsl_np_file_folder = 'data/' + base_folder + '-hsl'
+    self.rgb_np_file_folder = './data/' + base_folder + '-rgb'
+    self.hsl_np_file_folder = './data/' + base_folder + '-hsl'
     self.has_rgb_np_file_cache = os.path.exists(self.rgb_np_file_folder)
     self.has_hsl_np_file_cache = os.path.exists(self.hsl_np_file_folder)
-    self.images_paths = get_images_recursively('data/' + base_folder)
+    if self.has_rgb_np_file_cache:
+      files = [n for n in os.listdir(self.rgb_np_file_folder) if os.path.isfile(self.rgb_np_file_folder + '/' + n)]
+      self.nbr_of_elements_rgb_np_file_cache = len(files)
+    else:
+      self.nbr_of_elements_rgb_np_file_cache = 0
+    self.images_paths = get_images_recursively('./data/' + base_folder)
     self.image_cache = []
     if self.enable_cache:
       self.cache()
 
+    print('self.has_rgb_np_file_cache -> {}'.format(self.has_rgb_np_file_cache))
+    print('self.has_hsl_np_file_cache -> {}'.format(self.has_hsl_np_file_cache))
+
   def cache(self):
     if self.color_model == 'rgb':
       for image_path in self.images_paths:
+        print('caching image ' + image_path)
         self.image_cache.append(normalize_rgb(imread(image_path)))
 
   def get_random_image(self):
@@ -70,9 +79,8 @@ class DataSetManager:
       return self.image_cache[idx]
     elif self.color_model == 'rgb':
       if self.has_rgb_np_file_cache:
-        nbr_of_elements = len([name for name in os.listdir(self.rgb_np_file_folder) if os.path.isfile(name)])
-        idx = random.randint(0, nbr_of_elements - 1)
-        np_file_path = self.rgb_np_file_folder + '/' + idx
+        idx = random.randint(0, self.nbr_of_elements_rgb_np_file_cache - 1)
+        np_file_path = self.rgb_np_file_folder + '/' + str(idx) + '.npy'
         print('image loaded from ' + np_file_path)
         return np.load(np_file_path)
       elif not self.has_rgb_np_file_cache:
