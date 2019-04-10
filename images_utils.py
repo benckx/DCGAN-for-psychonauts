@@ -1,3 +1,4 @@
+import colorsys
 import glob
 import os
 import random
@@ -33,6 +34,18 @@ def get_images_recursively(image_folder):
   return images
 
 
+def convert_to_hsl(image):
+  result = np.zeros(shape=image.shape)
+  for x, row in enumerate(image):
+    for y, p in enumerate(row):
+      h, l, s = colorsys.rgb_to_hls(p[0].astype(np.float32), p[1].astype(np.float32), p[2].astype(np.float32))
+      result[x][y][0] = h
+      result[x][y][1] = l
+      result[x][y][2] = s
+
+  return result
+
+
 def imread(path):
   img_bgr = cv2.imread(path)
   img_rgb = img_bgr[..., ::-1]
@@ -53,11 +66,19 @@ class DataSetManager:
     self.hsl_np_file_folder = './data/' + base_folder + '-hsl'
     self.has_rgb_np_file_cache = os.path.exists(self.rgb_np_file_folder)
     self.has_hsl_np_file_cache = os.path.exists(self.hsl_np_file_folder)
+
     if self.has_rgb_np_file_cache:
       files = [n for n in os.listdir(self.rgb_np_file_folder) if os.path.isfile(self.rgb_np_file_folder + '/' + n)]
       self.nbr_of_elements_rgb_np_file_cache = len(files)
     else:
       self.nbr_of_elements_rgb_np_file_cache = 0
+
+    if self.has_hsl_np_file_cache:
+      files = [n for n in os.listdir(self.hsl_np_file_folder) if os.path.isfile(self.hsl_np_file_folder + '/' + n)]
+      self.nbr_of_elements_hsl_np_file_cache = len(files)
+    else:
+      self.nbr_of_elements_hsl_np_file_cache = 0
+
     self.images_paths = get_images_recursively('./data/' + base_folder)
     self.image_cache = []
     if self.enable_cache:
@@ -67,6 +88,7 @@ class DataSetManager:
     print('self.has_hsl_np_file_cache -> {}'.format(self.has_hsl_np_file_cache))
 
   def cache(self):
+    # TODO: cache HSL
     if self.color_model == 'rgb':
       for image_path in self.images_paths:
         print('caching image ' + image_path)
@@ -88,6 +110,13 @@ class DataSetManager:
         image_path = self.images_paths[idx]
         print('image loaded from ' + image_path)
         return normalize_rgb(imread(image_path))
+    elif self.color_model == 'hsl':
+      # TODO: open directly if not file-cached
+      if self.has_hsl_np_file_cache:
+        idx = random.randint(0, self.nbr_of_elements_hsl_np_file_cache - 1)
+        np_file_path = self.hsl_np_file_folder + '/' + str(idx) + '.npy'
+        print('image loaded from ' + np_file_path)
+        return np.load(np_file_path)
 
   def get_random_images(self, nbr):
     result = []

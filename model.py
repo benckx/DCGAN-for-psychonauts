@@ -95,9 +95,6 @@ class DCGAN(object):
     if len(self.data) < self.batch_size:
       raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
-    # self.enable_cache = enable_cache
-    # self.data_cache = []
-
     self.grayscale = (self.c_dim == 1)
     self.frames_count = 0
     self.frames_last_timestamps = []
@@ -205,25 +202,6 @@ class DCGAN(object):
 
     self.g_sum = merge_summary([self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
     self.d_sum = merge_summary([self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
-    # self.writer = SummaryWriter("./logs", self.sess.graph)
-
-    sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
-
-    # sample_files = self.data[0:self.sample_num]
-    # sample = [
-    #   get_image(sample_file,
-    #             input_height=self.input_height,
-    #             input_width=self.input_width,
-    #             resize_height=self.output_height,
-    #             resize_width=self.output_width,
-    #             crop=self.crop,
-    #             grayscale=self.grayscale) for sample_file in sample_files]
-    # if self.grayscale:
-    #   sample_inputs = np.array(sample).astype(np.float32)[:, :, :, None]
-    # else:
-    #   sample_inputs = np.array(sample).astype(np.float32)
-
-    sample_inputs = self.data_set_manager.get_random_images(self.sample_num)
 
     counter = 1
     start_time = time.time()
@@ -242,10 +220,10 @@ class DCGAN(object):
     np.random.shuffle(self.data)
     nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
 
-    # if self.enable_cache:
-    #     self.fill_data_cache(nbr_of_batches)
-
     self.job_start = datetime.datetime.now()
+
+    sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
+    sample_inputs = self.data_set_manager.get_random_images(self.sample_num)
 
     for epoch in xrange(config.epoch):
       for idx in xrange(0, nbr_of_batches):
@@ -285,36 +263,6 @@ class DCGAN(object):
                 print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
           except Exception as e:
             print('Error during checkpoint saving: {}'.format(e))
-
-  # def get_batch_data(self, idx):
-  #   if len(self.data_cache) > 0:
-  #     return self.data_cache[idx]
-  #   else:
-  #     return self.load_images_batch(idx)
-  #
-  # def fill_data_cache(self, nbr_of_batches):
-  #   begin = datetime.datetime.now()
-  #
-  #   for idx in xrange(0, nbr_of_batches):
-  #     print('caching data {}/{}'.format(idx, nbr_of_batches - 1))
-  #     self.data_cache.append(self.load_images_batch(idx))
-  #
-  #   duration = (datetime.datetime.now() - begin).seconds
-  #   print('total duration of caching: {} sec.'.format(duration))
-  #
-  # def load_images_batch(self, idx):
-  #   print('loading data {}'.format(idx))
-  #   image_data = [
-  #     get_image(batch_file,
-  #               input_height=self.input_height,
-  #               input_width=self.input_width,
-  #               resize_height=self.output_height,
-  #               resize_width=self.output_width,
-  #               crop=self.crop,
-  #               grayscale=self.grayscale) for batch_file in
-  #     self.data[idx * self.batch_size:(idx + 1) * self.batch_size]]
-  #
-  #   return np.array(image_data).astype(np.float32)
 
   def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
     try:

@@ -1,11 +1,13 @@
 import os
 import os.path
+from os import listdir
+from os.path import join, isdir
 
 import cv2
 import numpy as np
 
+from images_utils import convert_to_hsl
 from images_utils import get_images_recursively
-from utils import convert_to_hsl
 
 
 def imread(path):
@@ -58,4 +60,8 @@ def convert_to_files(data_set):
       count += 1
 
 
-convert_to_files('4-People-100x150')
+folders = [f for f in listdir('data') if isdir(join('data', f))]
+
+for data_set in folders:
+  if not data_set.endswith('-rgb') and not data_set.endswith('-hsl'):
+    convert_to_files(data_set)

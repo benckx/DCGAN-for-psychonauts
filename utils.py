@@ -3,7 +3,6 @@ Some codes from https://github.com/Newmu/dcgan_code
 """
 from __future__ import division
 
-import colorsys
 import datetime
 import os
 import os.path
@@ -48,18 +47,6 @@ def imread(path, grayscale=False):
     img_rgb = img_bgr[..., ::-1]
     # img_hsl = convert_to_hsl(img_rgb)
     return img_rgb.astype(np.float)
-
-
-def convert_to_hsl(image):
-  result = np.zeros(shape=image.shape)
-  for x, row in enumerate(image):
-    for y, p in enumerate(row):
-      h, l, s = colorsys.rgb_to_hls(p[0].astype(np.float), p[1].astype(np.float), p[2].astype(np.float))
-      result[x][y][0] = h
-      result[x][y][1] = l
-      result[x][y][2] = s
-
-  return result
 
 
 def merge_images(images, size):
