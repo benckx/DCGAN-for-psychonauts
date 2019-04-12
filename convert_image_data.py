@@ -6,7 +6,6 @@ from os.path import join, isdir
 import cv2
 import numpy as np
 
-from images_utils import convert_to_hsl
 from images_utils import get_images_recursively
 
 
@@ -39,7 +38,7 @@ def convert_to_files(data_set):
   images_paths = get_images_recursively('data/' + data_set)
 
   data_set_rgb = data_set + '-rgb'
-  data_set_hsl = data_set + '-hsl'
+  # data_set_hsl = data_set + '-hsl'
 
   if not os.path.exists('data/' + data_set_rgb):
     os.mkdir('data/' + data_set_rgb)
@@ -50,14 +49,14 @@ def convert_to_files(data_set):
       np.save('data/' + data_set_rgb + '/' + str(count) + '.npy', rgb_normalized)
       count += 1
 
-  if not os.path.exists('data/' + data_set_hsl):
-    os.mkdir('data/' + data_set_hsl)
-    count = 0
-    for image_path in images_paths:
-      print('converting {} to HSL'.format(image_path))
-      hsl = convert_to_hsl(imread(image_path))
-      np.save('data/' + data_set_hsl + '/' + str(count) + '.npy', hsl)
-      count += 1
+  # if not os.path.exists('data/' + data_set_hsl):
+  #   os.mkdir('data/' + data_set_hsl)
+  #   count = 0
+  #   for image_path in images_paths:
+  #     print('converting {} to HSL'.format(image_path))
+  #     hsl = convert_to_hsl(imread(image_path))
+  #     np.save('data/' + data_set_hsl + '/' + str(count) + '.npy', hsl)
+  #     count += 1
 
 
 folders = [f for f in listdir('data') if isdir(join('data', f))]
