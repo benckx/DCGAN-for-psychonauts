@@ -233,13 +233,15 @@ class DCGAN(object):
         for i in range(0, self.nbr_d_updates):
           batch_data = self.data_set_manager.get_random_images(self.batch_size)
           self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
-          self.build_frame(i, epoch, idx, sample_z, sample_inputs)
+
+        self.build_frame(i, epoch, idx, sample_z, sample_inputs)
 
         # Update G network
         # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
         for i in range(0, self.nbr_g_updates):
           self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
-          self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
+
+        self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
 
         counter += 1
         print("Epoch: [%2d] [%4d/%4d] time: %4.4f" % (epoch, idx, nbr_of_batches, time.time() - start_time))
