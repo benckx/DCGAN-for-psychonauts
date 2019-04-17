@@ -58,12 +58,12 @@ def normalize_rgb(image):
 
 
 class DataSetManager:
-  def __init__(self, base_folder, enable_cache, color_model):
-    self.base_folder = base_folder
+  def __init__(self, base_folders, enable_cache, color_model):
+    self.base_folders = base_folders
     self.enable_cache = enable_cache
     self.color_model = color_model
-    self.rgb_np_file_folder = './data/' + base_folder + '-rgb'
-    self.hsl_np_file_folder = './data/' + base_folder + '-hsl'
+    self.rgb_np_file_folder = './data/' + base_folders[0] + '-rgb'
+    self.hsl_np_file_folder = './data/' + base_folders[0] + '-hsl'
     self.has_rgb_np_file_cache = os.path.exists(self.rgb_np_file_folder)
     self.has_hsl_np_file_cache = os.path.exists(self.hsl_np_file_folder)
 
@@ -79,11 +79,15 @@ class DataSetManager:
     else:
       self.nbr_of_elements_hsl_np_file_cache = 0
 
-    self.images_paths = get_images_recursively('./data/' + base_folder)
+    self.images_paths = []
+    for dataset_name in base_folders:
+      self.images_paths.extend(get_images_recursively("./data/" + dataset_name))
+
     self.image_cache = []
     if self.enable_cache:
       self.cache()
 
+    print('dataset size: {}'.format(len(self.images_paths)))
     print('self.has_rgb_np_file_cache -> {}'.format(self.has_rgb_np_file_cache))
     print('self.has_hsl_np_file_cache -> {}'.format(self.has_hsl_np_file_cache))
 

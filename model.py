@@ -5,7 +5,7 @@ from multiprocessing import Pool
 
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
-from images_utils import get_images_recursively, DataSetManager
+from images_utils import DataSetManager
 from ops import *
 from utils import *
 
@@ -81,9 +81,9 @@ class DCGAN(object):
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
 
-    self.data = []
-    for dataset_name in dataset_names:
-      self.data.append(get_images_recursively("./data/" + dataset_name))
+    # self.data = []
+    # for dataset_name in dataset_names:
+    #   self.data.append(get_images_recursively("./data/" + dataset_name))
 
     print('data folders: {}'.format(dataset_names))
     print('dataset size: {}'.format(len(self.data)))
@@ -107,7 +107,7 @@ class DCGAN(object):
     print('generator device: {}'.format(self.gpu_allocator.generator_device()))
     print('discriminator device: {}'.format(self.gpu_allocator.discriminator_device()))
 
-    self.data_set_manager = DataSetManager(self.dataset_name, enable_cache, 'rgb')
+    self.data_set_manager = DataSetManager(dataset_names, enable_cache, 'rgb')
 
     self.build_model()
 

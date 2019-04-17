@@ -86,7 +86,7 @@ if len(names) != len(set(names)):
 # validate datasets
 config_file_datasets = []
 for _, row in data.iterrows():
-  config_file_datasets.append(row['dataset'].split(','))
+  config_file_datasets.extend(row['dataset'].split(','))
 
 for dataset in config_file_datasets:
   if dataset not in data_folders:
