@@ -66,7 +66,7 @@ output_height = FLAGS.output_height
 
 if (input_height is None and input_width is None) or (output_height is None and output_width is None):
   data_path = 'data/' + FLAGS.dataset
-  first_image = get_images_recursively(data_path)[0]
+  first_image = get_images_recursively(data_path.split(',')[0])[0]
   image_data = open(first_image, "rb").read()
   image = Image.open(io.BytesIO(image_data))
   rgb_im = image.convert('RGB')
