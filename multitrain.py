@@ -83,10 +83,14 @@ if (len(names)) != len(set(names)):
   print('Names are not unique')
   exit(1)
 
-# validate datasets
+config_file_datasets = []
 for _, row in data.iterrows():
-  if row['dataset'] not in data_folders:
-    print('Error: dataset {} not found!'.format(row['dataset']))
+  config_file_datasets.append(row['dataset'].split(','))
+
+# validate datasets
+for dataset in config_file_datasets:
+  if dataset not in data_folders:
+    print('Error: dataset {} not found!'.format(dataset))
     exit(1)
 
 # determine if we do automatic periodic renders
