@@ -20,7 +20,7 @@ class DCGAN(object):
                batch_size=64, sample_num=64, output_height=64, output_width=64,
                grid_height=8, grid_width=8,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-               gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
+               gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_names=['default'],
                input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
                activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1, gpu_idx=None,
@@ -61,7 +61,6 @@ class DCGAN(object):
     self.gfc_dim = gfc_dim
     self.dfc_dim = dfc_dim
 
-    self.dataset_name = dataset_name
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
 
@@ -82,7 +81,11 @@ class DCGAN(object):
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
 
-    self.data = get_images_recursively("./data/" + self.dataset_name)
+    self.data = []
+    for dataset_name in dataset_names:
+      self.data.append(get_images_recursively("./data/" + dataset_name))
+
+    print('data folders: {}'.format(dataset_names))
     print('dataset size: {}'.format(len(self.data)))
 
     np.random.shuffle(self.data)

@@ -175,6 +175,10 @@ for _, row in data.iterrows():
 
       # process video async
       if row['render_video']:
+        if auto_periodic_renders:
+          os.rename(sample_folder, shared_state.get_time_cut_folder_name())
+          sample_folder = shared_state.get_time_cut_folder_name()
+
         pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
 
       # backup checkpoint one last time

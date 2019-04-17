@@ -121,7 +121,7 @@ def main(_):
       batch_size=batch_size,
       sample_num=batch_size,
       z_dim=FLAGS.generate_test_images,
-      dataset_name=FLAGS.dataset,
+      dataset_names=FLAGS.dataset.split(','),
       input_fname_pattern=FLAGS.input_fname_pattern,
       crop=FLAGS.crop,
       checkpoint_dir=FLAGS.checkpoint_dir,

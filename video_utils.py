@@ -109,7 +109,7 @@ def create_video_time_cut(shared: ThreadsSharedState):
   folder = shared.get_folder()
   frames = [f for f in listdir(folder) if isfile(join(folder, f))]
   frames.sort()
-  time_cut_folder = '{}_time_cut{:04d}'.format(shared.get_job_name(), shared.get_current_cut())
+  time_cut_folder = shared.get_time_cut_folder_name()
   print('Time cut folder: {}'.format(time_cut_folder))
   os.makedirs(time_cut_folder)
   for f in frames[0:nbr_frames]:

@@ -62,3 +62,6 @@ class ThreadsSharedState:
 
   def set_delete_at_the_end(self, upload_to_ftp):
     self.delete_at_the_end = upload_to_ftp
+
+  def get_time_cut_folder_name(self):
+    return '{}_time_cut{:04d}'.format(self.get_job_name(), self.get_current_cut())
