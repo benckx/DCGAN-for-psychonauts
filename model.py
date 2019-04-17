@@ -214,8 +214,7 @@ class DCGAN(object):
     last_checkpoint_backup = int(time.time())
     checkpoint_backup_delay_in_min = get_checkpoint_backup_delay()
 
-    np.random.shuffle(self.data)
-    nbr_of_batches = min(len(self.data), config.train_size) // self.batch_size
+    nbr_of_batches = min(len(self.data_set_manager.images_paths), config.train_size) // self.batch_size
 
     self.job_start = datetime.datetime.now()
 
