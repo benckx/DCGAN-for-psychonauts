@@ -15,7 +15,7 @@ from PIL import Image
 import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
-from images_utils import get_images_recursively
+from images_utils import get_datasets_images
 from shared_state import ThreadsSharedState
 from video_utils import process_video, periodic_render_job
 
@@ -111,8 +111,8 @@ if auto_periodic_renders:
 for _, row in data.iterrows():
   print(str(row))
   try:
-    datasets_paths = 'data/' + row['dataset']
-    first_image = get_images_recursively(datasets_paths.split(',')[0])[0]
+    dataset_images = get_datasets_images(row['dataset'].split(','))
+    first_image = dataset_images[0]
     image = Image.open(io.BytesIO(open(first_image, "rb").read()))
     rgb_im = image.convert('RGB')
     input_width = rgb_im.size[0]
@@ -120,7 +120,7 @@ for _, row in data.iterrows():
     sample_width = row['grid_width'] * input_width
     sample_height = row['grid_height'] * input_height
 
-    dataset_size = len(listdir(datasets_paths))  # TODO: fix
+    dataset_size = len(dataset_images)
     batch_size = row['grid_width'] * row['grid_height']
     frames_per_iteration = 0
 

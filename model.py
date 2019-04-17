@@ -81,21 +81,17 @@ class DCGAN(object):
     self.nbr_g_updates = nbr_g_updates
     self.nbr_d_updates = nbr_d_updates
 
-    # self.data = []
-    # for dataset_name in dataset_names:
-    #   self.data.append(get_images_recursively("./data/" + dataset_name))
-
     print('data folders: {}'.format(dataset_names))
-    print('dataset size: {}'.format(len(self.data)))
+    self.data_set_manager = DataSetManager(dataset_names, enable_cache, 'rgb')
 
-    np.random.shuffle(self.data)
-    imread_img = imread(self.data[0])
+    np.random.shuffle(self.data_set_manager.images_paths)
+    imread_img = imread(self.data_set_manager.images_paths[0])
     if len(imread_img.shape) >= 3:  # check if image is a non-grayscale image by checking channel number
-      self.c_dim = imread(self.data[0]).shape[-1]
+      self.c_dim = imread(self.data_set_manager.images_paths[0]).shape[-1]
     else:
       self.c_dim = 1
 
-    if len(self.data) < self.batch_size:
+    if len(self.data_set_manager.images_paths) < self.batch_size:
       raise Exception("[!] Entire dataset size is less than the configured batch_size")
 
     self.grayscale = (self.c_dim == 1)
@@ -106,8 +102,6 @@ class DCGAN(object):
 
     print('generator device: {}'.format(self.gpu_allocator.generator_device()))
     print('discriminator device: {}'.format(self.gpu_allocator.discriminator_device()))
-
-    self.data_set_manager = DataSetManager(dataset_names, enable_cache, 'rgb')
 
     self.build_model()
 

@@ -26,6 +26,13 @@ def get_boxes(sample_res, render_res):
   return boxes
 
 
+def get_datasets_images(image_folders):
+  result = []
+  for image_folder in image_folders:
+    result.extend(get_images_recursively('data/' + image_folder))
+  return result
+
+
 def get_images_recursively(image_folder):
   images = []
   images.extend(glob.iglob(image_folder + '/**/*.jpg', recursive=True))
@@ -79,9 +86,7 @@ class DataSetManager:
     else:
       self.nbr_of_elements_hsl_np_file_cache = 0
 
-    self.images_paths = []
-    for dataset_name in base_folders:
-      self.images_paths.extend(get_images_recursively("./data/" + dataset_name))
+    self.images_paths = get_datasets_images(base_folders)
 
     self.image_cache = []
     if self.enable_cache:

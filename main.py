@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-from images_utils import get_images_recursively
+from images_utils import get_datasets_images
 from model import DCGAN
 from utils import show_all_variables
 from utils import visualize
@@ -65,8 +65,7 @@ output_width = FLAGS.output_width
 output_height = FLAGS.output_height
 
 if (input_height is None and input_width is None) or (output_height is None and output_width is None):
-  data_path = 'data/' + FLAGS.dataset
-  first_image = get_images_recursively(data_path.split(',')[0])[0]
+  first_image = get_datasets_images(FLAGS.dataset.split(','))[0]
   image_data = open(first_image, "rb").read()
   image = Image.open(io.BytesIO(image_data))
   rgb_im = image.convert('RGB')
