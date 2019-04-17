@@ -111,8 +111,8 @@ if auto_periodic_renders:
 for _, row in data.iterrows():
   print(str(row))
   try:
-    data_path = 'data/' + row['dataset']
-    first_image = get_images_recursively(data_path)[0]
+    datasets_paths = 'data/' + row['dataset']
+    first_image = get_images_recursively(datasets_paths.split(',')[0])[0]
     image = Image.open(io.BytesIO(open(first_image, "rb").read()))
     rgb_im = image.convert('RGB')
     input_width = rgb_im.size[0]
@@ -120,7 +120,7 @@ for _, row in data.iterrows():
     sample_width = row['grid_width'] * input_width
     sample_height = row['grid_height'] * input_height
 
-    dataset_size = len(listdir(data_path))
+    dataset_size = len(listdir(datasets_paths))  # TODO: fix
     batch_size = row['grid_width'] * row['grid_height']
     frames_per_iteration = 0
 
