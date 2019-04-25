@@ -1,4 +1,9 @@
+import io
+
 import math
+from PIL import Image
+
+from images_utils import get_datasets_images
 
 
 # noinspection PyListCreation
@@ -81,3 +86,28 @@ def build_dcgan_cmd(cmd_row, gpu_idx, enable_cache):
   dcgan_cmd.append('--train')
 
   return dcgan_cmd
+
+
+class Job:
+
+  @classmethod
+  def from_row(cls, row):
+    job = Job()
+    job.name = row['name']
+    job.grid_width = int(row['grid_width'])
+    job.grid_height = int(row['grid_height'])
+
+    job.dataset_folders = row['dataset'].split(',')
+    job.dataset_images = get_datasets_images(job.dataset_folders)
+
+    first_image = job.dataset_images[0]
+    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
+    rgb_im = image.convert('RGB')
+    input_width = rgb_im.size[0]
+    input_height = rgb_im.size[1]
+    job.sample_width = job.grid_width * input_width
+    job.sample_height = job.grid_height * input_height
+
+    job.has_auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
+    if job.has_auto_periodic_renders:
+      job.auto_render_period = int(row['auto_render_period'])
