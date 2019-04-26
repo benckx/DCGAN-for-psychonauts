@@ -30,7 +30,7 @@ for box_name in sorted_boxes_names:
 
 merged_jobs_names = set()
 for time_cut_files in time_cuts_files:
-    merged_jobs_names.add(time_cut_files[0:time_cut_files.find('_time_cut')])
+  merged_jobs_names.add(time_cut_files[0:time_cut_files.find('_time_cut')])
 
 for merged_job_name in merged_jobs_names:
   print(merged_job_name)
@@ -42,11 +42,12 @@ commands = []
 for job_name in merged_jobs_names_sorted:
   file_path = folder + '/' + job_name
   for box_name in sorted_boxes_names:
-    commands.append('mencoder -oac copy -ovc copy ' + file_path + '_time_cut*' + box_name + '*' + ' -o ' + file_path + '_' + box_name + '.mp4')
+    commands.append(
+      'mencoder -oac copy -ovc copy ' + file_path + '_time_cut*' + box_name + '*' + ' -o ' + file_path + '_' + box_name + '.mp4')
 
 for command in commands:
   print(command)
 
-# for command in commands:
-#   print('now running: ' + command)
-#   subprocess.run(command, shell=True)
+for command in commands:
+  print('now running: ' + command)
+  subprocess.run(command, shell=True)
