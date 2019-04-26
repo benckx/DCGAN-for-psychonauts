@@ -43,21 +43,37 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       print('Sending {}.mp4 to ftp'.format(images_folder))
       upload_via_ftp(images_folder + '.mp4')
   else:
+    original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
+    original_frames.sort()
+
+    boxes = images_utils.get_boxes(sample_res, render_res)
+
+    # phase 1: create boxes folders
     box_idx = 1
-    for box in images_utils.get_boxes(sample_res, render_res):
+    for _ in boxes:
       box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
       print('Box folder: {}'.format(box_folder_name))
       os.makedirs(box_folder_name)
+      box_idx += 1
 
-      original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
-      original_frames.sort()
-      for f in original_frames:
-        src = images_folder + '/' + f
+    # phase 2: extract sub-images (or regions)
+    for f in original_frames:
+      src = images_folder + '/' + f
+      original_image = Image.open(src)
+
+      box_idx = 1
+      for box in boxes:
+        box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
         dest = box_folder_name + '/' + f
         print('Extracting {} to {} with {}'.format(src, dest, box))
-        region = Image.open(src).crop(box)
+        region = original_image.crop(box)
         region.save(dest)
+        box_idx += 1
 
+    # phase 3: render videos
+    box_idx = 1
+    for _ in boxes:
+      box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
       render_video(box_folder_name)
 
       if upload_to_ftp:
@@ -68,6 +84,32 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
         shutil.rmtree(box_folder_name)
 
       box_idx += 1
+
+    # box_idx = 1
+    # for box in boxes:
+    #   box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
+    #   print('Box folder: {}'.format(box_folder_name))
+    #   os.makedirs(box_folder_name)
+    #
+    #   original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
+    #   original_frames.sort()
+    #   for f in original_frames:
+    #     src = images_folder + '/' + f
+    #     dest = box_folder_name + '/' + f
+    #     print('Extracting {} to {} with {}'.format(src, dest, box))
+    #     region = Image.open(src).crop(box)
+    #     region.save(dest)
+    #
+    #   render_video(box_folder_name)
+    #
+    #   if upload_to_ftp:
+    #     print('Sending {}.mp4 to ftp'.format(box_folder_name))
+    #     upload_via_ftp(box_folder_name + '.mp4')
+    #
+    #   if delete_images:
+    #     shutil.rmtree(box_folder_name)
+    #
+    #   box_idx += 1
 
   if delete_images:
     shutil.rmtree(images_folder)

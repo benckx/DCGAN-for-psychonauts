@@ -1,5 +1,4 @@
 import datetime
-import io
 import os.path
 import subprocess
 import sys
@@ -10,7 +9,6 @@ from os import listdir
 from os.path import isfile, join
 
 import pandas as pd
-from PIL import Image
 
 import images_utils
 from dcgan_cmd_builder import *

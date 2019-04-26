@@ -29,6 +29,6 @@ for element in merged_files_named_sorted:
 for command in commands:
   print(command)
 
-for command in commands:
-  print('now running: ' + command)
-  subprocess.run(command, shell=True)
+# for command in commands:
+#   print('now running: ' + command)
+#   subprocess.run(command, shell=True)
