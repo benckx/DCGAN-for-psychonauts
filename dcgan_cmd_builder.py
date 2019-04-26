@@ -100,6 +100,18 @@ class Job:
     job.dataset_folders = row['dataset'].split(',')
     job.dataset_images = get_datasets_images(job.dataset_folders)
 
+    job.epochs = int(row['epoch'])
+
+    if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
+      job.nbr_g_updates = int(row['nbr_g_updates'])
+    else:
+      job.nbr_g_updates = 2
+
+    if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
+      job.nbr_d_updates = int(row['nbr_d_updates'])
+    else:
+      job.nbr_d_updates = 1
+
     first_image = job.dataset_images[0]
     image = Image.open(io.BytesIO(open(first_image, "rb").read()))
     rgb_im = image.convert('RGB')
@@ -108,6 +120,16 @@ class Job:
     job.sample_width = job.grid_width * input_width
     job.sample_height = job.grid_height * input_height
 
+    job.batch_size = job.grid_width * job.grid_height
+
     job.has_auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
     if job.has_auto_periodic_renders:
       job.auto_render_period = int(row['auto_render_period'])
+
+    if job.has_auto_periodic_renders:
+      if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+        job.render_res = tuple([int(x) for x in row['render_res'].split('x')])
+      else:
+        job.render_res = None
+    else:
+      job.render_res = None
