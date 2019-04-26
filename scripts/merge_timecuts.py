@@ -14,16 +14,12 @@ if len(sys.argv) > 1:
 time_cuts_files = [f for f in listdir(folder) if (isfile(join(folder, f)) and f.find('_time_cut') > -1)]
 time_cuts_files.sort()
 
-# for time_cut_files in time_cuts_files:
-#   print(time_cut_files)
-
 boxes_files = [f for f in listdir(folder) if (isfile(join(folder, f)) and f.find('_box') > -1)]
 boxes_files.sort()
 
 boxes_names = set()
 for box_file in boxes_files:
   box_with_extension = box_file[box_file.find('_box') + 1:]
-
   boxes_names.add(box_with_extension[0:box_with_extension.find('.mp4')])
 
 sorted_boxes_names = list(boxes_names)
@@ -32,19 +28,19 @@ sorted_boxes_names.sort()
 for box_name in sorted_boxes_names:
   print(box_name)
 
-merged_files_names = set()
+merged_jobs_names = set()
 for time_cut_files in time_cuts_files:
-    merged_files_names.add(time_cut_files[0:time_cut_files.find('_time_cut')])
+    merged_jobs_names.add(time_cut_files[0:time_cut_files.find('_time_cut')])
 
-for merged_file_name in merged_files_names:
-  print(merged_file_name)
+for merged_job_name in merged_jobs_names:
+  print(merged_job_name)
 
-merged_files_named_sorted = list(merged_files_names)
-merged_files_named_sorted.sort()
+merged_jobs_names_sorted = list(merged_jobs_names)
+merged_jobs_names_sorted.sort()
 
 commands = []
-for element in merged_files_named_sorted:
-  file_path = folder + '/' + element
+for job_name in merged_jobs_names_sorted:
+  file_path = folder + '/' + job_name
   for box_name in sorted_boxes_names:
     commands.append('mencoder -oac copy -ovc copy ' + file_path + '_time_cut*' + box_name + '*' + ' -o ' + file_path + '_' + box_name + '.mp4')
 
