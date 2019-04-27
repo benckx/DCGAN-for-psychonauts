@@ -42,8 +42,10 @@ commands = []
 for job_name in merged_jobs_names_sorted:
   file_path = folder + '/' + job_name
   for box_name in sorted_boxes_names:
-    commands.append(
-      'mencoder -oac copy -ovc copy ' + file_path + '_time_cut*' + box_name + '*' + ' -o ' + file_path + '_' + box_name + '.mp4')
+    cuts_regex = file_path + '_time_cut*' + box_name + '*'
+    output_file = file_path + '_' + box_name + '.mp4'
+    command = 'mencoder -oac copy -ovc copy ' + cuts_regex + ' -o ' + output_file
+    commands.append(command)
 
 for command in commands:
   print(command)

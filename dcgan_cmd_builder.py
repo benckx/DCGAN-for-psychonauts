@@ -90,6 +90,15 @@ def build_dcgan_cmd(cmd_row, gpu_idx, enable_cache):
 
 class Job:
 
+  def __init__(self):
+    self.epochs = 0
+    self.batch_size = 0
+    self.dataset_size = 0
+
+  def get_nbr_of_frames(self):
+    frames_per_step = 2
+    return frames_per_step * int(self.dataset_size / self.batch_size) * self.epochs
+
   @classmethod
   def from_row(cls, row):
     job = Job()
@@ -133,3 +142,9 @@ class Job:
         job.render_res = None
     else:
       job.render_res = None
+
+    job.dataset_size = len(job.dataset_images)
+
+    fps = 60
+    job.sample_res = (job.sample_width, job.sample_height)
+    job.video_length_in_min = ((job.get_nbr_of_frames() / fps) / 60)
