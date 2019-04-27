@@ -53,9 +53,10 @@ def main():
   endpos = seconds_to_timestamp(length)
 
   count = 1
-  for i in range(0, get_video_duration_seconds(file_path) - length, length):
+  for i in range(0, get_video_duration_seconds(file_path), length):
     ss = seconds_to_timestamp(i)
     cut_num = str(count).rjust(3, '0')
+    count += 1
     output_file = file_folder + file_name_no_extension + '_' + cut_num + '.mp4'
     command = 'mencoder -ss ' + ss + ' -endpos ' + endpos + ' -oac copy -ovc copy ' + file_path + ' -o ' + output_file
     subprocess.run(command, shell=True)
@@ -65,7 +66,6 @@ def main():
       re_encode_command = 'ffmpeg -i ' + output_file + ' ' + encoding + ' ' + re_encode_output
       subprocess.run(re_encode_command, shell=True)
       os.remove(output_file)
-    count += 1
 
 
 if __name__ == "__main__":

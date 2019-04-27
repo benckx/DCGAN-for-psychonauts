@@ -3,13 +3,7 @@ import sys
 from os import listdir
 from os.path import isfile, join
 
-folder = None
-if len(sys.argv) > 1:
-  if len(sys.argv) > 1:
-    params = sys.argv[0:]
-    for idx, param in enumerate(params):
-      if param == '--folder':
-        folder = params[idx + 1]
+folder = sys.argv[1]
 
 time_cuts_files = [f for f in listdir(folder) if (isfile(join(folder, f)) and f.find('_time_cut') > -1)]
 time_cuts_files.sort()
