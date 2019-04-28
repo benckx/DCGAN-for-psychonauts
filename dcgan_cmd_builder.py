@@ -94,6 +94,13 @@ class Job:
     self.epochs = 0
     self.batch_size = 0
     self.dataset_size = 0
+    self.sample_folder = None
+    self.use_checkpoints = False
+    self.delete_images_after_render = False
+    self.upload_to_ftp = False
+    self.has_auto_periodic_render = False
+    self.sample_res = None
+    self.render_res = None
 
   def get_nbr_of_frames(self):
     frames_per_step = 2
@@ -101,15 +108,35 @@ class Job:
 
   @classmethod
   def from_row(cls, row):
+    fps = 60
+    samples_prefix = 'samples_'
+
+    # model settings
     job = Job()
     job.name = row['name']
+    job.epochs = int(row['epoch'])
     job.grid_width = int(row['grid_width'])
     job.grid_height = int(row['grid_height'])
+    job.batch_size = job.grid_width * job.grid_height
 
+    # input images
     job.dataset_folders = row['dataset'].split(',')
     job.dataset_images = get_datasets_images(job.dataset_folders)
+    job.sample_folder = samples_prefix + job.name
+    job.dataset_size = len(job.dataset_images)
 
-    job.epochs = int(row['epoch'])
+    # assuming all input images have the same resolution
+    first_image = job.dataset_images[0]
+    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
+    rgb_im = image.convert('RGB')
+    input_width = rgb_im.size[0]
+    input_height = rgb_im.size[1]
+    job.sample_width = job.grid_width * input_width
+    job.sample_height = job.grid_height * input_height
+    job.sample_res = (job.sample_width, job.sample_height)
+
+    # video settings
+    job.render_video = row['render_video']
 
     if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
       job.nbr_g_updates = int(row['nbr_g_updates'])
@@ -121,32 +148,21 @@ class Job:
     else:
       job.nbr_d_updates = 1
 
-    first_image = job.dataset_images[0]
-    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
-    rgb_im = image.convert('RGB')
-    input_width = rgb_im.size[0]
-    input_height = rgb_im.size[1]
-    job.sample_width = job.grid_width * input_width
-    job.sample_height = job.grid_height * input_height
-
-    job.batch_size = job.grid_width * job.grid_height
-
-    job.has_auto_periodic_render = row['auto_render_period'] and row['auto_render_period'] > 0
-    if job.has_auto_periodic_render:
-      job.auto_render_period = int(row['auto_render_period'])
-
-    if job.has_auto_periodic_render:
-      if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
-        job.render_res = tuple([int(x) for x in row['render_res'].split('x')])
-      else:
-        job.render_res = None
-    else:
-      job.render_res = None
-
-    job.dataset_size = len(job.dataset_images)
-
-    fps = 60
-    job.sample_res = (job.sample_width, job.sample_height)
     job.video_length_in_min = ((job.get_nbr_of_frames() / fps) / 60)
+
+    # periodic renders
+    if job.render_video:
+      job.has_auto_periodic_render = row['auto_render_period'] and row['auto_render_period'] > 0
+      if job.has_auto_periodic_render:
+        job.auto_render_period = int(row['auto_render_period'])
+
+      if job.has_auto_periodic_render:
+        if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+          job.render_res = tuple([int(x) for x in row['render_res'].split('x')])
+
+    # flags
+    job.upload_to_ftp = row['upload_to_ftp']
+    job.delete_images_after_render = row['delete_images_after_render']
+    job.use_checkpoints = row['use_checkpoints']
 
     return job

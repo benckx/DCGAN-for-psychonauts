@@ -9,6 +9,7 @@ from os.path import isfile, join
 from PIL import Image
 
 import images_utils
+from dcgan_cmd_builder import Job
 from files_utils import upload_via_ftp
 from shared_state import ThreadsSharedState
 
@@ -32,6 +33,10 @@ def render_video(images_folder):
   ffmpeg_cmd.append('yuv420p')
   ffmpeg_cmd.append(images_folder + '.mp4')
   subprocess.run(ffmpeg_cmd)
+
+
+def process_video_job_param(job: Job):
+  process_video(job.sample_folder, job.upload_to_ftp, job.delete_images, job.sample_res, job.render_res)
 
 
 def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
@@ -84,32 +89,6 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
         shutil.rmtree(box_folder_name)
 
       box_idx += 1
-
-    # box_idx = 1
-    # for box in boxes:
-    #   box_folder_name = '{}_box{:04d}'.format(images_folder, box_idx)
-    #   print('Box folder: {}'.format(box_folder_name))
-    #   os.makedirs(box_folder_name)
-    #
-    #   original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
-    #   original_frames.sort()
-    #   for f in original_frames:
-    #     src = images_folder + '/' + f
-    #     dest = box_folder_name + '/' + f
-    #     print('Extracting {} to {} with {}'.format(src, dest, box))
-    #     region = Image.open(src).crop(box)
-    #     region.save(dest)
-    #
-    #   render_video(box_folder_name)
-    #
-    #   if upload_to_ftp:
-    #     print('Sending {}.mp4 to ftp'.format(box_folder_name))
-    #     upload_via_ftp(box_folder_name + '.mp4')
-    #
-    #   if delete_images:
-    #     shutil.rmtree(box_folder_name)
-    #
-    #   box_idx += 1
 
   if delete_images:
     shutil.rmtree(images_folder)

@@ -14,7 +14,7 @@ import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
 from shared_state import ThreadsSharedState
-from video_utils import process_video, periodic_render_job
+from video_utils import process_video_job_param, periodic_render_job
 
 
 class MyManager(BaseManager):
@@ -65,6 +65,12 @@ print()
 
 data = pd.read_csv(csv_file, encoding='UTF-8')
 
+# parse jobs
+# jobs = []
+# for _, row in data.iterrows():
+#   print(str(row))
+#   jobs.append(Job.from_row(row))
+
 # validate ftp
 for _, row in data.iterrows():
   if row['upload_to_ftp'] and not os.path.exists('ftp.ini'):
@@ -107,19 +113,16 @@ if auto_periodic_renders:
 # run the jobs
 for _, row in data.iterrows():
   print(str(row))
+  job = Job.from_row(row)
   try:
-    job = Job.from_row(row)
-
-    sample_folder = samples_prefix + job.name
-
     print('')
     if job.has_auto_periodic_render:
       shared_state.init_current_cut()
-      shared_state.set_folder(sample_folder)
+      shared_state.set_folder(job.sample_folder)
       shared_state.set_job_name(job.name)
       shared_state.set_frames_threshold(job.auto_render_period * fps)
-      shared_state.set_upload_to_ftp(row['upload_to_ftp'])
-      shared_state.set_delete_at_the_end(row['delete_images_after_render'])
+      shared_state.set_upload_to_ftp(job.upload_to_ftp)
+      shared_state.set_delete_at_the_end(job.delete_images_after_render)
       print('frames threshold: {}'.format(shared_state.get_frames_threshold()))
       print('sample folder: {}'.format(shared_state.get_folder()))
 
@@ -131,7 +134,7 @@ for _, row in data.iterrows():
     if job.render_res is not None:
       print('render resolution: {}'.format(job.render_res))
       print('boxes: {}'.format(images_utils.get_boxes(job.sample_res, job.render_res)))
-      if auto_periodic_renders:
+      if job.has_auto_periodic_render:
         shared_state.set_sample_res(job.sample_res)
         shared_state.set_render_res(job.render_res)
     print('')
@@ -142,19 +145,15 @@ for _, row in data.iterrows():
     process = subprocess.run(job_cmd)
     print('return code: {}'.format(process.returncode))
     duration = datetime.datetime.now().replace(microsecond=0) - begin
-    print('duration of the job {} -> {}'.format(row['name'], duration))
+    print('duration of the job {} -> {}'.format(job.name, duration))
 
+    # process video async
     if process.returncode == 0:
-      upload_to_ftp = row['upload_to_ftp']
-      delete_after = row['delete_images_after_render']
-
-      # process video async
-      if row['render_video']:
+      if job.render_video:
         if auto_periodic_renders:
-          os.rename(sample_folder, shared_state.get_time_cut_folder_name())
-          sample_folder = shared_state.get_time_cut_folder_name()
+          os.rename(job.sample_folder, shared_state.get_time_cut_folder_name())
 
-        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, job.sample_res, job.render_res))
+        pool.apply_async(process_video_job_param, job)
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
