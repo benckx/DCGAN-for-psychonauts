@@ -131,11 +131,11 @@ class Job:
 
     job.batch_size = job.grid_width * job.grid_height
 
-    job.has_auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
-    if job.has_auto_periodic_renders:
+    job.has_auto_periodic_render = row['auto_render_period'] and row['auto_render_period'] > 0
+    if job.has_auto_periodic_render:
       job.auto_render_period = int(row['auto_render_period'])
 
-    if job.has_auto_periodic_renders:
+    if job.has_auto_periodic_render:
       if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
         job.render_res = tuple([int(x) for x in row['render_res'].split('x')])
       else:
@@ -148,3 +148,5 @@ class Job:
     fps = 60
     job.sample_res = (job.sample_width, job.sample_height)
     job.video_length_in_min = ((job.get_nbr_of_frames() / fps) / 60)
+
+    return job

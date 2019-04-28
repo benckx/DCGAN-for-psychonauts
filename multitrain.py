@@ -13,7 +13,6 @@ import pandas as pd
 import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
-from images_utils import get_datasets_images
 from shared_state import ThreadsSharedState
 from video_utils import process_video, periodic_render_job
 
@@ -109,57 +108,32 @@ if auto_periodic_renders:
 for _, row in data.iterrows():
   print(str(row))
   try:
-    dataset_images = get_datasets_images(row['dataset'].split(','))
-    first_image = dataset_images[0]
-    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
-    rgb_im = image.convert('RGB')
-    input_width = rgb_im.size[0]
-    input_height = rgb_im.size[1]
-    sample_width = row['grid_width'] * input_width
-    sample_height = row['grid_height'] * input_height
+    job = Job.from_row(row)
 
-    dataset_size = len(dataset_images)
-    batch_size = row['grid_width'] * row['grid_height']
-    frames_per_iteration = 0
-
-    if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
-      frames_per_iteration += int(row['nbr_g_updates'])
-    else:
-      frames_per_iteration += 2
-
-    if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
-      frames_per_iteration += int(row['nbr_d_updates'])
-    else:
-      frames_per_iteration += 1
-
-    nbr_of_frames = frames_per_iteration * int(dataset_size / batch_size) * row['epoch']
-    sample_res = (sample_width, sample_height)
-    render_res = None
-    video_length_in_min = ((nbr_of_frames / fps) / 60)
+    sample_folder = samples_prefix + job.name
 
     print('')
-    if auto_periodic_renders and row['render_video']:
+    if job.has_auto_periodic_render:
       shared_state.init_current_cut()
-      shared_state.set_folder(samples_prefix + row['name'])
-      shared_state.set_job_name(row['name'])
-      shared_state.set_frames_threshold(row['auto_render_period'] * fps)
+      shared_state.set_folder(sample_folder)
+      shared_state.set_job_name(job.name)
+      shared_state.set_frames_threshold(job.auto_render_period * fps)
       shared_state.set_upload_to_ftp(row['upload_to_ftp'])
       shared_state.set_delete_at_the_end(row['delete_images_after_render'])
       print('frames threshold: {}'.format(shared_state.get_frames_threshold()))
       print('sample folder: {}'.format(shared_state.get_folder()))
 
-    print('dataset size: {}'.format(dataset_size))
-    print('video length: {} frames --> {:0.2f} min.'.format(nbr_of_frames, video_length_in_min))
+    print('dataset size: {}'.format(job.dataset_size))
+    print('video length: {} frames --> {:0.2f} min.'.format(job.get_nbr_of_frames(), job.video_length_in_min))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
-    print('sample resolution: {}'.format(sample_res))
-    if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
-      render_res = tuple([int(x) for x in row['render_res'].split('x')])
-      print('render resolution: {}'.format(render_res))
-      print('boxes: {}'.format(images_utils.get_boxes(sample_res, render_res)))
+    print('sample resolution: {}'.format(job.sample_res))
+    if job.render_res is not None:
+      print('render resolution: {}'.format(job.render_res))
+      print('boxes: {}'.format(images_utils.get_boxes(job.sample_res, job.render_res)))
       if auto_periodic_renders:
-        shared_state.set_sample_res(sample_res)
-        shared_state.set_render_res(render_res)
+        shared_state.set_sample_res(job.sample_res)
+        shared_state.set_render_res(job.render_res)
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
@@ -171,7 +145,6 @@ for _, row in data.iterrows():
     print('duration of the job {} -> {}'.format(row['name'], duration))
 
     if process.returncode == 0:
-      sample_folder = samples_prefix + row['name']
       upload_to_ftp = row['upload_to_ftp']
       delete_after = row['delete_images_after_render']
 
@@ -181,13 +154,13 @@ for _, row in data.iterrows():
           os.rename(sample_folder, shared_state.get_time_cut_folder_name())
           sample_folder = shared_state.get_time_cut_folder_name()
 
-        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, sample_res, render_res))
+        pool.apply_async(process_video, (sample_folder, upload_to_ftp, delete_after, job.sample_res, job.render_res))
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and row['use_checkpoint']:
-        backup_checkpoint(row['name'])
+        backup_checkpoint(job.name)
   except Exception as e:
-    print('error during process of {} -> {}'.format(row['name'], e))
+    print('error during process of {} -> {}'.format(job.name, e))
     print(traceback.format_exc())
 
 pool.close()
