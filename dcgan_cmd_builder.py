@@ -91,9 +91,25 @@ def build_dcgan_cmd(cmd_row, gpu_idx, enable_cache):
 class Job:
 
   def __init__(self):
+    self.name = 'dcgan_job'
     self.epochs = 0
     self.batch_size = 0
+    self.dataset_folders = []
     self.dataset_size = 0
+    self.activation_g = []
+    self.activation_d = []
+    self.nbr_of_layers_g = 5
+    self.nbr_of_layers_d = 5
+    self.batch_norm_g = True
+    self.batch_norm_d = True
+    self.learning_rate_g = None
+    self.learning_rate_d = None
+    self.beta1_g = None
+    self.beta1_d = None
+    self.grid_width = 2
+    self.grid_height = 2
+    self.nbr_g_updates = 1
+    self.nbr_d_updates = 1
     self.sample_folder = None
     self.use_checkpoints = False
     self.delete_images_after_render = False
@@ -105,6 +121,84 @@ class Job:
   def get_nbr_of_frames(self):
     frames_per_step = 2
     return frames_per_step * int(self.dataset_size / self.batch_size) * self.epochs
+
+  # noinspection PyListCreation
+  def build_job_command(self, gpu_idx=None, enable_cache=True):
+    dcgan_cmd = ['python3', 'main.py']
+
+    dcgan_cmd.append('--epoch')
+    dcgan_cmd.append(str(self.epochs))
+
+    dcgan_cmd.append('--name')
+    dcgan_cmd.append(self.name)
+
+    dcgan_cmd.append('--dataset')
+    dcgan_cmd.append(','.join(self.dataset_folders))
+
+    dcgan_cmd.append('--grid_width')
+    dcgan_cmd.append(str(self.grid_width))
+
+    dcgan_cmd.append('--grid_height')
+    dcgan_cmd.append(str(self.grid_height))
+
+    dcgan_cmd.append('--nbr_of_layers_g')
+    dcgan_cmd.append(str(self.nbr_of_layers_g))
+
+    dcgan_cmd.append('--nbr_of_layers_d')
+    dcgan_cmd.append(str(self.nbr_of_layers_d))
+
+    if self.batch_norm_g:
+      dcgan_cmd.append('--batch_norm_g')
+
+    if self.batch_norm_d:
+      dcgan_cmd.append('--batch_norm_d')
+
+    if len(self.activation_g) > 0:
+      dcgan_cmd.append('--activation_g')
+      dcgan_cmd.append(','.join(self.activation_g))
+
+    if len(self.activation_d) > 0:
+      dcgan_cmd.append('--activation_d')
+      dcgan_cmd.append(','.join(self.activation_d))
+
+    if self.learning_rate_g is not None:
+      dcgan_cmd.append('--learning_rate_g')
+      dcgan_cmd.append(str(self.learning_rate_g))
+
+    if self.beta1_g is not None:
+      dcgan_cmd.append('--beta1_g')
+      dcgan_cmd.append(str(self.beta1_g))
+
+    if self.learning_rate_d is not None:
+      dcgan_cmd.append('--learning_rate_d')
+      dcgan_cmd.append(str(self.learning_rate_d))
+
+    if self.beta1_d is not None:
+      dcgan_cmd.append('--beta1_d')
+      dcgan_cmd.append(str(self.beta1_d))
+
+    dcgan_cmd.append('--nbr_g_updates')
+    dcgan_cmd.append(str(self.nbr_g_updates))
+
+    dcgan_cmd.append('--nbr_d_updates')
+    dcgan_cmd.append(str(self.nbr_d_updates))
+
+    dcgan_cmd.append('--sample_rate')
+    dcgan_cmd.append('1')
+
+    if self.use_checkpoints:
+      dcgan_cmd.append("--use_checkpoints")
+
+    if gpu_idx is not None:
+      dcgan_cmd.append("--gpu_idx")
+      dcgan_cmd.append(str(gpu_idx))
+
+    if not enable_cache:
+      dcgan_cmd.append("--disable_cache")
+
+    dcgan_cmd.append('--train')
+
+    return dcgan_cmd
 
   @classmethod
   def from_row(cls, row):
@@ -118,6 +212,28 @@ class Job:
     job.grid_width = int(row['grid_width'])
     job.grid_height = int(row['grid_height'])
     job.batch_size = job.grid_width * job.grid_height
+
+    if row['learning_rate_g'] and not math.isnan(row['learning_rate_g']):
+      job.learning_rate_g = float(row['learning_rate_g'])
+
+    if row['beta1_g'] and not math.isnan(row['beat1_g']):
+      job.beta1_g = float(row['beta1_g'])
+
+    if row['learning_rate_d'] and not math.isnan(row['learning_rate_d']):
+      job.learning_rate_d = float(row['learning_rate_d'])
+
+    if row['beta1_d'] and not math.isnan(row['beat1_d']):
+      job.beta1_d = float(row['beta1_d'])
+
+    # layers
+    job.batch_norm_g = row['batch_norm_g'] == '' or row['batch_norm_g']
+    job.batch_norm_d = row['batch_norm_d'] == '' or row['batch_norm_d']
+
+    if row['activation_g'] and str(row['activation_g']) != "nan":
+      job.activation_g = row['activation_g'].split(',')
+
+    if row['activation_d'] and str(row['activation_d']) != "nan":
+      job.activation_d = row['activation_d'].split(',')
 
     # input images
     job.dataset_folders = row['dataset'].split(',')
