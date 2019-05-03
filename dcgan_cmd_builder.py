@@ -216,13 +216,13 @@ class Job:
     if row['learning_rate_g'] and not math.isnan(row['learning_rate_g']):
       job.learning_rate_g = float(row['learning_rate_g'])
 
-    if row['beta1_g'] and not math.isnan(row['beat1_g']):
+    if row['beta1_g']:
       job.beta1_g = float(row['beta1_g'])
 
     if row['learning_rate_d'] and not math.isnan(row['learning_rate_d']):
       job.learning_rate_d = float(row['learning_rate_d'])
 
-    if row['beta1_d'] and not math.isnan(row['beat1_d']):
+    if row['beta1_d']:
       job.beta1_d = float(row['beta1_d'])
 
     # layers
