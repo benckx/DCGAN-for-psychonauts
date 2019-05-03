@@ -226,6 +226,9 @@ class Job:
       job.beta1_d = float(row['beta1_d'])
 
     # layers
+    job.nbr_of_layers_d = int(row['nbr_of_layers_d'])
+    job.nbr_of_layers_g = int(row['nbr_of_layers_g'])
+
     job.batch_norm_g = row['batch_norm_g'] == '' or row['batch_norm_g']
     job.batch_norm_d = row['batch_norm_d'] == '' or row['batch_norm_d']
 

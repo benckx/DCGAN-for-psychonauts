@@ -140,7 +140,8 @@ for _, row in data.iterrows():
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
-    job_cmd = build_dcgan_cmd(row, gpu_idx, enable_cache)
+    # job_cmd = build_dcgan_cmd(row, gpu_idx, enable_cache)
+    job_cmd = job.build_job_command(gpu_idx, enable_cache)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
     process = subprocess.run(job_cmd)
     print('return code: {}'.format(process.returncode))
