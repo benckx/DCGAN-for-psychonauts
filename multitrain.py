@@ -63,47 +63,12 @@ else:
 
 print()
 
-data = pd.read_csv(csv_file, encoding='UTF-8')
-
-# parse jobs
-# jobs = []
-# for _, row in data.iterrows():
-#   print(str(row))
-#   jobs.append(Job.from_row(row))
-
-# validate ftp
-for _, row in data.iterrows():
-  if row['upload_to_ftp'] and not os.path.exists('ftp.ini'):
-    print('option upload_to_ftp == true but ftp.ini file was not found')
-    exit(1)
-
-# validate names
-names = []
-for _, row in data.iterrows():
-  names.append(row['name'])
-
-if len(names) != len(set(names)):
-  print('Names are not unique')
-  exit(1)
-
-# validate datasets
-config_file_datasets = []
-for _, row in data.iterrows():
-  config_file_datasets.extend(row['dataset'].split(','))
-
-for dataset in config_file_datasets:
-  if dataset not in data_folders:
-    print('Error: dataset {} not found!'.format(dataset))
-    exit(1)
-
-# determine if we do automatic periodic renders
-auto_periodic_renders = False
-
-for index, row in data.iterrows():
-  if not auto_periodic_renders:
-    auto_periodic_renders = row['auto_render_period'] and row['auto_render_period'] > 0
+# parse and validate jobs
+jobs = Job.from_csv_file(csv_file)
+Job.validate(jobs)
 
 # launch schedule job if needed
+auto_periodic_renders = Job.must_start_auto_periodic_renders(jobs)
 shared_state = None
 if auto_periodic_renders:
   # noinspection PyUnresolvedReferences
@@ -111,9 +76,7 @@ if auto_periodic_renders:
   pool.apply(periodic_render_job, args=[shared_state, True])
 
 # run the jobs
-for _, row in data.iterrows():
-  print(str(row))
-  job = Job.from_row(row)
+for job in jobs:
   try:
     print('')
     if job.has_auto_periodic_render:
