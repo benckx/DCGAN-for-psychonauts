@@ -157,7 +157,7 @@ for _, row in data.iterrows():
         pool.apply_async(process_video_job_param, job)
 
       # backup checkpoint one last time
-      if must_backup_checkpoint() and row['use_checkpoint']:
+      if must_backup_checkpoint() and job.use_checkpoints:
         backup_checkpoint(job.name)
   except Exception as e:
     print('error during process of {} -> {}'.format(job.name, e))
