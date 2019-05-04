@@ -1,5 +1,5 @@
 import io
-from os import listdir
+import os
 
 import math
 import pandas as pd
@@ -226,7 +226,7 @@ class Job:
         print('option upload_to_ftp == true but ftp.ini file was not found')
         exit(1)
 
-    # validate names
+    # validate names uniqueness
     names = []
     for job in jobs:
       names.append(job.name)
@@ -236,7 +236,7 @@ class Job:
       exit(1)
 
     # validate datasets
-    data_folders = [f for f in listdir('data/')]
+    data_folders = [f for f in os.listdir('data/')]
 
     config_file_datasets = []
     for job in jobs:

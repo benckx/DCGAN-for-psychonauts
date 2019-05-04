@@ -1,5 +1,4 @@
 import datetime
-import os.path
 import subprocess
 import sys
 import traceback
@@ -7,8 +6,6 @@ from multiprocessing import Pool
 from multiprocessing.managers import BaseManager
 from os import listdir
 from os.path import isfile, join
-
-import pandas as pd
 
 import images_utils
 from dcgan_cmd_builder import *
@@ -103,7 +100,6 @@ for job in jobs:
     print('')
 
     begin = datetime.datetime.now().replace(microsecond=0)
-    # job_cmd = build_dcgan_cmd(row, gpu_idx, enable_cache)
     job_cmd = job.build_job_command(gpu_idx, enable_cache)
     print('command: ' + ' '.join('{}'.format(v) for v in job_cmd))
     process = subprocess.run(job_cmd)
