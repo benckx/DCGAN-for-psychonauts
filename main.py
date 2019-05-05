@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+from dcgan_cmd_builder import Job
 from images_utils import get_datasets_images
 from model import DCGAN
 from utils import show_all_variables
@@ -107,6 +108,8 @@ def main(_):
   run_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
   run_config.gpu_options.allow_growth = True
   run_config.gpu_options.per_process_gpu_memory_fraction = 1
+
+  job = Job.from_FLAGS(FLAGS)
 
   with tf.Session(config=run_config) as sess:
     dcgan = DCGAN(

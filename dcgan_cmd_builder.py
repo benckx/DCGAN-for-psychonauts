@@ -248,6 +248,28 @@ class Job:
         exit(1)
 
   @classmethod
+  def from_FLAGS(cls, FLAGS):
+    job = Job()
+    job.name = FLAGS.name
+    job.nbr_of_layers_d = FLAGS.nbr_of_layers_d
+    job.nbr_of_layers_g = FLAGS.nbr_of_layers_g
+    job.use_checkpoints = FLAGS.use_checkpoints
+    job.batch_norm_g = FLAGS.batch_norm_g
+    job.batch_norm_d = FLAGS.batch_norm_d
+    job.activation_g = FLAGS.activation_g.split(',')
+    job.activation_d = FLAGS.activation_d.split(',')
+    job.nbr_g_updates = FLAGS.nbr_g_updates
+    job.nbr_d_updates = FLAGS.nbr_d_updates
+    job.grid_height = FLAGS.grid_height
+    job.grid_width = FLAGS.grid_width
+    job.learning_rate_g = FLAGS.learning_rate_g
+    job.learning_rate_d = FLAGS.learning_rate_d
+    job.beta1_g = FLAGS.beta1_g
+    job.beta1_d = FLAGS.beta1_d
+
+    return job
+
+  @classmethod
   def must_start_auto_periodic_renders(cls, jobs):
     auto_periodic_renders = False
 
