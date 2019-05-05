@@ -3,6 +3,7 @@ from __future__ import division
 import time
 from multiprocessing import Pool
 
+from dcgan_cmd_builder import Job
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
 from images_utils import DataSetManager
@@ -11,17 +12,17 @@ from utils import *
 
 frames_saving_pool = Pool(processes=20)
 
+
 def conv_out_size_same(size, stride):
   return int(math.ceil(float(size) / float(stride)))
 
 
 class DCGAN(object):
-  def __init__(self, sess, input_height=108, input_width=108, crop=True,
+  def __init__(self, sess, job: Job, input_height=108, input_width=108, crop=True,
                batch_size=64, sample_num=64, output_height=64, output_width=64,
-               grid_height=8, grid_width=8,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_names=['default'],
-               input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
+               input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
                activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1, gpu_idx=None,
                enable_cache=True):
@@ -39,6 +40,7 @@ class DCGAN(object):
       c_dim: (optional) Dimension of image color. For grayscale input, set to 1. [3]
     """
     self.sess = sess
+    self.job = job
     self.crop = crop
 
     self.batch_size = batch_size
@@ -48,9 +50,6 @@ class DCGAN(object):
     self.input_width = input_width
     self.output_height = output_height
     self.output_width = output_width
-
-    self.grid_width = grid_width
-    self.grid_height = grid_height
 
     self.y_dim = y_dim
     self.z_dim = z_dim
@@ -64,7 +63,6 @@ class DCGAN(object):
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
 
-    self.name = name
     self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
 
@@ -145,11 +143,14 @@ class DCGAN(object):
           return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
 
     with tf.device(self.gpu_allocator.discriminator_device()):
-      d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D), self.gpu_allocator.discriminator_device())
-      d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_), self.gpu_allocator.generator_device())
+      d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D),
+                                                                   self.gpu_allocator.discriminator_device())
+      d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_),
+                                                                   self.gpu_allocator.generator_device())
 
     with tf.device(self.gpu_allocator.generator_device()):
-      g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_), self.gpu_allocator.generator_device())
+      g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_),
+                                                              self.gpu_allocator.generator_device())
 
     with tf.device(self.gpu_allocator.discriminator_device()):
       self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
@@ -254,7 +255,7 @@ class DCGAN(object):
               print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
               if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
                 print('time to save the thing')
-                backup_checkpoint(self.name)
+                backup_checkpoint(self.job.name)
                 last_checkpoint_backup = int(time.time())
               else:
                 min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
@@ -272,7 +273,7 @@ class DCGAN(object):
         },
       )
       file_name = './{}/train_{:06d}_{:06d}_{:03d}.png'.format(self.sample_dir, epoch, idx, suffix)
-      frames_saving_pool.apply_async(save_images, (samples, (self.grid_height, self.grid_width), file_name))
+      frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
       self.log_frame_rate()
     except Exception as e:
@@ -418,7 +419,7 @@ class DCGAN(object):
 
   @property
   def model_dir(self):
-    return self.name
+    return self.job.name
 
   def save(self, checkpoint_dir, step):
     model_name = "DCGAN.model"

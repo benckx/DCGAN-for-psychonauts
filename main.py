@@ -114,12 +114,11 @@ def main(_):
   with tf.Session(config=run_config) as sess:
     dcgan = DCGAN(
       sess,
+      job,
       input_width=input_width,
       input_height=input_height,
       output_width=output_width,
       output_height=output_height,
-      grid_height=FLAGS.grid_height,
-      grid_width=FLAGS.grid_width,
       batch_size=batch_size,
       sample_num=batch_size,
       z_dim=FLAGS.generate_test_images,
@@ -128,7 +127,6 @@ def main(_):
       crop=FLAGS.crop,
       checkpoint_dir=FLAGS.checkpoint_dir,
       sample_dir=sample_dir,
-      name=FLAGS.name,
       sample_rate=FLAGS.sample_rate,
       nbr_of_layers_d=FLAGS.nbr_of_layers_d,
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,
