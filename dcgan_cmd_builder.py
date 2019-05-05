@@ -1,5 +1,6 @@
 import io
 import os
+import numpy as np
 
 import math
 import pandas as pd
@@ -37,6 +38,7 @@ class Job:
     self.has_auto_periodic_render = False
     self.sample_res = None
     self.render_res = None
+    self.train_size = None
 
   def get_nbr_of_frames(self):
     frames_per_step = 2
@@ -266,6 +268,7 @@ class Job:
     job.learning_rate_d = FLAGS.learning_rate_d
     job.beta1_g = FLAGS.beta1_g
     job.beta1_d = FLAGS.beta1_d
+    job.train_size = np.inf
 
     return job
 
