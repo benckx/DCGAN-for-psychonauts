@@ -87,7 +87,7 @@ for job in jobs:
       print('sample folder: {}'.format(shared_state.get_folder()))
 
     print('dataset size: {}'.format(job.dataset_size))
-    print('video length: --> {:0.2f} min.'.format(job.video_length_in_min))
+    print('video length: {:0.2f} min.'.format(job.video_length))
     print('frames per minutes: {}'.format(fps * 60))
     print('automatic periodic render: {}'.format(auto_periodic_renders))
     print('sample resolution: {}'.format(job.sample_res))

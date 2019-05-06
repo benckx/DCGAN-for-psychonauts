@@ -14,6 +14,7 @@ from utils import visualize
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
+flags.DEFINE_float("video_length", 5, "Length of the video render")
 flags.DEFINE_float("learning_rate_g", 0.0002, "Learning rate of for adam (G) [0.0002]")
 flags.DEFINE_float("beta1_g", 0.5, "Momentum term of adam (G) [0.5]")
 flags.DEFINE_float("learning_rate_d", 0.0002, "Learning rate of for adam (D) [0.0002]")
@@ -122,21 +123,11 @@ def main(_):
       batch_size=batch_size,
       sample_num=batch_size,
       z_dim=FLAGS.generate_test_images,
-      dataset_names=FLAGS.dataset.split(','),
       input_fname_pattern=FLAGS.input_fname_pattern,
       crop=FLAGS.crop,
       checkpoint_dir=FLAGS.checkpoint_dir,
       sample_dir=sample_dir,
       sample_rate=FLAGS.sample_rate,
-      nbr_of_layers_d=FLAGS.nbr_of_layers_d,
-      nbr_of_layers_g=FLAGS.nbr_of_layers_g,
-      use_checkpoints=FLAGS.use_checkpoints,
-      batch_norm_g=FLAGS.batch_norm_g,
-      batch_norm_d=FLAGS.batch_norm_d,
-      activation_g=FLAGS.activation_g.split(','),
-      activation_d=FLAGS.activation_d.split(','),
-      nbr_g_updates=FLAGS.nbr_g_updates,
-      nbr_d_updates=FLAGS.nbr_d_updates,
       gpu_idx=FLAGS.gpu_idx,
       enable_cache=not FLAGS.disable_cache)
 

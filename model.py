@@ -18,14 +18,10 @@ def conv_out_size_same(size, stride):
 
 
 class DCGAN(object):
-  def __init__(self, sess, job: Job, input_height=108, input_width=108, crop=True,
-               batch_size=64, sample_num=64, output_height=64, output_width=64,
-               y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
-               gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_names=['default'],
-               input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
-               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
-               activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1, gpu_idx=None,
-               enable_cache=True):
+  def __init__(self, sess, job: Job, input_height=108, input_width=108, crop=True, batch_size=64, sample_num=64,
+               output_height=64, output_width=64, y_dim=None, z_dim=100, gf_dim=64, df_dim=64, gfc_dim=1024,
+               dfc_dim=1024, input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
+               gpu_idx=None, enable_cache=True):
     """
 
     Args:
@@ -63,24 +59,15 @@ class DCGAN(object):
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
 
-    self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
 
     self.sample_rate = sample_rate
-    self.nbr_of_layers_d = nbr_of_layers_d
-    self.nbr_of_layers_g = nbr_of_layers_g
 
-    self.batch_norm_g = batch_norm_g
-    self.batch_norm_d = batch_norm_d
+    self.activation_g = extend_array_to(self.job.activation_g, self.job.nbr_of_layers_g - 1)
+    self.activation_d = extend_array_to(self.job.activation_d, self.job.nbr_of_layers_d - 1)
 
-    self.activation_g = extend_array_to(activation_g, nbr_of_layers_g - 1)
-    self.activation_d = extend_array_to(activation_d, nbr_of_layers_d - 1)
-
-    self.nbr_g_updates = nbr_g_updates
-    self.nbr_d_updates = nbr_d_updates
-
-    print('data folders: {}'.format(dataset_names))
-    self.data_set_manager = DataSetManager(dataset_names, enable_cache, 'rgb')
+    print('data folders: {}'.format(self.job.dataset_folders))
+    self.data_set_manager = DataSetManager(self.job.dataset_folders, enable_cache, 'rgb')
 
     np.random.shuffle(self.data_set_manager.images_paths)
     imread_img = imread(self.data_set_manager.images_paths[0])
@@ -102,6 +89,7 @@ class DCGAN(object):
     print('discriminator device: {}'.format(self.gpu_allocator.discriminator_device()))
 
     self.build_model()
+    self.job_start = None
 
   def build_model(self):
     if self.y_dim:
@@ -179,21 +167,21 @@ class DCGAN(object):
 
   def train(self, config):
     print()
-    print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
-    print('self.nbr_d_updates: {}'.format(self.nbr_d_updates))
-    print('self.activation_g: {}'.format(self.activation_g))
-    print('self.activation_d: {}'.format(self.activation_d))
-    print("config.learning_rate_g: {}".format(config.learning_rate_g))
-    print("config.beta1_g: {}".format(config.beta1_g))
-    print("config.learning_rate_d: {}".format(config.learning_rate_d))
-    print("config.beta1_d: {}".format(config.beta1_d))
+    print('self.nbr_g_updates: {}'.format(self.job.nbr_g_updates))
+    print('self.nbr_d_updates: {}'.format(self.job.nbr_d_updates))
+    print('self.activation_g: {}'.format(self.job.activation_g))
+    print('self.activation_d: {}'.format(self.job.activation_d))
+    print("config.learning_rate_g: {}".format(self.job.learning_rate_g))
+    print("config.beta1_g: {}".format(self.job.beta1_g))
+    print("config.learning_rate_d: {}".format(self.job.learning_rate_d))
+    print("config.beta1_d: {}".format(self.job.beta1_d))
     print()
 
     with tf.device(self.gpu_allocator.generator_device()):
-      g_optim = adam(config.learning_rate_g, config.beta1_g).minimize(self.g_loss, var_list=self.g_vars)
+      g_optim = adam(self.job.learning_rate_g, self.job.beta1_g).minimize(self.g_loss, var_list=self.g_vars)
 
     with tf.device(self.gpu_allocator.discriminator_device()):
-      d_optim = adam(config.learning_rate_d, config.beta1_d).minimize(self.d_loss, var_list=self.d_vars)
+      d_optim = adam(self.job.learning_rate_d, self.job.beta1_d).minimize(self.d_loss, var_list=self.d_vars)
 
     try:
       tf.global_variables_initializer().run()
@@ -206,7 +194,7 @@ class DCGAN(object):
     counter = 1
     start_time = time.time()
 
-    if self.use_checkpoints:
+    if self.job.use_checkpoints:
       could_load, checkpoint_counter = self.load(self.checkpoint_dir)
       if could_load:
         counter = checkpoint_counter
@@ -226,7 +214,7 @@ class DCGAN(object):
       batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
       # Update D network
-      for i in range(0, self.nbr_d_updates):
+      for i in range(0, self.job.nbr_d_updates):
         batch_data = self.data_set_manager.get_random_images(self.batch_size)
         self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
 
@@ -234,15 +222,15 @@ class DCGAN(object):
 
       # Update G network
       # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-      for i in range(0, self.nbr_g_updates):
+      for i in range(0, self.job.nbr_g_updates):
         self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
 
-      self.build_frame(step, self.nbr_d_updates + i, sample_z, sample_inputs)
+      self.build_frame(step, self.job.nbr_d_updates + i, sample_z, sample_inputs)
 
       counter += 1
       print("Step: [%6d] time: %4.4f" % (step, time.time() - start_time))
 
-      if self.use_checkpoints and np.mod(counter, 500) == 2:
+      if self.job.use_checkpoints and np.mod(counter, 500) == 2:
         try:
           begin = datetime.datetime.now().replace(microsecond=0)
           self.save(config.checkpoint_dir, counter)
@@ -302,7 +290,7 @@ class DCGAN(object):
         if reuse:
           scope.reuse_variables()
 
-        nbr_layers = self.nbr_of_layers_d
+        nbr_layers = self.job.nbr_of_layers_d
         print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
         # layer 0
@@ -314,7 +302,7 @@ class DCGAN(object):
           output_dim = self.df_dim * (2 ** i)
           layer_name = 'd_h' + str(i) + '_conv'
           conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
-          if self.batch_norm_d:
+          if self.job.batch_norm_d:
             conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
           previous_layer = add_activation(self.activation_d[i], conv_layer)
 
@@ -326,7 +314,7 @@ class DCGAN(object):
   def generator(self, z):
     with tf.device(self.gpu_allocator.generator_device()):
       with tf.variable_scope("generator") as scope:
-        nbr_layers = self.nbr_of_layers_g
+        nbr_layers = self.job.nbr_of_layers_g
         print('init generator with ' + str(nbr_layers) + ' layers ...')
 
         heights = []
@@ -348,7 +336,7 @@ class DCGAN(object):
         width = widths[nbr_layers - 1]
         z_ = linear(z, self.gf_dim * mul * height * width, 'g_h0_lin')
         prev_layer = tf.reshape(z_, [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
-        if self.batch_norm_g:
+        if self.job.batch_norm_g:
           prev_layer = batch_norm(name='g_bn0')(prev_layer)
         prev_layer = add_activation(self.activation_g[0], prev_layer)
 
@@ -359,7 +347,7 @@ class DCGAN(object):
           width = widths[nbr_layers - 1 - i]
           layer_name = 'g_h' + str(i)
           prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
-          if self.batch_norm_g:
+          if self.job.batch_norm_g:
             prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
           prev_layer = add_activation(self.activation_g[i], prev_layer)
 
@@ -374,7 +362,7 @@ class DCGAN(object):
       with tf.variable_scope("generator") as scope:
         scope.reuse_variables()
 
-        nbr_layers = self.nbr_of_layers_g
+        nbr_layers = self.job.nbr_of_layers_g
 
         heights = []
         widths = []
@@ -395,7 +383,7 @@ class DCGAN(object):
           linear(z, self.gf_dim * mul * heights[nbr_layers - 1] * widths[nbr_layers - 1], 'g_h0_lin'),
           [-1, heights[nbr_layers - 1], widths[nbr_layers - 1], self.gf_dim * mul])
 
-        if self.batch_norm_g:
+        if self.job.batch_norm_g:
           prev_layer = batch_norm(name='g_bn0')(prev_layer, train=False)
 
         prev_layer = add_activation(self.activation_g[0], prev_layer)
@@ -407,7 +395,7 @@ class DCGAN(object):
           w = widths[nbr_layers - i - 1]
           layer_name = 'g_h' + str(i)
           prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
-          if self.batch_norm_g:
+          if self.job.batch_norm_g:
             prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
           prev_layer = add_activation(self.activation_g[i], prev_layer)
 

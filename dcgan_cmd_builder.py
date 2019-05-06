@@ -13,7 +13,6 @@ class Job:
 
   def __init__(self):
     self.name = 'dcgan_job'
-    self.epochs = 0
     self.batch_size = 0
     self.dataset_folders = []
     self.dataset_size = 0
@@ -45,14 +44,14 @@ class Job:
     return self.get_nbr_of_steps() * 2
 
   def get_nbr_of_steps(self):
-    return self.video_length * 1800
+    return int(self.video_length * 1800)
 
   # noinspection PyListCreation
   def build_job_command(self, gpu_idx=None, enable_cache=True):
     dcgan_cmd = ['python3', 'main.py']
 
-    dcgan_cmd.append('--epoch')
-    dcgan_cmd.append(str(self.epochs))
+    dcgan_cmd.append('--video_length')
+    dcgan_cmd.append(str(self.video_length))
 
     dcgan_cmd.append('--name')
     dcgan_cmd.append(self.name)
@@ -191,7 +190,7 @@ class Job:
       job.nbr_d_updates = 1
 
     if row['video_length'] and not math.isnan(row['video_length']):
-      job.video_length_in_min = float(row['video_length'])
+      job.video_length = float(row['video_length'])
 
     # periodic renders
     if job.render_video:
@@ -271,6 +270,8 @@ class Job:
     job.beta1_g = FLAGS.beta1_g
     job.beta1_d = FLAGS.beta1_d
     job.train_size = np.inf
+    job.dataset_folders = FLAGS.dataset.split(',')
+    job.video_length = FLAGS.video_length
 
     return job
 
