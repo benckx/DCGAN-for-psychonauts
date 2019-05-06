@@ -175,6 +175,8 @@ class DCGAN(object):
     with tf.device(self.gpu_allocator.other_things_device()):
       self.saver = tf.train.Saver()
 
+    self.job_start = None
+
   def train(self, config):
     print()
     print('self.nbr_g_updates: {}'.format(self.nbr_g_updates))
@@ -215,55 +217,52 @@ class DCGAN(object):
     last_checkpoint_backup = int(time.time())
     checkpoint_backup_delay_in_min = get_checkpoint_backup_delay()
 
-    nbr_of_batches = min(len(self.data_set_manager.images_paths), config.train_size) // self.batch_size
-
     self.job_start = datetime.datetime.now()
 
     sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
     sample_inputs = self.data_set_manager.get_random_images(self.sample_num)
 
-    for epoch in xrange(config.epoch):
-      for idx in xrange(0, nbr_of_batches):
-        batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
+    for step in xrange(self.job.get_nbr_of_steps()):
+      batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
-        # Update D network
-        for i in range(0, self.nbr_d_updates):
-          batch_data = self.data_set_manager.get_random_images(self.batch_size)
-          self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
+      # Update D network
+      for i in range(0, self.nbr_d_updates):
+        batch_data = self.data_set_manager.get_random_images(self.batch_size)
+        self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
 
-        self.build_frame(i, epoch, idx, sample_z, sample_inputs)
+      self.build_frame(step, i, sample_z, sample_inputs)
 
-        # Update G network
-        # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
-        for i in range(0, self.nbr_g_updates):
-          self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
+      # Update G network
+      # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
+      for i in range(0, self.nbr_g_updates):
+        self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
 
-        self.build_frame(self.nbr_d_updates + i, epoch, idx, sample_z, sample_inputs)
+      self.build_frame(step, self.nbr_d_updates + i, sample_z, sample_inputs)
 
-        counter += 1
-        print("Epoch: [%2d] [%4d/%4d] time: %4.4f" % (epoch, idx, nbr_of_batches, time.time() - start_time))
+      counter += 1
+      print("Step: [%6d] time: %4.4f" % (step, time.time() - start_time))
 
-        if self.use_checkpoints and np.mod(counter, 500) == 2:
-          try:
-            begin = datetime.datetime.now().replace(microsecond=0)
-            self.save(config.checkpoint_dir, counter)
-            duration = datetime.datetime.now().replace(microsecond=0) - begin
-            print('duration of checkpoint saving: {}'.format(duration))
-            if must_backup_checkpoint():
-              current_time = int(time.time())
-              last_checkpoint_backup_min_ago = (current_time - last_checkpoint_backup) / 60
-              print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
-              if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
-                print('time to save the thing')
-                backup_checkpoint(self.job.name)
-                last_checkpoint_backup = int(time.time())
-              else:
-                min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
-                print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
-          except Exception as e:
-            print('Error during checkpoint saving: {}'.format(e))
+      if self.use_checkpoints and np.mod(counter, 500) == 2:
+        try:
+          begin = datetime.datetime.now().replace(microsecond=0)
+          self.save(config.checkpoint_dir, counter)
+          duration = datetime.datetime.now().replace(microsecond=0) - begin
+          print('duration of checkpoint saving: {}'.format(duration))
+          if must_backup_checkpoint():
+            current_time = int(time.time())
+            last_checkpoint_backup_min_ago = (current_time - last_checkpoint_backup) / 60
+            print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
+            if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
+              print('time to save the thing')
+              backup_checkpoint(self.job.name)
+              last_checkpoint_backup = int(time.time())
+            else:
+              min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
+              print('wait {:0.2f} more minutes before making a checkpoint backup'.format(min_before_next_backup))
+        except Exception as e:
+          print('Error during checkpoint saving: {}'.format(e))
 
-  def build_frame(self, suffix, epoch, idx, sample_z, sample_inputs):
+  def build_frame(self, step, suffix, sample_z, sample_inputs):
     try:
       samples, d_loss, g_loss = self.sess.run(
         [self.sampler, self.d_loss, self.g_loss],
@@ -272,7 +271,7 @@ class DCGAN(object):
           self.inputs: sample_inputs,
         },
       )
-      file_name = './{}/train_{:06d}_{:06d}_{:03d}.png'.format(self.sample_dir, epoch, idx, suffix)
+      file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
       frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
       self.log_frame_rate()

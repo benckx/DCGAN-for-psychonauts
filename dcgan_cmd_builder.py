@@ -39,10 +39,13 @@ class Job:
     self.sample_res = None
     self.render_res = None
     self.train_size = None
+    self.video_length = None
 
   def get_nbr_of_frames(self):
-    frames_per_step = 2
-    return frames_per_step * int(self.dataset_size / self.batch_size) * self.epochs
+    return self.get_nbr_of_steps() * 2
+
+  def get_nbr_of_steps(self):
+    return self.video_length * 1800
 
   # noinspection PyListCreation
   def build_job_command(self, gpu_idx=None, enable_cache=True):
@@ -124,13 +127,11 @@ class Job:
 
   @classmethod
   def from_row(cls, row):
-    fps = 60
     samples_prefix = 'samples_'
 
     # model settings
     job = Job()
     job.name = row['name']
-    job.epochs = int(row['epoch'])
     job.grid_width = int(row['grid_width'])
     job.grid_height = int(row['grid_height'])
     job.batch_size = job.grid_width * job.grid_height
@@ -189,7 +190,8 @@ class Job:
     else:
       job.nbr_d_updates = 1
 
-    job.video_length_in_min = ((job.get_nbr_of_frames() / fps) / 60)
+    if row['video_length'] and not math.isnan(row['video_length']):
+      job.video_length_in_min = float(row['video_length'])
 
     # periodic renders
     if job.render_video:
