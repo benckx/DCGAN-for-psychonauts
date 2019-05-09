@@ -111,6 +111,7 @@ def main(_):
   run_config.gpu_options.per_process_gpu_memory_fraction = 1
 
   job = Job.from_FLAGS(FLAGS)
+  print('video length: {} min.'.format(job.video_length))
 
   with tf.Session(config=run_config) as sess:
     dcgan = DCGAN(

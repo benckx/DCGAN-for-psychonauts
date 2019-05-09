@@ -250,6 +250,7 @@ class Job:
         print('Error: dataset {} not found!'.format(dataset))
         exit(1)
 
+  # noinspection PyPep8Naming
   @classmethod
   def from_FLAGS(cls, FLAGS):
     job = Job()
