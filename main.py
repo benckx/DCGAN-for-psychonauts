@@ -116,6 +116,7 @@ def main(_):
   with tf.Session(config=run_config) as sess:
     dcgan = DCGAN(
       sess,
+      job,
       input_width=input_width,
       input_height=input_height,
       output_width=output_width,
