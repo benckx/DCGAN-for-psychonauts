@@ -303,10 +303,10 @@ class DCGAN(object):
     # progress and time remaining estimate
     total_steps = self.job.get_nbr_of_steps()
     progress = step / total_steps
+    print("progress: {0:.2f}%".format(progress * 100))
     if progress >= 0.01:
       remaining_progress = 1 - progress
       remaining_time_in_minutes = minutes_since_job_started * remaining_progress
-      print("progress: {0:.2f}%".format(progress * 100))
       if remaining_time_in_minutes <= 120:
         print('remaining {:0.2f} min.'.format(remaining_time_in_minutes))
       else:
