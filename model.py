@@ -3,12 +3,12 @@ from __future__ import division
 import time
 from multiprocessing import Pool
 
+from dcgan_cmd_builder import Job
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
 from images_utils import DataSetManager
 from ops import *
 from utils import *
-from dcgan_cmd_builder import Job
 
 frames_saving_pool = Pool(processes=20)
 
@@ -18,7 +18,7 @@ def conv_out_size_same(size, stride):
 
 
 class DCGAN(object):
-  def __init__(self, sess, job : Job, input_height=108, input_width=108, crop=True,
+  def __init__(self, sess, job: Job, input_height=108, input_width=108, crop=True,
                batch_size=64, sample_num=64, output_height=64, output_width=64,
                grid_height=8, grid_width=8,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
@@ -224,7 +224,9 @@ class DCGAN(object):
     sample_z = np.random.uniform(-1, 1, size=(self.sample_num, self.z_dim))
     sample_inputs = self.data_set_manager.get_random_images(self.sample_num)
 
-    for step in xrange(self.job.get_nbr_of_steps()):
+    total_steps = self.job.get_nbr_of_steps()
+
+    for step in xrange(total_steps):
       batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
 
       # Update D network
@@ -242,7 +244,7 @@ class DCGAN(object):
       self.build_frame(step, 1, sample_z, sample_inputs)
 
       counter += 1
-      print("Step: [%6d] time: %4.4f" % (step, time.time() - start_time))
+      print("Step: [%6d/%6d] time: %4.4f" % (step, total_steps, time.time() - start_time))
 
       if self.use_checkpoints and np.mod(counter, 500) == 2:
         try:
@@ -276,11 +278,11 @@ class DCGAN(object):
       file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
       frames_saving_pool.apply_async(save_images, (samples, (self.grid_height, self.grid_width), file_name))
       print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
-      self.log_frame_rate()
+      self.log_performances(step)
     except Exception as e:
       print("one pic error! --> {}".format(e))
 
-  def log_frame_rate(self):
+  def log_performances(self, step):
     # global
     print()
     self.frames_count += 1
@@ -297,6 +299,24 @@ class DCGAN(object):
 
     if minutes_since_job_started >= 3:
       print('frames/min (3 min): {:0.2f}'.format(len(self.frames_last_timestamps) / 3))
+
+    # progress and time remaining estimate
+    total_steps = self.job.get_nbr_of_steps()
+    progress = step / total_steps
+    if progress >= 0.01:
+      remaining_progress = 1 - progress
+      remaining_time_in_minutes = minutes_since_job_started * remaining_progress
+      print("progress: {0:.2f}%".format(progress * 100))
+      if remaining_time_in_minutes <= 120:
+        print('remaining {:0.2f} min.'.format(remaining_time_in_minutes))
+      else:
+        remaining_time_in_hours = (minutes_since_job_started * remaining_progress) / 60
+        print('remaining {:0.2f} hours.'.format(remaining_time_in_hours))
+
+      now = datetime.datetime.now()
+      eta = now + datetime.timedelta(minutes=remaining_time_in_minutes)
+      print('ETA: {}'.format(eta))
+      print()
 
   def discriminator(self, image, reuse=False):
     with tf.device(self.gpu_allocator.discriminator_device()):
