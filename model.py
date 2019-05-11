@@ -9,6 +9,7 @@ from gpu_devices import GpuAllocator
 from images_utils import DataSetManager
 from ops import *
 from utils import *
+from string_utils import min_to_string
 
 frames_saving_pool = Pool(processes=20)
 
@@ -283,39 +284,37 @@ class DCGAN(object):
       print("one pic error! --> {}".format(e))
 
   def log_performances(self, step):
-    # global
-    print()
-    self.frames_count += 1
+    date_format = "%d/%m %H:%M"
     now = datetime.datetime.now()
-    minutes_since_job_started = ((now - self.job_start).seconds / 60)
-    print('frames/min (total): {:0.2f}'.format(self.frames_count / minutes_since_job_started))
-
-    # on last 3 min.
+    self.frames_count += 1
     self.frames_last_timestamps.append(now)
+    min_since_started = ((now - self.job_start).seconds / 60)
+
+    total_steps = self.job.get_nbr_of_steps()
+    progress = step / total_steps
+
+    # calculate frame/min. on last 3 min.
     for value in self.frames_last_timestamps:
       delta = (now - value).seconds
       if delta >= 3 * 60:
         self.frames_last_timestamps.remove(value)
 
-    if minutes_since_job_started >= 3:
+    print()
+    if min_since_started >= 3:
       print('frames/min (3 min): {:0.2f}'.format(len(self.frames_last_timestamps) / 3))
+    else:
+      print('frames/min (total): {:0.2f}'.format(self.frames_count / min_since_started))
 
     # progress and time remaining estimate
-    total_steps = self.job.get_nbr_of_steps()
-    progress = step / total_steps
     print("progress: {0:.2f}%".format(progress * 100))
     if progress >= 0.01:
       remaining_progress = 1 - progress
-      remaining_time_in_minutes = minutes_since_job_started * remaining_progress
-      if remaining_time_in_minutes <= 120:
-        print('remaining {:0.2f} min.'.format(remaining_time_in_minutes))
-      else:
-        remaining_time_in_hours = (minutes_since_job_started * remaining_progress) / 60
-        print('remaining {:0.2f} hours.'.format(remaining_time_in_hours))
+      remaining_time = min_since_started * remaining_progress * 100
+      print('remaining time: ' + min_to_string(remaining_time))
 
-      now = datetime.datetime.now()
-      eta = now + datetime.timedelta(minutes=remaining_time_in_minutes)
-      print('ETA: {}'.format(eta))
+      eta = now + datetime.timedelta(minutes=remaining_time)
+      print('start: ' + self.job_start.strftime(date_format) + ' (' + min_to_string(min_since_started) + ' ago)')
+      print('ETA: ' + eta.strftime(date_format))
       print()
 
   def discriminator(self, image, reuse=False):
