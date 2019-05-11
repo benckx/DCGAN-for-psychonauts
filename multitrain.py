@@ -112,6 +112,7 @@ for job in jobs:
       if job.render_video:
         if auto_periodic_renders:
           os.rename(job.sample_folder, shared_state.get_time_cut_folder_name())
+          job.sample_folder = shared_state.get_time_cut_folder_name()
 
         pool.apply_async(process_video_job_param, job)
 
