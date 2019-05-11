@@ -307,7 +307,7 @@ class DCGAN(object):
 
     # progress and time remaining estimate
     print("progress: {0:.2f}%".format(progress * 100))
-    if progress >= 0.01:
+    if progress >= 0.005:
       remaining_progress = 1 - progress
       remaining_time = min_since_started * remaining_progress * 100
       print('remaining time: ' + min_to_string(remaining_time))
