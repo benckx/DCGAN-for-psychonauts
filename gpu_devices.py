@@ -3,7 +3,6 @@ from tensorflow.python.client import device_lib
 
 class GpuAllocator:
   def __init__(self, gpu_idx):
-    self.idx = 1
     self.gpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'GPU']
     self.cpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'CPU']
     self.nbr_gpu_devices = len(self.gpu_devices)
