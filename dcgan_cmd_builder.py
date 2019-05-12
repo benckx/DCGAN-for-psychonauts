@@ -117,6 +117,12 @@ class Job:
     dcgan_cmd.append('--nbr_d_updates')
     dcgan_cmd.append(str(self.nbr_d_updates))
 
+    dcgan_cmd.append('--k_w')
+    dcgan_cmd.append(str(self.k_w))
+
+    dcgan_cmd.append('--k_h')
+    dcgan_cmd.append(str(self.k_h))
+
     dcgan_cmd.append('--sample_rate')
     dcgan_cmd.append('1')
 
