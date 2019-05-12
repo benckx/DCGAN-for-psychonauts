@@ -35,18 +35,39 @@ class GpuAllocator:
       self.allocations['sampler'] = self.nbr_gpu_devices - 3
       self.allocations['discriminator_fake'] = self.nbr_gpu_devices - 3
       self.allocations['other'] = self.nbr_gpu_devices - 3
+    else:
+      self.allocations['generator'] = None
+      self.allocations['discriminator'] = None
+      self.allocations['sampler'] = None
+      self.allocations['discriminator_fake'] = None
+      self.allocations['other'] = None
 
   def generator_device(self):
-    return self.gpu_devices[self.allocations['generator']].name
+    if self.allocations['generator'] is None:
+      return ''
+    else:
+      return self.gpu_devices[self.allocations['generator']].name
 
   def sampler_device(self):
-    return self.gpu_devices[self.allocations['sampler']].name
+    if self.allocations['sampler'] is None:
+      return ''
+    else:
+      return self.gpu_devices[self.allocations['sampler']].name
 
   def discriminator_device(self):
-    return self.gpu_devices[self.allocations['discriminator']].name
+    if self.allocations['discriminator'] is None:
+      return ''
+    else:
+      return self.gpu_devices[self.allocations['discriminator']].name
 
   def discriminator_fake_device(self):
-    return self.gpu_devices[self.allocations['discriminator_fake']].name
+    if self.allocations['discriminator_fake'] is None:
+      return ''
+    else:
+      return self.gpu_devices[self.allocations['discriminator_fake']].name
 
   def other_things_device(self):
-    return self.gpu_devices[self.allocations['other']].name
+    if self.allocations['other'] is None:
+      return ''
+    else:
+      return self.gpu_devices[self.allocations['other']].name

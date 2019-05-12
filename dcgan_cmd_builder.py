@@ -23,8 +23,8 @@ class Job:
     self.batch_size = 0
     self.dataset_folders = []
     self.dataset_size = 0
-    self.activation_g = []
-    self.activation_d = []
+    self.activation_g = ['relu']
+    self.activation_d = ['lrelu']
     self.nbr_of_layers_g = 5
     self.nbr_of_layers_d = 5
     self.batch_norm_g = True
@@ -162,12 +162,13 @@ class Job:
     job.batch_norm_d = row['batch_norm_d'] == '' or row['batch_norm_d']
 
     if row['activation_g'] and str(row['activation_g']) != "nan":
-      activation_g = row['activation_g'].split(',')
-      job.activation_g = extend_array_to(activation_g, job.nbr_of_layers_g - 1)
+      job.activation_g.activation_g = row['activation_g'].split(',')
 
     if row['activation_d'] and str(row['activation_d']) != "nan":
-      activation_d = row['activation_d'].split(',')
-      job.activation_d = extend_array_to(activation_d, job.nbr_of_layers_d - 1)
+      job.activation_d = row['activation_d'].split(',')
+
+    job.activation_d = extend_array_to(job.activation_d, job.nbr_of_layers_d - 1)
+    job.activation_g = extend_array_to(job.activation_g, job.nbr_of_layers_g - 1)
 
     # input images
     job.dataset_folders = row['dataset'].split(',')
