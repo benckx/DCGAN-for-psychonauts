@@ -135,7 +135,7 @@ class Job:
     return dcgan_cmd
 
   @classmethod
-  def from_row(cls, row):
+  def from_row(cls, row, columns):
     samples_prefix = 'samples_'
 
     # model settings
@@ -145,29 +145,32 @@ class Job:
     job.grid_height = int(row['grid_height'])
     job.batch_size = job.grid_width * job.grid_height
 
-    if row['learning_rate_g'] and not math.isnan(row['learning_rate_g']):
+    if 'learning_rate_g' in columns:
       job.learning_rate_g = float(row['learning_rate_g'])
 
-    if row['beta1_g'] and not math.isnan(row['beta1_g']):
+    if 'beta1_g' in columns:
       job.beta1_g = float(row['beta1_g'])
 
-    if row['learning_rate_d'] and not math.isnan(row['learning_rate_d']):
+    if 'learning_rate_d' in columns:
       job.learning_rate_d = float(row['learning_rate_d'])
 
-    if row['beta1_d'] and not math.isnan(row['beta1_g']):
+    if 'beta1_d' in columns:
       job.beta1_d = float(row['beta1_d'])
 
     # layers
     job.nbr_of_layers_d = int(row['nbr_of_layers_d'])
     job.nbr_of_layers_g = int(row['nbr_of_layers_g'])
 
-    job.batch_norm_g = row['batch_norm_g'] == '' or row['batch_norm_g']
-    job.batch_norm_d = row['batch_norm_d'] == '' or row['batch_norm_d']
+    if 'batch_norm_g' in columns:
+      job.batch_norm_g = row['batch_norm_g']
 
-    if row['activation_g'] and str(row['activation_g']) != "nan":
-      job.activation_g.activation_g = row['activation_g'].split(',')
+    if 'batch_norm_d' in columns:
+      job.batch_norm_d = row['batch_norm_d']
 
-    if row['activation_d'] and str(row['activation_d']) != "nan":
+    if 'activation_g' in columns:
+      job.activation_g = row['activation_g'].split(',')
+
+    if 'activation_d' in columns:
       job.activation_d = row['activation_d'].split(',')
 
     job.activation_d = extend_array_to(job.activation_d, job.nbr_of_layers_d - 1)
@@ -196,17 +199,14 @@ class Job:
     job.sample_res = (job.sample_width, job.sample_height)
 
     # video settings
-    job.render_video = row['render_video']
+    if 'render_video' in columns:
+      job.render_video = row['render_video']
 
-    if row['nbr_g_updates'] and not math.isnan(row['nbr_g_updates']):
+    if 'nbr_g_updates' in columns:
       job.nbr_g_updates = int(row['nbr_g_updates'])
-    else:
-      job.nbr_g_updates = 2
 
-    if row['nbr_d_updates'] and not math.isnan(row['nbr_d_updates']):
+    if 'nbr_d_updates' in columns:
       job.nbr_d_updates = int(row['nbr_d_updates'])
-    else:
-      job.nbr_d_updates = 1
 
     if row['video_length'] and not math.isnan(row['video_length']):
       job.video_length = float(row['video_length'])
@@ -218,13 +218,18 @@ class Job:
         job.auto_render_period = int(row['auto_render_period'])
 
       if job.has_auto_periodic_render:
-        if row['render_res'] and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
+        if 'render_res' in columns and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
           job.render_res = tuple([int(x) for x in row['render_res'].split('x')])
 
     # flags
-    job.upload_to_ftp = row['upload_to_ftp']
-    job.delete_images_after_render = row['delete_images_after_render']
-    job.use_checkpoints = row['use_checkpoints']
+    if 'upload_to_ftp' in columns:
+      job.upload_to_ftp = row['upload_to_ftp']
+
+    if 'delete_images_after_render' in columns:
+      job.delete_images_after_render = row['delete_images_after_render']
+
+    if 'use_checkpoints' in columns:
+      job.use_checkpoints = row['use_checkpoints']
 
     return job
 
@@ -236,7 +241,7 @@ class Job:
     jobs = []
     for _, row in data.iterrows():
       print(str(row))
-      jobs.append(Job.from_row(row))
+      jobs.append(Job.from_row(row, data.columns))
 
     return jobs
 
