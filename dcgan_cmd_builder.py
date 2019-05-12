@@ -1,12 +1,19 @@
 import io
 import os
-import numpy as np
 
 import math
+import numpy as np
 import pandas as pd
 from PIL import Image
 
 from images_utils import get_datasets_images
+
+
+def extend_array_to(input_array, nbr):
+  result_array = input_array
+  while len(input_array) < nbr:
+    input_array.extend(input_array)
+  return result_array[0:nbr]
 
 
 class Job:
@@ -155,10 +162,12 @@ class Job:
     job.batch_norm_d = row['batch_norm_d'] == '' or row['batch_norm_d']
 
     if row['activation_g'] and str(row['activation_g']) != "nan":
-      job.activation_g = row['activation_g'].split(',')
+      activation_g = row['activation_g'].split(',')
+      job.activation_g = extend_array_to(activation_g, job.nbr_of_layers_g - 1)
 
     if row['activation_d'] and str(row['activation_d']) != "nan":
-      job.activation_d = row['activation_d'].split(',')
+      activation_d = row['activation_d'].split(',')
+      job.activation_d = extend_array_to(activation_d, job.nbr_of_layers_d - 1)
 
     # input images
     job.dataset_folders = row['dataset'].split(',')
