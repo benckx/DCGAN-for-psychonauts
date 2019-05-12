@@ -131,7 +131,6 @@ def main(_):
       crop=FLAGS.crop,
       checkpoint_dir=FLAGS.checkpoint_dir,
       sample_dir=sample_dir,
-      name=FLAGS.name,
       sample_rate=FLAGS.sample_rate,
       nbr_of_layers_d=FLAGS.nbr_of_layers_d,
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,

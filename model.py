@@ -25,7 +25,7 @@ class DCGAN(object):
                grid_height=8, grid_width=8,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_names=['default'],
-               input_fname_pattern='*.jpg', checkpoint_dir=None, name='dcgan', sample_dir=None, sample_rate=None,
+               input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
                nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, batch_norm_g=True, batch_norm_d=True,
                activation_g=["relu"], activation_d=["lrelu"], nbr_g_updates=2, nbr_d_updates=1, gpu_idx=None,
                enable_cache=True):
@@ -70,7 +70,6 @@ class DCGAN(object):
     self.input_fname_pattern = input_fname_pattern
     self.checkpoint_dir = checkpoint_dir
 
-    self.name = name
     self.use_checkpoints = use_checkpoints
     self.sample_dir = sample_dir
 
@@ -260,7 +259,7 @@ class DCGAN(object):
             print('last checkpoint backup: {:0.2f} min. ago'.format(last_checkpoint_backup_min_ago))
             if last_checkpoint_backup_min_ago >= checkpoint_backup_delay_in_min:
               print('time to save the thing')
-              backup_checkpoint(self.name)
+              backup_checkpoint(self.job.name)
               last_checkpoint_backup = int(time.time())
             else:
               min_before_next_backup = checkpoint_backup_delay_in_min - last_checkpoint_backup_min_ago
@@ -308,7 +307,7 @@ class DCGAN(object):
     print("progress: {0:.2f}%".format(progress * 100))
     if progress >= 0.005:
       remaining_progress = 1 - progress
-      remaining_time = min_since_started * remaining_progress * 100
+      remaining_time = (min_since_started / progress) * remaining_progress
       print('remaining time: ' + min_to_string(remaining_time))
 
       eta = now + datetime.timedelta(minutes=remaining_time)
@@ -438,7 +437,7 @@ class DCGAN(object):
 
   @property
   def model_dir(self):
-    return self.name
+    return self.job.name
 
   def save(self, checkpoint_dir, step):
     model_name = "DCGAN.model"
