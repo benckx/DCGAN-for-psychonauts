@@ -38,8 +38,9 @@ class Job:
     self.nbr_g_updates = 1
     self.nbr_d_updates = 1
     self.sample_folder = None
-    self.use_checkpoints = False
-    self.delete_images_after_render = False
+    self.render_video = True
+    self.use_checkpoints = True
+    self.delete_images_after_render = True
     self.upload_to_ftp = False
     self.has_auto_periodic_render = False
     self.sample_res = None
