@@ -91,7 +91,10 @@ class DCGAN(object):
     self.gpu_allocator = GpuAllocator(gpu_idx)
 
     print('generator device: {}'.format(self.gpu_allocator.generator_device()))
+    print('sampler device: {}'.format(self.gpu_allocator.sampler_device()))
     print('discriminator device: {}'.format(self.gpu_allocator.discriminator_device()))
+    print('discriminator fake device: {}'.format(self.gpu_allocator.discriminator_fake_device()))
+    print('other device: {}'.format(self.gpu_allocator.other_things_device()))
 
     self.build_model()
 
