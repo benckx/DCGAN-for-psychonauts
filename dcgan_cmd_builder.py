@@ -182,10 +182,10 @@ class Job:
     job.activation_d = extend_array_to(job.activation_d, job.nbr_of_layers_d - 1)
     job.activation_g = extend_array_to(job.activation_g, job.nbr_of_layers_g - 1)
 
-    if row['k_w']:
+    if 'k_w' in columns:
       job.k_w = int(row['k_w'])
 
-    if row['k_h']:
+    if 'k_h' in columns:
       job.k_h = int(row['k_h'])
 
     # input images
