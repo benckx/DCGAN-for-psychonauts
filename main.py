@@ -108,7 +108,7 @@ def main(_):
     os.makedirs(sample_dir)
 
   # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-  run_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+  run_config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=True)
   run_config.gpu_options.allow_growth = True
   run_config.gpu_options.per_process_gpu_memory_fraction = 1
 
