@@ -310,14 +310,14 @@ class DCGAN(object):
         print('init discriminator with ' + str(nbr_layers) + ' layers ...')
 
         # layer 0
-        previous_layer = conv2d(image, self.df_dim, name='d_h0_conv')
+        previous_layer = conv2d(image, self.df_dim, name='d_h0_conv', k_w=self.job.k_w, k_h=self.job.k_h)
         previous_layer = add_activation(self.job.activation_d[0], previous_layer)
 
         # middle layers
         for i in range(1, nbr_layers - 1):
           output_dim = self.df_dim * (2 ** i)
           layer_name = 'd_h' + str(i) + '_conv'
-          conv_layer = conv2d(previous_layer, output_dim, name=layer_name)
+          conv_layer = conv2d(previous_layer, output_dim, name=layer_name, k_w=self.job.k_w, k_h=self.job.k_h)
           if self.job.batch_norm_d:
             conv_layer = batch_norm(name='d_bn{}'.format(i))(conv_layer)
           previous_layer = add_activation(self.job.activation_d[i], conv_layer)
@@ -362,14 +362,16 @@ class DCGAN(object):
           height = heights[nbr_layers - 1 - i]
           width = widths[nbr_layers - 1 - i]
           layer_name = 'g_h' + str(i)
-          prev_layer = deconv2d(prev_layer, [self.batch_size, height, width, self.gf_dim * mul], name=layer_name)
+          output_shape = [self.batch_size, height, width, self.gf_dim * mul]
+          prev_layer = deconv2d(prev_layer, output_shape, name=layer_name, k_w=self.job.k_w, k_h=self.job.k_h)
           if self.job.batch_norm_g:
             prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer)
           prev_layer = add_activation(self.job.activation_g[i], prev_layer)
 
         # last layer
         layer_name = 'g_h' + str(nbr_layers - 1)
-        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
+        output_shape = [self.batch_size, heights[0], widths[0], self.c_dim]
+        last_layer = deconv2d(prev_layer, output_shape, name=layer_name, k_w=self.job.k_w, k_h=self.job.k_h)
 
         return tf.nn.tanh(last_layer)
 
@@ -410,14 +412,16 @@ class DCGAN(object):
           h = heights[nbr_layers - i - 1]
           w = widths[nbr_layers - i - 1]
           layer_name = 'g_h' + str(i)
-          prev_layer = deconv2d(prev_layer, [self.batch_size, h, w, self.gf_dim * mul], name=layer_name)
+          output_shape = [self.batch_size, h, w, self.gf_dim * mul]
+          prev_layer = deconv2d(prev_layer, output_shape, name=layer_name, k_w=self.job.k_w, k_h=self.job.k_h)
           if self.job.batch_norm_g:
             prev_layer = batch_norm(name='g_bn' + str(i))(prev_layer, train=False)
           prev_layer = add_activation(self.job.activation_g[i], prev_layer)
 
         # last layer
         layer_name = 'g_h' + str(nbr_layers - 1)
-        last_layer = deconv2d(prev_layer, [self.batch_size, heights[0], widths[0], self.c_dim], name=layer_name)
+        output_shape = [self.batch_size, heights[0], widths[0], self.c_dim]
+        last_layer = deconv2d(prev_layer, output_shape, name=layer_name, k_w=self.job.k_w, k_h=self.job.k_h)
         return tf.nn.tanh(last_layer)
 
   @property

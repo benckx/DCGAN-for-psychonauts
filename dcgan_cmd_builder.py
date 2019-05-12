@@ -47,6 +47,8 @@ class Job:
     self.render_res = None
     self.train_size = None
     self.video_length = None
+    self.k_w = 5
+    self.k_h = 5
 
   def get_nbr_of_frames(self):
     return self.get_nbr_of_steps() * 2
@@ -171,6 +173,12 @@ class Job:
     job.activation_d = extend_array_to(job.activation_d, job.nbr_of_layers_d - 1)
     job.activation_g = extend_array_to(job.activation_g, job.nbr_of_layers_g - 1)
 
+    if row['k_w']:
+      job.k_w = int(row['k_w'])
+
+    if row['k_h']:
+      job.k_h = int(row['k_h'])
+
     # input images
     job.dataset_folders = row['dataset'].split(',')
     job.dataset_images = get_datasets_images(job.dataset_folders)
@@ -284,6 +292,8 @@ class Job:
     job.train_size = np.inf
     job.dataset_folders = FLAGS.dataset.split(',')
     job.video_length = FLAGS.video_length
+    job.k_w = FLAGS.k_w
+    job.k_h = FLAGS.k_h
 
     return job
 

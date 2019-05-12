@@ -50,6 +50,8 @@ flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimize
 flags.DEFINE_integer("nbr_d_updates", 1, "Number of update of Discriminator optimizer (per iteration)")
 flags.DEFINE_integer("gpu_idx", None, "Index of GPU")
 flags.DEFINE_boolean("disable_cache", False, "Enable/Disable the caching of input images")
+flags.DEFINE_integer("k_w", 5, "k_h")
+flags.DEFINE_integer("k_h", 5, "k_h")
 FLAGS = flags.FLAGS
 
 # default batch_size
