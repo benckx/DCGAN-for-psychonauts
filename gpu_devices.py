@@ -16,59 +16,37 @@ class GpuAllocator:
     for cpu_devices in self.cpu_devices:
       print(str(cpu_devices.name))
 
-  def generator_device(self):
-    if len(self.gpu_devices) == 0:
-      return ''
-    elif self.gpu_idx is not None:
-      return self.gpu_devices[self.gpu_idx].name
-    elif self.nbr_gpu_devices == 5:
-      return self.gpu_devices[4].name
-    elif self.nbr_gpu_devices == 4:
-      return self.gpu_devices[3].name
+    self.allocations = {}
+    if gpu_idx is not None:
+      self.allocations['generator'] = gpu_idx
+      self.allocations['discriminator'] = gpu_idx
+      self.allocations['sampler'] = gpu_idx
+      self.allocations['discriminator_fake'] = gpu_idx
+      self.allocations['other'] = gpu_idx
     elif self.nbr_gpu_devices == 2:
-      return self.gpu_devices[1].name
+      self.allocations['generator'] = self.nbr_gpu_devices - 1
+      self.allocations['sampler'] = self.nbr_gpu_devices - 1
+      self.allocations['discriminator'] = self.nbr_gpu_devices - 2
+      self.allocations['discriminator_fake'] = self.nbr_gpu_devices - 2
+      self.allocations['other'] = self.nbr_gpu_devices - 2
+    elif self.nbr_gpu_devices >= 3:
+      self.allocations['generator'] = self.nbr_gpu_devices - 1
+      self.allocations['discriminator'] = self.nbr_gpu_devices - 2
+      self.allocations['sampler'] = self.nbr_gpu_devices - 3
+      self.allocations['discriminator_fake'] = self.nbr_gpu_devices - 3
+      self.allocations['other'] = self.nbr_gpu_devices - 3
+
+  def generator_device(self):
+    return self.gpu_devices[self.allocations['generator']].name
 
   def sampler_device(self):
-    if len(self.gpu_devices) == 0:
-      return ''
-    elif self.gpu_idx is not None:
-      return self.gpu_devices[self.gpu_idx].name
-    elif self.nbr_gpu_devices == 5:
-      return self.gpu_devices[3].name
-    elif self.nbr_gpu_devices == 4:
-      return self.gpu_devices[2].name
-    elif self.nbr_gpu_devices == 2:
-      return self.gpu_devices[1].name
+    return self.gpu_devices[self.allocations['sample']].name
 
   def discriminator_device(self):
-    if len(self.gpu_devices) == 0:
-      return ''
-    elif self.gpu_idx is not None:
-      return self.gpu_devices[self.gpu_idx].name
-    elif self.nbr_gpu_devices == 5:
-      return self.gpu_devices[2].name
-    elif self.nbr_gpu_devices == 4:
-      return self.gpu_devices[1].name
-    elif self.nbr_gpu_devices == 2:
-      return self.gpu_devices[0].name
+    return self.gpu_devices[self.allocations['discriminator']].name
 
   def discriminator_fake_device(self):
-    if len(self.gpu_devices) == 0:
-      return ''
-    elif self.gpu_idx is not None:
-      return self.gpu_devices[self.gpu_idx].name
-    elif self.nbr_gpu_devices == 5:
-      return self.gpu_devices[1].name
-    elif self.nbr_gpu_devices == 4:
-      return self.gpu_devices[0].name
-    elif self.nbr_gpu_devices == 2:
-      return self.gpu_devices[0].name
+    return self.gpu_devices[self.allocations['discriminator_fake']].name
 
   def other_things_device(self):
-    if len(self.gpu_devices) == 0:
-      return ''
-    elif self.gpu_idx is not None:
-      return self.gpu_devices[self.gpu_idx].name
-    else:
-      return self.gpu_devices[len(self.gpu_devices) - 1].name
-
+    return self.gpu_devices[self.allocations['other']].name
