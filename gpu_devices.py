@@ -40,7 +40,7 @@ class GpuAllocator:
     return self.gpu_devices[self.allocations['generator']].name
 
   def sampler_device(self):
-    return self.gpu_devices[self.allocations['sample']].name
+    return self.gpu_devices[self.allocations['sampler']].name
 
   def discriminator_device(self):
     return self.gpu_devices[self.allocations['discriminator']].name
