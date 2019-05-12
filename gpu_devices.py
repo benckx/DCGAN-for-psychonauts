@@ -17,11 +17,11 @@ class GpuAllocator:
 
     self.allocations = {}
     if gpu_idx is not None:
-      self.allocations['generator'] = gpu_idx
-      self.allocations['discriminator'] = gpu_idx
-      self.allocations['sampler'] = gpu_idx
-      self.allocations['discriminator_fake'] = gpu_idx
-      self.allocations['other'] = gpu_idx
+      self.allocations['generator'] = self.gpu_idx
+      self.allocations['discriminator'] = self.gpu_idx
+      self.allocations['sampler'] = self.gpu_idx
+      self.allocations['discriminator_fake'] = self.gpu_idx
+      self.allocations['other'] = self.gpu_idx
     elif self.nbr_gpu_devices == 2:
       self.allocations['generator'] = self.nbr_gpu_devices - 1
       self.allocations['sampler'] = self.nbr_gpu_devices - 1
