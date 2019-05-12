@@ -42,6 +42,12 @@ class GpuAllocator:
       self.allocations['discriminator_fake'] = None
       self.allocations['other'] = None
 
+    print('generator GPU idx: '.format(self.allocations['generator']))
+    print('discriminator GPU idx: '.format(self.allocations['discriminator']))
+    print('sampler GPU idx: '.format(self.allocations['sampler']))
+    print('discriminator_fake GPU idx: '.format(self.allocations['discriminator_fake']))
+    print('other GPU idx: '.format(self.allocations['other']))
+
   def generator_device(self):
     if self.allocations['generator'] is None:
       return ''
