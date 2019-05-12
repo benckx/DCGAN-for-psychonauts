@@ -111,7 +111,7 @@ def main(_):
   # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
   gpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'GPU']
   for gpu_devices in gpu_devices:
-    print(gpu_devices)
+    print('device: {}'.format(gpu_devices))
 
   run_config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=True)
   run_config.gpu_options.allow_growth = True
