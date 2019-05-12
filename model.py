@@ -12,6 +12,7 @@ from utils import *
 from string_utils import min_to_string
 
 frames_saving_pool = Pool(processes=20)
+date_format = "%d/%m %H:%M"
 
 
 def conv_out_size_same(size, stride):
@@ -284,14 +285,12 @@ class DCGAN(object):
       print("one pic error! --> {}".format(e))
 
   def log_performances(self, step):
-    date_format = "%d/%m %H:%M"
     now = datetime.datetime.now()
     self.frames_count += 1
     self.frames_last_timestamps.append(now)
     min_since_started = ((now - self.job_start).seconds / 60)
 
-    total_steps = self.job.get_nbr_of_steps()
-    progress = step / total_steps
+    progress = step / self.job.get_nbr_of_steps()
 
     # calculate frame/min. on last 3 min.
     for value in self.frames_last_timestamps:
