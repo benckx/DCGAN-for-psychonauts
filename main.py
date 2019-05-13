@@ -5,7 +5,6 @@ import os.path
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-from tensorflow.python.client import device_lib
 
 from dcgan_cmd_builder import Job
 from images_utils import get_datasets_images
@@ -109,7 +108,7 @@ def main(_):
     os.makedirs(sample_dir)
 
   # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-  run_config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=True)
+  run_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
   run_config.gpu_options.allow_growth = True
   run_config.gpu_options.per_process_gpu_memory_fraction = 1
 
