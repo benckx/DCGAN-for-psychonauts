@@ -114,7 +114,8 @@ for job in jobs:
           os.rename(job.sample_folder, shared_state.get_time_cut_folder_name())
           job.sample_folder = shared_state.get_time_cut_folder_name()
 
-        pool.apply_async(process_video_job_param, job)
+        # pool.apply_async(process_video_job_param, job)
+        process_video_job_param(job)
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and job.use_checkpoints:

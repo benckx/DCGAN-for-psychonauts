@@ -151,16 +151,16 @@ class Job:
     job.grid_height = int(row['grid_height'])
     job.batch_size = job.grid_width * job.grid_height
 
-    if 'learning_rate_g' in columns:
+    if 'learning_rate_g' in columns and str(row['learning_rate_g']) != 'nan':
       job.learning_rate_g = float(row['learning_rate_g'])
 
-    if 'beta1_g' in columns:
+    if 'beta1_g' in columns and str(row['beta1_g']) != 'nan':
       job.beta1_g = float(row['beta1_g'])
 
-    if 'learning_rate_d' in columns:
+    if 'learning_rate_d' in columns and str(row['learning_rate_d']) != 'nan':
       job.learning_rate_d = float(row['learning_rate_d'])
 
-    if 'beta1_d' in columns:
+    if 'beta1_d' in columns and str(row['beta1_d']) != 'nan':
       job.beta1_d = float(row['beta1_d'])
 
     # layers
@@ -173,10 +173,10 @@ class Job:
     if 'batch_norm_d' in columns:
       job.batch_norm_d = row['batch_norm_d']
 
-    if 'activation_g' in columns:
+    if 'activation_g' in columns and str(row['activation_g']) != 'nan':
       job.activation_g = row['activation_g'].split(',')
 
-    if 'activation_d' in columns:
+    if 'activation_d' in columns and str(row['activation_d']) != 'nan':
       job.activation_d = row['activation_d'].split(',')
 
     job.activation_d = extend_array_to(job.activation_d, job.nbr_of_layers_d - 1)
