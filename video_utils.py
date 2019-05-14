@@ -36,6 +36,9 @@ def render_video(images_folder):
 
 
 def process_video_job_param(job: Job):
+  print('job.sample_folder: ' + job.sample_folder)
+  print('job.sample_res: {}'.format(job.sample_res))
+  print('job.render_res: {}'.format(job.render_res))
   process_video(job.sample_folder, job.upload_to_ftp, job.delete_images_after_render, job.sample_res, job.render_res)
 
 
