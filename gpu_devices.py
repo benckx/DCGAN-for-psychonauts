@@ -17,7 +17,7 @@ class GpuAllocator:
 
     self.allocations = {}
     if self.gpu_idx is not None:
-      device = '/device:GPU:{}'.format(gpu_idx)
+      device = '/device:GPU:{}'.format(self.gpu_idx)
       self.allocations['generator'] = device
       self.allocations['discriminator'] = device
       self.allocations['sampler'] = device
@@ -36,38 +36,23 @@ class GpuAllocator:
       self.allocations['discriminator_fake'] = self.gpu_devices[self.nbr_gpu_devices - 3].name
       self.allocations['other'] = self.gpu_devices[self.nbr_gpu_devices - 3].name
     else:
-      self.allocations['generator'] = None
-      self.allocations['discriminator'] = None
-      self.allocations['sampler'] = None
-      self.allocations['discriminator_fake'] = None
-      self.allocations['other'] = None
+      self.allocations['generator'] = ''
+      self.allocations['discriminator'] = ''
+      self.allocations['sampler'] = ''
+      self.allocations['discriminator_fake'] = ''
+      self.allocations['other'] = ''
 
   def generator_device(self):
-    if self.allocations['generator'] is None:
-      return ''
-    else:
-      return self.gpu_devices[self.allocations['generator']]
+    return self.gpu_devices[self.allocations['generator']]
 
   def sampler_device(self):
-    if self.allocations['sampler'] is None:
-      return ''
-    else:
-      return self.gpu_devices[self.allocations['sampler']]
+    return self.gpu_devices[self.allocations['sampler']]
 
   def discriminator_device(self):
-    if self.allocations['discriminator'] is None:
-      return ''
-    else:
-      return self.gpu_devices[self.allocations['discriminator']]
+    return self.gpu_devices[self.allocations['discriminator']]
 
   def discriminator_fake_device(self):
-    if self.allocations['discriminator_fake'] is None:
-      return ''
-    else:
-      return self.gpu_devices[self.allocations['discriminator_fake']]
+    return self.gpu_devices[self.allocations['discriminator_fake']]
 
   def other_things_device(self):
-    if self.allocations['other'] is None:
-      return ''
-    else:
-      return self.gpu_devices[self.allocations['other']]
+    return self.gpu_devices[self.allocations['other']]
