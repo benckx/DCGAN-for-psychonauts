@@ -43,16 +43,16 @@ class GpuAllocator:
       self.allocations['other'] = ''
 
   def generator_device(self):
-    return self.gpu_devices[self.allocations['generator']]
+    return self.allocations['generator']
 
   def sampler_device(self):
-    return self.gpu_devices[self.allocations['sampler']]
+    return self.allocations['sampler']
 
   def discriminator_device(self):
-    return self.gpu_devices[self.allocations['discriminator']]
+    return self.allocations['discriminator']
 
   def discriminator_fake_device(self):
-    return self.gpu_devices[self.allocations['discriminator_fake']]
+    return self.allocations['discriminator_fake']
 
   def other_things_device(self):
-    return self.gpu_devices[self.allocations['other']]
+    return self.allocations['other']
