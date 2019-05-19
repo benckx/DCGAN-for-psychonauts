@@ -3,17 +3,18 @@ from tensorflow.python.client import device_lib
 
 class GpuAllocator:
   def __init__(self, gpu_idx):
-    if gpu_idx is not None:
+    if gpu_idx is None:
+      self.gpu_idx = None
       self.gpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'GPU']
       self.cpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'CPU']
       self.nbr_gpu_devices = len(self.gpu_devices)
-      self.gpu_idx = int(gpu_idx)
       for gpu_devices in self.gpu_devices:
         print(str(gpu_devices.name))
       for cpu_devices in self.cpu_devices:
         print(str(cpu_devices.name))
     else:
-      self.gpu_idx = None
+      self.nbr_gpu_devices = 1
+      self.gpu_idx = int(gpu_idx)
 
     self.allocations = {}
     if self.gpu_idx is not None:
