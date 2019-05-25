@@ -94,7 +94,7 @@ More columns can be added with the parameters described below:
 * `k_w` and `k_h`: size of the convolution kernel
 * Default value: `5`
 
-#### Batch normalization
+#### Batch Normalization
 
 According to the author, batch normalization "*deals with poor initialization helps gradient flow*".
 
@@ -103,7 +103,7 @@ According to the author, batch normalization "*deals with poor initialization he
 
 ## Video Parameters
 
-* `render_res`: for example, if you use 1280x720 images and you picked 2 for `grid_width` and `grid_height`, by default
+* `render_res`: if you use for example 1280x720 images and you picked 2 for `grid_width` and `grid_height`, by default
 output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 videos in 1280x720 by setting 
 `render_res` at `1280x720`. Frames will be cut before being rendered to videos.
 * `auto_render_period`: allow to render videos before the training is completed, so you can preview the result and save 
