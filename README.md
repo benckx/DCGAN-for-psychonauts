@@ -19,7 +19,15 @@ Use DCGAN to create trippy videos.
 
 [More examples on my portfolio](https://www.vjloops.com/users/20585.html)
 
-The model is based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow).
+## DCGAN
+
+Deep Convolutional Generative Adversarial Networks (DCGAN) are used to create generates pictures. But if you sample 
+the state of the model at every step and render them as frames in a video, you can create a sort of 'timelapse'
+of the training process. This is what this project does.
+
+The model is based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow). This
+project is a generalization of the original model, which allows more tinkering of the parameters, which can result in maybe 
+less realistic but more visually interesting renders.   
 
 # Usage
 
@@ -34,6 +42,8 @@ Command parameters:
 * ```--gpu_idx 2``` to pick a GPU device if you have multiple of them
 * ```--disable_cache``` disable caching of np data (you should add that if you use a lot of large images)
 (I'll probably make this the default setting in the future) 
+
+## CSV config file
 
 The CSV config file contains a list of jobs with different model and video parameters.
 A minimal config CSV file must contain the following columns:
@@ -54,9 +64,9 @@ A minimal config CSV file must contain the following columns:
 will be 1920x1080 images, in a 3x3 grid format, similar to [this render](https://www.vjloops.com/stock-video/abstract-shutter-3x3-16-137695.html)))
 * `video_length`: length of the output video in minutes
 
-More columns can be added with the parameters described below:
+A more complete example of CSV config file with can be found [here](example_config.csv).
 
-A more complete example of CSV config file with can be found [here](example_config.csv)
+More columns can be added with the parameters described below:
 
 ## Model Parameters
 
@@ -106,8 +116,13 @@ frames to render 1 minute of video, it will be rendered while the training proce
 ## Linux
 
 * `ffmpeg` is required to render the videos
+* `mencoder` is only needed to the `merge_timecuts.py` script
 
 ## Python libs
+
+This is my current environment. Not all libraries listed here are required, but you'll need at least `tensorflow`, 
+`Pillow`, `pandas`, `numpy`, `opencv-python`, `h5py`
+
 ```
 (tensorflow4) benoit@farm:~$ pip3 list
 Package              Version 
@@ -145,7 +160,6 @@ termcolor            1.1.0
 Werkzeug             0.15.1  
 wheel                0.33.1 
 ```
-
 ## Installation
 
 * Linux Mint 19.1 (Ubuntu 18.04)
