@@ -2,8 +2,15 @@
 
 Use DCGAN to create trippy videos:
 
+<a href="https://www.vjloops.com/stock-video/elusive-features-loop-1-139232.html">![](https://storage.googleapis.com/vjloops/139232_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/elusive-features-125-139202.html">![](https://storage.googleapis.com/vjloops/139202_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/elusive-features-83-139155.html">![](https://storage.googleapis.com/vjloops/139155_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/elusive-features-95-139162.html">![](https://storage.googleapis.com/vjloops/139162_thumb0.jpg)</a>
+
 <a href="https://www.vjloops.com/stock-video/fresh-and-simple-7-loop-3-140717.html">![](https://storage.googleapis.com/vjloops/140717_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/fresh-and-simple-8-loop-3-140747.html">![](https://storage.googleapis.com/vjloops/140747_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/fresh-and-simple-4-loop-3-140635.html">![](https://storage.googleapis.com/vjloops/140635_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/fresh-and-simple-5c-140711.html">![](https://storage.googleapis.com/vjloops/140711_thumb0.jpg)</a>
 
 [More examples on my portfolio](https://www.vjloops.com/users/20585.html)
 
@@ -22,7 +29,7 @@ Other command parameters:
 * ```--gpu_idx 2``` to pick a GPU device if you have multiple of them
 * ```--disable_cache``` disable caching of np data (you should add that if you use a lot of large images) 
 
-The CSV file contains a list of jobs with different model and video parameters.
+The CSV config file contains a list of jobs with different model and video parameters.
 A minimal config CSV file must contain the following columns:
 
 |name          |dataset       |grid_width|grid_height|video_length|
@@ -65,13 +72,14 @@ More columns can be added with the parameters described below:
 
 ## Video Parameters
 
-* `render_res`: if you use for examples 1280x720 images and you picked 2 for `grid_width` and `grid_height`, by default
-output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 videos with resolution
-of 1280x720 by setting `render_res` at `1280x720`.
+* `render_res`: for example, if you use 1280x720 images and you picked 2 for `grid_width` and `grid_height`, by default
+output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 videos in 1280x720 by setting 
+`render_res` at `1280x720`. Frames will be cut before being rendered to videos.
 * `auto_render_period`: allow to render videos before the training is completed, so you can preview the result and save 
 some disk space (as it quickly produces Gb of images). For example, if you pick `60`, every time it has produces enough 
-frames to render 1 minute of video (i.e. 3600 in 60 fps), it will be rendered and the training continues in parallel.
-The processed video have suffix '_timecut001', so you can merge it later (see script `merge_timecuts.py`)
+frames to render 1 minute of video, it will be rendered while the training process continues in parallel.
+    * The resulting video files have suffix '_timecut001.mp4' so they can merged at the end
+    * You can use the script `python3 merge_timecuts.py /home/user/Video/folder-with-timecuts` to do that
 
 # Dependencies
 
@@ -118,7 +126,7 @@ Werkzeug             0.15.1
 wheel                0.33.1 
 ```
 
-## Set-up
+## Installation
 
 * Linux Mint 19.1 (Ubuntu 18.04)
 * TensorFlow 1.13.0
@@ -127,8 +135,6 @@ wheel                0.33.1
 * Nvidia driver 417 
 
 # Related Projects
-
-
 
 # Credit
 
