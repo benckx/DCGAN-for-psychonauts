@@ -78,8 +78,8 @@ output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 
 * `auto_render_period`: allow to render videos before the training is completed, so you can preview the result and save 
 some disk space (as it quickly produces Gb of images). For example, if you pick `60`, every time it has produces enough 
 frames to render 1 minute of video, it will be rendered while the training process continues in parallel.
-    * The resulting video files have suffix '_timecut001.mp4' so they can merged at the end
-    * You can use the script `python3 merge_timecuts.py /home/user/Video/folder-with-timecuts` to do that
+    * The resulting video files have suffix `_timecut0001.mp4` so they can merged later
+    * You can use the following script `python3 merge_timecuts.py /home/user/Video/folder-with-timecuts` to do that
 
 # Dependencies
 
@@ -135,6 +135,9 @@ wheel                0.33.1
 * Nvidia driver 417 
 
 # Related Projects
+
+* To extract face data from images: [benckx/tensorflow-face-detection](https://github.com/benckx/tensorflow-face-detection)
+* To clean up images datasets (crop, filter, resize, etc.): [benckx/iapetus-images](https://github.com/benckx/iapetus-images)
 
 # Credit
 
