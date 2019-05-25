@@ -21,13 +21,13 @@ Use DCGAN to create trippy videos.
 
 ## DCGAN
 
-Deep Convolutional Generative Adversarial Networks (DCGAN) are used to create generates pictures. But if you sample 
-the state of the model at every step and render them as frames in a video, you can create a sort of 'timelapse'
+Deep Convolutional Generative Adversarial Networks (DCGAN) are used to generate realistic images. But if you sample 
+the state of the model at every step and render them into a video, you can create a sort of "timelapse"
 of the training process. This is what this project does.
 
-The model is based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow). This
-project is a generalization of the original model, which allows more tinkering of the parameters, which can result in maybe 
-less realistic but more visually interesting renders.   
+The model is largely based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow). This
+project is a generalization of the model, to allow more tinkering of the parameters, which can result in maybe 
+less realistic but more visually interesting renders.
 
 # Usage
 
@@ -53,7 +53,8 @@ A minimal config CSV file must contain the following columns:
 |job01         |images_folder |3         |3          |5           |
 |job02         |images_folder |3         |3          |5           |
 
-* `name`: name of the job, to create the checkpoint, the name of the video, etc.
+* `name`: name of the job, to create the checkpoint, the video file, etc.
+    * must be unique
 * `dataset`: image folders where the input images can be found
     * must be a subfolder of `/data/`
     * all images must be the same size 
@@ -120,8 +121,9 @@ frames to render 1 minute of video, it will be rendered while the training proce
 
 ## Python libs
 
-This is my current environment. Not all libraries listed here are required, but you'll need at least `tensorflow`, 
-`Pillow`, `pandas`, `numpy`, `opencv-python`, `h5py`
+This is my current environment, for reference. 
+Not all libraries listed here are required, but you'll need at least `tensorflow`, `Pillow`, `pandas`, `numpy`, 
+`opencv-python`, `h5py`.
 
 ```
 (tensorflow4) benoit@farm:~$ pip3 list
@@ -160,7 +162,7 @@ termcolor            1.1.0
 Werkzeug             0.15.1  
 wheel                0.33.1 
 ```
-## Installation
+## Set-up
 
 * Linux Mint 19.1 (Ubuntu 18.04)
 * TensorFlow 1.13.0
@@ -170,10 +172,10 @@ wheel                0.33.1
 
 # Related Projects
 
-* To extract face data from images: [benckx/tensorflow-face-detection](https://github.com/benckx/tensorflow-face-detection)
-* To clean up images datasets (crop, filter, resize, etc.): [benckx/iapetus-images](https://github.com/benckx/iapetus-images)
+* Extract face data from images: [benckx/tensorflow-face-detection](https://github.com/benckx/tensorflow-face-detection)
+* Clean up images datasets (crop, filter, resize, etc.): [benckx/iapetus-images](https://github.com/benckx/iapetus-images)
 
 # Credit
 
 See [the original project](https://github.com/carpedm20/DCGAN-tensorflow) 
-and Taehoon Kim / [@carpedm20](http://carpedm20.github.io/) for more info
+and Taehoon Kim / [@carpedm20](http://carpedm20.github.io/) for more info.
