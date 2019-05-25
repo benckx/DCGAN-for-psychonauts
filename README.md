@@ -1,6 +1,11 @@
 # About
 
-Use DCGAN to create trippy videos:
+Use DCGAN to create trippy videos.
+
+<a href="https://www.vjloops.com/stock-video/the-beautiful-people-21-139715.html">![](https://storage.googleapis.com/vjloops/139715_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/the-beautiful-people-114-139683.html">![](https://storage.googleapis.com/vjloops/139683_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/the-beautiful-people-112-139681.html">![](https://storage.googleapis.com/vjloops/139681_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/the-beautiful-people-23-139717.html">![](https://storage.googleapis.com/vjloops/139717_thumb0.jpg)</a>
 
 <a href="https://www.vjloops.com/stock-video/elusive-features-loop-1-139232.html">![](https://storage.googleapis.com/vjloops/139232_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/elusive-features-125-139202.html">![](https://storage.googleapis.com/vjloops/139202_thumb0.jpg)</a>
@@ -18,16 +23,17 @@ The model is based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/
 
 # Usage
 
-    python3 multitrain.py --config my_config.csv 
+    python3 multitrain.py --config my_config.csv --disable_cache 
     
 Or with `nohup`:
    
-    nohup python3 multitrain.py --config my_config.csv > log.out 2>&1&
+    nohup python3 multitrain.py --config my_config.csv --disable_cache > log.out 2>&1&
 
-Other command parameters:
+Command parameters:
 
 * ```--gpu_idx 2``` to pick a GPU device if you have multiple of them
-* ```--disable_cache``` disable caching of np data (you should add that if you use a lot of large images) 
+* ```--disable_cache``` disable caching of np data (you should add that if you use a lot of large images)
+(I'll probably make this the default setting in the future) 
 
 The CSV config file contains a list of jobs with different model and video parameters.
 A minimal config CSV file must contain the following columns:
@@ -50,6 +56,8 @@ will be 1920x1080 images, in a 3x3 grid format, similar to [this render](https:/
 
 More columns can be added with the parameters described below:
 
+A more complete example of CSV config file with can be found [here](example_config.csv)
+
 ## Model Parameters
 
 #### Number of Layers
@@ -58,17 +66,29 @@ More columns can be added with the parameters described below:
    
 #### Activation Functions
 * `activation_g` and `activation_d`: activation functions between layers of the Generator and the Discriminator. 
-* Default values are `relu` and `lrelu`.
+* Default values: `relu` and `lrelu`.
 * Possible values: `relu`, `relu6`, `lrelu`, `elu`, `crelu`, `selu`, `tanh`, `sigmoid`, `softplus`, `softsign`, `softmax`, `swish`.
     
 #### Adam Optimizer
 
-* `learning_rate_g`, `beta1_g`, `learning_rate_d`, `beta1_d`:
+* `learning_rate_g`, `beta1_g`, `learning_rate_d`, `beta1_d`: parameters of Adam for the Generator and the Discriminator
 
 |Parameter          |TensorFlow default|DCGAN default|
 |---                |---               |---          |
 |**Learning rate**  |0.001             |0.0002       |
 |**Beta1**          |0.9               |0.5          |
+
+#### Kernel Size
+
+* `k_w` and `k_h`: size of the convolution kernel
+* Default value: `5`
+
+#### Batch normalization
+
+According to the author, batch normalization "*deals with poor initialization helps gradient flow*".
+
+* `batch_norm_g` and `batch_norm_d`
+* Default value: `True` 
 
 ## Video Parameters
 

@@ -91,6 +91,5 @@ nohup.out
 samples_*
 .~lock.*
 ftp.ini
-*.csv
 *.mp4
 *.bak
