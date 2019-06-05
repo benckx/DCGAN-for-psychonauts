@@ -8,8 +8,8 @@ from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoin
 from gpu_devices import GpuAllocator
 from images_utils import DataSetManager
 from ops import *
-from utils import *
 from string_utils import min_to_string
+from utils import *
 
 frames_saving_pool = Pool(processes=20)
 date_format = "%d/%m %H:%M"
@@ -24,8 +24,7 @@ class DCGAN(object):
                batch_size=64, sample_num=64, output_height=64, output_width=64,
                y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
                gfc_dim=1024, dfc_dim=1024, c_dim=3, input_fname_pattern='*.jpg', checkpoint_dir=None, sample_dir=None, sample_rate=None,
-               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, gpu_idx=None,
-               enable_cache=True):
+               nbr_of_layers_d=5, nbr_of_layers_g=5, use_checkpoints=True, enable_cache=True):
     """
 
     Args:
@@ -88,7 +87,7 @@ class DCGAN(object):
     self.frames_count = 0
     self.frames_last_timestamps = []
 
-    self.gpu_allocator = GpuAllocator(gpu_idx)
+    self.gpu_allocator = GpuAllocator()
 
     print('generator device: {}'.format(self.gpu_allocator.generator_device()))
     print('sampler device: {}'.format(self.gpu_allocator.sampler_device()))

@@ -48,7 +48,7 @@ flags.DEFINE_string("activation_g", "relu", "Activation function in Generator")
 flags.DEFINE_string("activation_d", "lrelu", "Activation function in Discriminator")
 flags.DEFINE_integer("nbr_g_updates", 2, "Number of update of Generator optimizer (per iteration)")
 flags.DEFINE_integer("nbr_d_updates", 1, "Number of update of Discriminator optimizer (per iteration)")
-flags.DEFINE_integer("gpu_idx", None, "Index of GPU")
+flags.DEFINE_string("gpu_idx", None, "Indexes of GPU")
 flags.DEFINE_boolean("disable_cache", False, "Enable/Disable the caching of input images")
 flags.DEFINE_integer("k_w", 5, "k_h")
 flags.DEFINE_integer("k_h", 5, "k_h")
@@ -115,6 +115,10 @@ def main(_):
   job = Job.from_FLAGS(FLAGS)
   print('video length: {} min.'.format(job.video_length))
 
+  if FLAGS.gpu_idx is not None:
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_idx
+
   with tf.Session(config=run_config) as sess:
     dcgan = DCGAN(
       sess,
@@ -134,7 +138,6 @@ def main(_):
       nbr_of_layers_d=FLAGS.nbr_of_layers_d,
       nbr_of_layers_g=FLAGS.nbr_of_layers_g,
       use_checkpoints=FLAGS.use_checkpoints,
-      gpu_idx=FLAGS.gpu_idx,
       enable_cache=not FLAGS.disable_cache)
 
     show_all_variables()
