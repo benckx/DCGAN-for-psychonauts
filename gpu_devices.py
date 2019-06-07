@@ -4,10 +4,9 @@ from tensorflow.python.client import device_lib
 class GpuAllocator:
   def __init__(self):
     gpu_devices = [x for x in device_lib.list_local_devices() if x.device_type == 'GPU']
-    print(str(gpu_devices))
     nbr_gpu_devices = len(gpu_devices)
-    for gpu_devices in gpu_devices:
-      print(str(gpu_devices.name))
+    for gpu_device in gpu_devices:
+      print(str(gpu_device))
 
     self.allocations = {}
     if nbr_gpu_devices == 1:
