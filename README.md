@@ -39,9 +39,11 @@ Or with `nohup`:
 
 Command parameters:
 
-* ```--gpu_idx 2``` to pick a GPU device if you have multiple of them
-* ```--disable_cache``` disable caching of np data (you should add that if you use a lot of large images)
-(I'll probably make this the default setting in the future) 
+* `--gpu_idx 2` to pick a specific GPU device if you have several. You can also pick multiple GPU, 
+the model will be spread on them: `--gpu_idx 0,1,2`. I would recommend to run the job on 1 GPU when possible
+(to avoid communication overheads). If not possible, pick 2 or 3 GPU.
+* `--disable_cache` disable caching of np data (you should add that if you use a lot of large images)
+(I'll probably make this the default setting in the future)
 
 ## CSV config file
 
