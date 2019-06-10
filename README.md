@@ -171,6 +171,38 @@ wheel                0.33.1
 * Cuda 10
 * cudnn 7.5.0
 * Nvidia driver 410.104 
+* GeForce GTX 1070 (5x)
+
+# Future Developments / Road map
+
+You're welcome to contribute if you want to. These are the next features I'm planning to work on:
+
+## Model & Config
+
+* Use a YAML instead of a CSV for jobs config, which would allow more complex configurations,
+with different settings at different layers, convolution parameters, activation function parameters, etc.; 
+use a more "embedded" structure instead of a "flat" CSV structure.
+* Allow different types of convolution (dilated convolution, etc.)
+* Allow different kernel sizes at different layers.
+* Random configuration generator.
+* Different colors models:
+    * Instead of normalizing the 3 RGB values `[0-255]` to `[-1,1]`, we could maybe normalize a `[0-16M]` color value 
+    to a single `[-1,1]` variable (with maybe more precision), in order to reduce GPU memory footprint.
+    * Try out alternative color models like HSL, HSV, RGB + alpha, etc.
+* Add other optimizers and loss functions to the job config.
+
+## Jobs queuing
+
+* Assign jobs automatically based on available GPU.
+
+## Usability
+
+* Make `--disable_cache` true by default, as caching np images takes a lot of RAM, for a relatively 
+small performance improvement (~10%).
+* Set-up a default dataset that could be downloaded automatically, so it would be possible to run 
+the code without preparing an images dataset. For example movies posters, which had been used
+in this other project [benckx/dnn-movie-posters](https://github.com/benckx/dnn-movie-posters), or 
+any other freely available images set.
 
 # Related Projects
 
