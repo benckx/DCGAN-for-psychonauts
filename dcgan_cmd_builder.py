@@ -219,9 +219,12 @@ class Job:
 
     # periodic renders
     if job.render_video:
-      job.has_auto_periodic_render = row['auto_render_period']
-      if job.has_auto_periodic_render:
-        job.auto_render_period = int(row['auto_render_period'])
+      try:
+        job.has_auto_periodic_render = row['auto_render_period']
+        if job.has_auto_periodic_render:
+          job.auto_render_period = int(row['auto_render_period'])
+      except:
+        job.has_auto_periodic_render = False
 
       if job.has_auto_periodic_render:
         if 'render_res' in columns and str(row['render_res']) != '' and str(row['render_res']) != 'nan':
