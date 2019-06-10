@@ -219,7 +219,7 @@ class Job:
 
     # periodic renders
     if job.render_video:
-      job.has_auto_periodic_render = row['auto_render_period'] and row['auto_render_period'] > 0
+      job.has_auto_periodic_render = row['auto_render_period'] and int(row['auto_render_period']) > 0
       if job.has_auto_periodic_render:
         job.auto_render_period = int(row['auto_render_period'])
 
