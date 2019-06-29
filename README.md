@@ -17,7 +17,12 @@ Use DCGAN to create trippy videos.
 <a href="https://www.vjloops.com/stock-video/fresh-and-simple-4-loop-3-140635.html">![](https://storage.googleapis.com/vjloops/140635_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/fresh-and-simple-5c-140711.html">![](https://storage.googleapis.com/vjloops/140711_thumb0.jpg)</a>
 
-[More examples on my portfolio](https://www.vjloops.com/users/20585.html)
+<a href="https://www.vjloops.com/stock-video/transmission-error-loop-13-143002.html">![](https://storage.googleapis.com/vjloops/143002_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/8i-bits-loop-1-143179.html">![](https://storage.googleapis.com/vjloops/143179_thumb0.jpg)</a>
+<a href="https://www.vjloops.com//stock-video/8i-bits-loop-2-143180.html">![](https://storage.googleapis.com/vjloops/143180_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/8i-bits-loop-9-143296.html">![](https://storage.googleapis.com/vjloops/143296_thumb0.jpg)</a>
+
+**More examples on [my portfolio](https://www.vjloops.com/index.php?portfolio=1&user=20585&svideo=1&items=500&str=1&showmenu=0)**
 
 ## DCGAN
 
@@ -25,7 +30,7 @@ Deep Convolutional Generative Adversarial Networks (DCGAN) are used to generate 
 the state of the model at every step and render them into a video, you can create a sort of "timelapse"
 of the training process. This is what this project does.
 
-The model is largely based on [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow). This
+The model is a fork of [carpedm20/DCGAN-tensorflow](https://github.com/carpedm20/DCGAN-tensorflow). This
 project is a generalization of the model, to allow more tinkering of the parameters, which can result in maybe 
 less realistic but more visually interesting renders.
 
@@ -203,6 +208,11 @@ small performance improvement (~10%).
 the code without preparing an images dataset. For example movies posters, which had been used
 in this other project [benckx/dnn-movie-posters](https://github.com/benckx/dnn-movie-posters), or 
 any other freely available images set.
+
+## Performances
+
+* The samples frames are merged before being persisted to the file system, then cut again later before processing the video.
+This could be made more efficient.
 
 # Related Projects
 
