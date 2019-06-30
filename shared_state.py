@@ -65,3 +65,6 @@ class ThreadsSharedState:
 
   def get_time_cut_folder_name(self):
     return '{}_time_cut{:04d}'.format(self.get_job_name(), self.get_current_cut())
+
+  def has_boxes(self):
+    return not (self.get_render_res() is None or self.get_sample_res() == self.get_render_res())

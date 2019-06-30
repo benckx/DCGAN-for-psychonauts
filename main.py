@@ -13,6 +13,7 @@ from images_utils import get_datasets_images
 from model import DCGAN
 from utils import show_all_variables
 from utils import visualize
+from video_utils import get_box_name
 
 flags = tf.app.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
@@ -122,7 +123,7 @@ def main(_):
   if job.render_res is not None:
     nbr_of_boxes = images_utils.get_nbr_of_boxes(job.sample_res, job.render_res)
     for box_idx in range(1, nbr_of_boxes + 1):
-      box_folder_name = '{}/box{:04d}'.format(sample_dir, box_idx)
+      box_folder_name = '{}/{}'.format(sample_dir, get_box_name(box_idx))
       print('box folder: {}'.format(box_folder_name))
       os.makedirs(box_folder_name)
 

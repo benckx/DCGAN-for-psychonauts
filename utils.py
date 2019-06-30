@@ -3,7 +3,6 @@ Some codes from https://github.com/Newmu/dcgan_code
 """
 from __future__ import division
 
-import datetime
 import os
 import os.path
 import pprint
@@ -22,9 +21,11 @@ pp = pprint.PrettyPrinter()
 
 get_stddev = lambda x, k_h, k_w: 1/math.sqrt(k_w*k_h*x.get_shape()[-1])
 
+
 def show_all_variables():
   model_vars = tf.trainable_variables()
   slim.model_analyzer.analyze_vars(model_vars, print_info=True)
+
 
 def get_image(image_path, input_height, input_width,
               resize_height=64, resize_width=64,
@@ -32,6 +33,7 @@ def get_image(image_path, input_height, input_width,
   image = imread(image_path, grayscale)
   return transform(image, input_height, input_width,
                    resize_height, resize_width, crop)
+
 
 def save_images(images, size, image_path):
   return imsave(inverse_transform(images), size, image_path)
@@ -51,6 +53,7 @@ def imread(path, grayscale=False):
 
 def merge_images(images, size):
   return inverse_transform(images)
+
 
 def merge(images, size):
   h, w = images.shape[1], images.shape[2]
@@ -73,13 +76,11 @@ def merge(images, size):
     raise ValueError('in merge(images,size) images parameter '
                      'must have dimensions: HxW or HxWx3 or HxWx4')
 
+
 def imsave(images, size, path):
-  begin = datetime.datetime.now()
   image = np.squeeze(merge(images, size))
-  result = scipy.misc.imsave(path, image)
-  duration = (datetime.datetime.now() - begin).microseconds / 1000
-  print('frame saved in {} ms.'.format(duration))
-  return result
+  return scipy.misc.imsave(path, image)
+
 
 def center_crop(x, crop_h, crop_w,
                 resize_h=64, resize_w=64):
@@ -91,6 +92,7 @@ def center_crop(x, crop_h, crop_w,
   return scipy.misc.imresize(
       x[j:j+crop_h, i:i+crop_w], [resize_h, resize_w])
 
+
 def transform(image, input_height, input_width,
               resize_height=64, resize_width=64, crop=True):
   if crop:
@@ -101,8 +103,10 @@ def transform(image, input_height, input_width,
     cropped_image = scipy.misc.imresize(image, [resize_height, resize_width])
   return np.array(cropped_image)#/127.5 - 1.
 
+
 def inverse_transform(images):
   return (images+1.)/2.
+
 
 def to_json(output_path, *layers):
   with open(output_path, "w") as layer_f:
@@ -166,6 +170,7 @@ def to_json(output_path, *layers):
           };""" % (layer_idx, 2**(int(layer_idx)+2), 2**(int(layer_idx)+2),
                W.shape[0], W.shape[3], biases, gamma, beta, fs)
     layer_f.write(" ".join(lines.replace("'","").split()))
+
 
 def make_gif(images, fname, duration=2, true_image=False):
   import moviepy.editor as mpy

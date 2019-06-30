@@ -18,6 +18,9 @@ class MyManager(BaseManager):
   pass
 
 
+if not os.path.exists('renders'):
+  os.makedirs('renders')
+
 BaseManager.register('ThreadsSharedState', ThreadsSharedState)
 manager = BaseManager()
 manager.start()

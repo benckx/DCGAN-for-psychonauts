@@ -211,8 +211,8 @@ any other freely available images set.
 
 ## Performances
 
-* The samples frames are merged before being persisted to the file system, then cut again later before processing the video.
-This could be made more efficient.
+* ~~The samples frames are merged before being persisted to the file system, then cut again later before processing the video.
+This could be made more efficient.~~
 
 # Related Projects
 

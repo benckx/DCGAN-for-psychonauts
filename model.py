@@ -11,6 +11,7 @@ from images_utils import DataSetManager
 from ops import *
 from string_utils import min_to_string
 from utils import *
+from video_utils import get_box_name
 
 frames_saving_pool = Pool(processes=20)
 date_format = "%d/%m %H:%M"
@@ -256,7 +257,6 @@ class DCGAN(object):
           print('Error during checkpoint saving: {}'.format(e))
 
   def build_frame(self, step, suffix, sample_z, sample_inputs):
-    #    try:
     samples, d_loss, g_loss = self.sess.run(
       [self.sampler, self.d_loss, self.g_loss],
       feed_dict={
@@ -265,12 +265,9 @@ class DCGAN(object):
       },
     )
 
-    print('{}'.format(self.job.sample_res))
-    print('{}'.format(self.job.render_res))
-
     if self.job.render_res is not None:
-      box_grid_w = int(self.job.grid_width / int(self.job.sample_res[0] / self.job.render_res[0]))
-      box_grid_h = int(self.job.grid_height / int(self.job.sample_res[1] / self.job.render_res[1]))
+      box_grid_w = int(self.job.grid_width / (self.job.sample_res[0] / self.job.render_res[0]))
+      box_grid_h = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
 
       nbr_of_boxes = images_utils.get_nbr_of_boxes(self.job.sample_res, self.job.render_res)
       tiles_per_box = int(len(samples) / nbr_of_boxes)
@@ -278,33 +275,23 @@ class DCGAN(object):
       print('nbr of boxes: {}'.format(nbr_of_boxes))
       print('tiles per box: {}'.format(tiles_per_box))
 
-      # TODO: if else
+      for box_idx in range(1, nbr_of_boxes + 1):
+        box_folder_name = '{}/{}'.format(self.sample_dir, get_box_name(box_idx))
+        file_name = './{}/train_{:09d}_{:03d}.png'.format(box_folder_name, step, suffix)
+        print(file_name)
+        box_samples = samples[:tiles_per_box]
+
+        save_images(box_samples, (box_grid_h, box_grid_w), file_name)
+        # frames_saving_pool.apply_async(save_images, (box_samples, (box_grid_h, box_grid_w), file_name))
+    else:
       file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
       print('{}'.format(samples.shape))
       print('{}x{}'.format(self.job.grid_height, self.job.grid_width))
       save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
       # frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
 
-      for box_idx in range(1, nbr_of_boxes + 1):
-        box_folder_name = '{}/box{:04d}'.format(self.sample_dir, box_idx)  # TODO: box folder name in function
-        file_name = './{}/train_{:09d}_{:03d}.png'.format(box_folder_name, step, suffix)
-        print(file_name)
-        begin = (box_idx - 1) * tiles_per_box
-        end = box_idx * tiles_per_box
-        print('from {} to {}'.format(begin, end))
-        # box_samples = samples[begin:end]
-        box_samples = samples[:tiles_per_box]
-        print('{}'.format(samples.shape))
-        print('{}'.format(box_samples.shape))
-        print('{}x{}'.format(box_grid_w, box_grid_h))
-
-        save_images(box_samples, (box_grid_h, box_grid_w), file_name)
-        # frames_saving_pool.apply_async(save_images, (samples[begin:end], (box_grid_h, box_grid_w), file_name))
-
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)
-    # except Exception as e:
-    #   print("one pic error! --> {}".format(e))
 
   def log_performances(self, step):
     now = datetime.datetime.now()
