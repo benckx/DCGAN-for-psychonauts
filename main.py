@@ -1,11 +1,13 @@
 import io
 import os
 import os.path
+import shutil
 
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+import images_utils
 from dcgan_cmd_builder import Job
 from images_utils import get_datasets_images
 from model import DCGAN
@@ -33,6 +35,7 @@ flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, ls
 flags.DEFINE_string("input_fname_pattern", "*.jpg", "Glob pattern of filename of input images [*]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
+flags.DEFINE_string("render_res", None, "The resolution of the boxes")
 flags.DEFINE_integer("sample_rate", None, "If == 5, it will take a sample image every 5 iterations")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
@@ -102,11 +105,6 @@ def main(_):
   if FLAGS.use_checkpoints and not os.path.exists(FLAGS.checkpoint_dir):
     os.makedirs(FLAGS.checkpoint_dir)
 
-  sample_dir = 'samples_' + FLAGS.name
-
-  if not os.path.exists(sample_dir):
-    os.makedirs(sample_dir)
-
   # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
   run_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
   run_config.gpu_options.allow_growth = True
@@ -114,6 +112,19 @@ def main(_):
 
   job = Job.from_FLAGS(FLAGS)
   print('video length: {} min.'.format(job.video_length))
+
+  sample_dir = 'samples_' + FLAGS.name
+
+  if os.path.exists(sample_dir):
+    shutil.rmtree(sample_dir)
+
+  os.makedirs(sample_dir)
+  if job.render_res is not None:
+    nbr_of_boxes = images_utils.get_nbr_of_boxes(job.sample_res, job.render_res)
+    for box_idx in range(1, nbr_of_boxes + 1):
+      box_folder_name = '{}/box{:04d}'.format(sample_dir, box_idx)
+      print('box folder: {}'.format(box_folder_name))
+      os.makedirs(box_folder_name)
 
   if FLAGS.gpu_idx is not None:
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"

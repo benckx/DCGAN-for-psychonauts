@@ -8,6 +8,7 @@ from PIL import Image
 
 from images_utils import get_datasets_images
 
+samples_prefix = 'samples_'
 
 def extend_array_to(input_array, nbr):
   result_array = input_array
@@ -55,6 +56,21 @@ class Job:
 
   def get_nbr_of_steps(self):
     return int(self.video_length * 1800)
+
+  def compute_sample_res(self):
+    dataset_images = get_datasets_images(self.dataset_folders)
+    self.sample_folder = samples_prefix + self.name
+    self.dataset_size = len(dataset_images)
+
+    # assuming all input images have the same resolution
+    first_image = dataset_images[0]
+    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
+    rgb_im = image.convert('RGB')
+    input_width = rgb_im.size[0]
+    input_height = rgb_im.size[1]
+    sample_width = self.grid_width * input_width
+    sample_height = self.grid_height * input_height
+    self.sample_res = (sample_width, sample_height)
 
   # noinspection PyListCreation
   def build_job_command(self, gpu_idx=None, enable_cache=True):
@@ -123,6 +139,10 @@ class Job:
     dcgan_cmd.append('--k_h')
     dcgan_cmd.append(str(self.k_h))
 
+    if self.render_res is not None:
+      dcgan_cmd.append('--render_res')
+      dcgan_cmd.append('{}x{}'.format(self.render_res[0], self.render_res[1]))
+
     dcgan_cmd.append('--sample_rate')
     dcgan_cmd.append('1')
 
@@ -142,8 +162,6 @@ class Job:
 
   @classmethod
   def from_row(cls, row, columns):
-    samples_prefix = 'samples_'
-
     # model settings
     job = Job()
     job.name = row['name']
@@ -190,19 +208,7 @@ class Job:
 
     # input images
     job.dataset_folders = row['dataset'].split(',')
-    job.dataset_images = get_datasets_images(job.dataset_folders)
-    job.sample_folder = samples_prefix + job.name
-    job.dataset_size = len(job.dataset_images)
-
-    # assuming all input images have the same resolution
-    first_image = job.dataset_images[0]
-    image = Image.open(io.BytesIO(open(first_image, "rb").read()))
-    rgb_im = image.convert('RGB')
-    input_width = rgb_im.size[0]
-    input_height = rgb_im.size[1]
-    job.sample_width = job.grid_width * input_width
-    job.sample_height = job.grid_height * input_height
-    job.sample_res = (job.sample_width, job.sample_height)
+    job.compute_sample_res()
 
     # video settings
     if 'render_video' in columns:
@@ -308,6 +314,8 @@ class Job:
     job.video_length = FLAGS.video_length
     job.k_w = FLAGS.k_w
     job.k_h = FLAGS.k_h
+    job.render_res = tuple([int(val) for val in FLAGS.render_res.split('x')])
+    job.compute_sample_res()
 
     return job
 

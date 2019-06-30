@@ -7,6 +7,10 @@ import cv2
 import numpy as np
 
 
+def get_nbr_of_boxes(sample_res, render_res):
+  return len(get_boxes(sample_res, render_res))
+
+
 def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('Error: Resolution not divisible: {}, {}'.format(sample_res, render_res))
