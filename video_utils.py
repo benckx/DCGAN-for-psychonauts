@@ -70,7 +70,8 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
         print('Sending {} to ftp'.format(video_file_name))
         upload_via_ftp(video_file_name)
 
-      os.rename(images_folder + '/' + video_file_name, 'renders/' + video_file_name)
+      target_file_name = images_folder + '_' + box_folder_name + '.mp3'
+      os.rename(images_folder + '/' + video_file_name, 'renders/' + target_file_name)
 
   if delete_images:
     shutil.rmtree(images_folder)
@@ -145,6 +146,7 @@ def create_video_time_cut(shared: ThreadsSharedState):
       frames = [f for f in listdir(folder + '/' + box_folder_name) if isfile(join(folder + '/' + box_folder_name, f))]
       frames.sort()
 
+      # TODO: refactor (make a function)
       for f in frames[0:nbr_frames]:
         src = shared.get_folder() + '/' + box_folder_name + '/' + f
         dest = target_box_folder + '/' + f
@@ -158,8 +160,8 @@ def create_video_time_cut(shared: ThreadsSharedState):
     frames = [f for f in listdir(folder) if isfile(join(folder, f))]
     frames.sort()
 
+    # TODO: refactor (make a function)
     for f in frames[0:nbr_frames]:
-      # TODO: refactor
       src = shared.get_folder() + '/' + f
       dest = time_cut_folder + '/' + f
       print('moving from {} to {}'.format(src, dest))
