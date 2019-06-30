@@ -6,7 +6,7 @@ import threading
 from os import listdir
 from os.path import isfile, join
 
-import images_utils
+from images_utils import get_nbr_of_boxes, get_boxes
 from dcgan_cmd_builder import Job
 from files_utils import upload_via_ftp
 from shared_state import ThreadsSharedState
@@ -37,14 +37,14 @@ def render_video(images_folder):
   subprocess.run(ffmpeg_cmd)
 
 
-def process_video_job_param(job: Job):
+def process_videos_job_param(job: Job):
   print('job.sample_folder: ' + job.sample_folder)
   print('job.sample_res: {}'.format(job.sample_res))
   print('job.render_res: {}'.format(job.render_res))
-  process_video(job.sample_folder, job.upload_to_ftp, job.delete_images_after_render, job.sample_res, job.render_res)
+  process_videos(job.sample_folder, job.upload_to_ftp, job.delete_images_after_render, job.sample_res, job.render_res)
 
 
-def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
+def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None, render_res=None):
   """ Render to video, upload to ftp """
 
   if sample_res is None or render_res is None or sample_res == render_res:
@@ -55,22 +55,22 @@ def process_video(images_folder, upload_to_ftp, delete_images, sample_res=None, 
       print('Sending {} to ftp'.format(video_file_name))
       upload_via_ftp(video_file_name)
 
-    os.rename(video_file_name, '../renders/' + video_file_name)
+    os.rename(video_file_name, 'renders/' + video_file_name)
   else:
     original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
     original_frames.sort()
 
-    boxes = images_utils.get_boxes(sample_res, render_res)
-    for box_idx in range(1, len(boxes) + 1):
+    nbr_of_boxes = get_nbr_of_boxes(sample_res, render_res)
+    for box_idx in range(1, nbr_of_boxes + 1):
       box_folder_name = get_box_name(box_idx)
-      render_video(box_folder_name)
+      render_video(images_folder + '/' + box_folder_name)
       video_file_name = box_folder_name + '.mp4'
 
       if upload_to_ftp:
         print('Sending {} to ftp'.format(video_file_name))
         upload_via_ftp(video_file_name)
 
-      os.rename(video_file_name, '../renders/' + video_file_name)
+      os.rename(images_folder + '/' + video_file_name, 'renders/' + video_file_name)
 
   if delete_images:
     shutil.rmtree(images_folder)
@@ -109,13 +109,13 @@ def must_proceed_time_cut(shared: ThreadsSharedState):
       print('{} folder size: {}'.format(shared.get_folder(), folder_size))
       return shared.get_frames_threshold() < folder_size
     else:
-      boxes = images_utils.get_boxes(shared.get_sample_res(), shared.get_render_res())
+      boxes = get_boxes(shared.get_sample_res(), shared.get_render_res())
       for box_idx in range(1, len(boxes) + 1):
         box_folder_name = shared.get_folder() + '/' + get_box_name(box_idx)
         # TODO: move to function
         box_folder_size = len([f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))])
         print('{} size: {}'.format(box_folder_name, box_folder_size))
-        if shared.get_frames_threshold() > box_folder_size:
+        if shared.get_frames_threshold() >= box_folder_size:
           return False
 
       return True
@@ -133,11 +133,12 @@ def create_video_time_cut(shared: ThreadsSharedState):
   os.makedirs(time_cut_folder)
 
   upload_to_ftp = shared.is_upload_to_ftp()
-  delete_at_the_end = shared.is_delete_at_the_end()
+  delete_images = shared.is_delete_at_the_end()
 
   if shared.has_boxes():
-    boxes = images_utils.get_nbr_of_boxes(shared.get_sample_res(), shared.get_render_res())
-    for box_idx in range(1, len(boxes) + 1):
+    # phase 1: move images
+    nbr_of_boxes = get_nbr_of_boxes(shared.get_sample_res(), shared.get_render_res())
+    for box_idx in range(1, nbr_of_boxes + 1):
       box_folder_name = get_box_name(box_idx)
       target_box_folder = '{}/{}'.format(time_cut_folder, box_folder_name)
       os.makedirs(target_box_folder)
@@ -147,7 +148,12 @@ def create_video_time_cut(shared: ThreadsSharedState):
         print('moving from {} to {}'.format(src, dest))
         os.rename(src, dest)
 
-      process_video(target_box_folder, upload_to_ftp, delete_at_the_end, shared.sample_res, shared.render_res)
+    # phase 2: render boxes videos
+    process_videos(time_cut_folder, upload_to_ftp, delete_images, shared.get_sample_res(), shared.get_render_res())
+    # for box_idx in range(1, nbr_of_boxes + 1):
+    #   box_folder_name = get_box_name(box_idx)
+    #   target_box_folder = '{}/{}'.format(time_cut_folder, box_folder_name)
+    #   process_video(target_box_folder, upload_to_ftp, delete_images, shared.get_sample_res(), shared.get_render_res())
   else:
     for f in frames[0:nbr_frames]:
       # TODO: refactor
@@ -156,4 +162,4 @@ def create_video_time_cut(shared: ThreadsSharedState):
       print('moving from {} to {}'.format(src, dest))
       os.rename(src, dest)
 
-    process_video(time_cut_folder, upload_to_ftp, delete_at_the_end)
+    process_videos(time_cut_folder, upload_to_ftp, delete_images)

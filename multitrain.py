@@ -11,7 +11,7 @@ import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
 from shared_state import ThreadsSharedState
-from video_utils import process_video_job_param, periodic_render_job
+from video_utils import process_videos_job_param, periodic_render_job
 
 
 class MyManager(BaseManager):
@@ -118,7 +118,7 @@ for job in jobs:
           job.sample_folder = shared_state.get_time_cut_folder_name()
 
         # pool.apply_async(process_video_job_param, job)
-        process_video_job_param(job)
+        process_videos_job_param(job)
 
       # backup checkpoint one last time
       if must_backup_checkpoint() and job.use_checkpoints:

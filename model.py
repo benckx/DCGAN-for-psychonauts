@@ -267,29 +267,23 @@ class DCGAN(object):
     )
 
     if self.job.render_res is not None:
-      box_grid_w = int(self.job.grid_width / (self.job.sample_res[0] / self.job.render_res[0]))
-      box_grid_h = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
+      box_grid_width = int(self.job.grid_width / (self.job.sample_res[0] / self.job.render_res[0]))
+      box_grid_height = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
+      box_grid_size = (box_grid_height, box_grid_width)
 
       nbr_of_boxes = images_utils.get_nbr_of_boxes(self.job.sample_res, self.job.render_res)
       tiles_per_box = int(len(samples) / nbr_of_boxes)
 
-      print('nbr of boxes: {}'.format(nbr_of_boxes))
-      print('tiles per box: {}'.format(tiles_per_box))
-
       for box_idx in range(1, nbr_of_boxes + 1):
         box_folder_name = '{}/{}'.format(self.sample_dir, get_box_name(box_idx))
         file_name = './{}/train_{:09d}_{:03d}.png'.format(box_folder_name, step, suffix)
-        print(file_name)
         box_samples = samples[:tiles_per_box]
-
-        save_images(box_samples, (box_grid_h, box_grid_w), file_name)
-        # frames_saving_pool.apply_async(save_images, (box_samples, (box_grid_h, box_grid_w), file_name))
+        # save_images(box_samples, box_grid_size, file_name)
+        frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
     else:
       file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
-      print('{}'.format(samples.shape))
-      print('{}x{}'.format(self.job.grid_height, self.job.grid_width))
-      save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
-      # frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
+      # save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
+      frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)
