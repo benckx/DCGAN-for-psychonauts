@@ -63,8 +63,8 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
     nbr_of_boxes = get_nbr_of_boxes(sample_res, render_res)
     for box_idx in range(1, nbr_of_boxes + 1):
       box_folder_name = get_box_name(box_idx)
-      render_video(images_folder + '/' + box_folder_name)
       video_file_name = box_folder_name + '.mp4'
+      render_video(images_folder + '/' + box_folder_name)
 
       if upload_to_ftp:
         print('Sending {} to ftp'.format(video_file_name))
@@ -126,8 +126,6 @@ def must_proceed_time_cut(shared: ThreadsSharedState):
 def create_video_time_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
   folder = shared.get_folder()
-  frames = [f for f in listdir(folder) if isfile(join(folder, f))]
-  frames.sort()
   time_cut_folder = shared.get_time_cut_folder_name()
   print('Time cut folder: {}'.format(time_cut_folder))
   os.makedirs(time_cut_folder)
@@ -142,6 +140,11 @@ def create_video_time_cut(shared: ThreadsSharedState):
       box_folder_name = get_box_name(box_idx)
       target_box_folder = '{}/{}'.format(time_cut_folder, box_folder_name)
       os.makedirs(target_box_folder)
+
+      # TODO: make this a function
+      frames = [f for f in listdir(folder + '/' + box_folder_name) if isfile(join(folder + '/' + box_folder_name, f))]
+      frames.sort()
+
       for f in frames[0:nbr_frames]:
         src = shared.get_folder() + '/' + box_folder_name + '/' + f
         dest = target_box_folder + '/' + f
@@ -150,11 +153,11 @@ def create_video_time_cut(shared: ThreadsSharedState):
 
     # phase 2: render boxes videos
     process_videos(time_cut_folder, upload_to_ftp, delete_images, shared.get_sample_res(), shared.get_render_res())
-    # for box_idx in range(1, nbr_of_boxes + 1):
-    #   box_folder_name = get_box_name(box_idx)
-    #   target_box_folder = '{}/{}'.format(time_cut_folder, box_folder_name)
-    #   process_video(target_box_folder, upload_to_ftp, delete_images, shared.get_sample_res(), shared.get_render_res())
   else:
+    # TODO: make this a function
+    frames = [f for f in listdir(folder) if isfile(join(folder, f))]
+    frames.sort()
+
     for f in frames[0:nbr_frames]:
       # TODO: refactor
       src = shared.get_folder() + '/' + f

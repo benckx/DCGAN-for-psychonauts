@@ -278,12 +278,12 @@ class DCGAN(object):
         box_folder_name = '{}/{}'.format(self.sample_dir, get_box_name(box_idx))
         file_name = './{}/train_{:09d}_{:03d}.png'.format(box_folder_name, step, suffix)
         box_samples = samples[:tiles_per_box]
-        # save_images(box_samples, box_grid_size, file_name)
-        frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
+        save_images(box_samples, box_grid_size, file_name)
+        # frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
     else:
       file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
-      # save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
-      frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
+      save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
+      # frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)

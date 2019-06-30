@@ -118,19 +118,19 @@ class DataSetManager:
       if self.has_rgb_np_file_cache:
         idx = random.randint(0, self.nbr_of_elements_rgb_np_file_cache - 1)
         np_file_path = self.rgb_np_file_folder + '/' + str(idx) + '.npy'
-        print('image loaded from ' + np_file_path)
+        # print('image loaded from ' + np_file_path)
         return np.load(np_file_path)
       elif not self.has_rgb_np_file_cache:
         idx = random.randint(0, len(self.images_paths) - 1)
         image_path = self.images_paths[idx]
-        print('image loaded from ' + image_path)
+        # print('image loaded from ' + image_path)
         return normalize_rgb(imread(image_path))
     elif self.color_model == 'hsl':
       # TODO: open directly if not file-cached
       if self.has_hsl_np_file_cache:
         idx = random.randint(0, self.nbr_of_elements_hsl_np_file_cache - 1)
         np_file_path = self.hsl_np_file_folder + '/' + str(idx) + '.npy'
-        print('image loaded from ' + np_file_path)
+        # print('image loaded from ' + np_file_path)
         return np.load(np_file_path)
 
   def get_random_images(self, nbr):
