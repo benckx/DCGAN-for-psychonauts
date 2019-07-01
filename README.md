@@ -38,9 +38,17 @@ less realistic but more visually interesting renders.
 
     python3 multitrain.py --config my_config.csv --disable_cache 
     
-Or with `nohup`:
+You should use `nohup` for example do if you run it in the Cloud and want to be able to close the terminal:
    
     nohup python3 multitrain.py --config my_config.csv --disable_cache > log.out 2>&1&
+
+There is also a bash script shortcut:
+
+    ./run.sh my_config.csv 0,1
+
+Which is equivalent to:
+
+    nohup python3 multitrain.py --config my_config.csv --gpu_idx 0,1 --disable_cache > my_config.csv.out 2>&1&
 
 Command parameters:
 
