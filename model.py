@@ -16,6 +16,7 @@ from video_utils import get_box_name
 
 frames_saving_pool = Pool(processes=20)
 date_format = "%d/%m %H:%M"
+frame_file_name_format = './{}/train_{:09d}_{:03d}.png'
 
 
 def conv_out_size_same(size, stride):
@@ -196,13 +197,13 @@ class DCGAN(object):
     self.g_sum = merge_summary([self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
     self.d_sum = merge_summary([self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
 
-    counter = 1
+    checkpoint_counter = 1
     start_time = time.time()
 
     if self.use_checkpoints:
-      could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+      could_load, previous_checkpoint_counter = self.load(self.checkpoint_dir)
       if could_load:
-        counter = checkpoint_counter
+        checkpoint_counter = previous_checkpoint_counter
         print(" [*] Load SUCCESS")
       else:
         print(" [!] Load failed...")
@@ -225,22 +226,21 @@ class DCGAN(object):
         batch_data = self.data_set_manager.get_random_images(self.batch_size)
         self.sess.run([d_optim, self.d_sum], feed_dict={self.inputs: batch_data, self.z: batch_z})
 
-      self.build_frame(step, 0, sample_z, sample_inputs)
+      self.build_frame(step, 0, sample_z, sample_inputs)  # TODO: suffix should depend on the nbr of updates
 
       # Update G network
-      # By default, run g_optim twice to make sure that d_loss does not go to zero (different from paper)
       for i in range(0, self.job.nbr_g_updates):
         self.sess.run([g_optim, self.g_sum], feed_dict={self.z: batch_z})
 
       self.build_frame(step, 1, sample_z, sample_inputs)
 
-      counter += 1
+      checkpoint_counter += 1
       print("Step: [%6d/%6d] time: %4.4f" % (step, total_steps, time.time() - start_time))
 
-      if self.use_checkpoints and np.mod(counter, 500) == 2:
+      if self.use_checkpoints and np.mod(checkpoint_counter, 500) == 2:
         try:
           begin = datetime.datetime.now().replace(microsecond=0)
-          self.save(config.checkpoint_dir, counter)
+          self.save(config.checkpoint_dir, checkpoint_counter)
           duration = datetime.datetime.now().replace(microsecond=0) - begin
           print('duration of checkpoint saving: {}'.format(duration))
           if must_backup_checkpoint():
@@ -267,6 +267,7 @@ class DCGAN(object):
     )
 
     if self.job.render_res is not None:
+      # save boxes frames in separate folders
       box_grid_width = int(self.job.grid_width / (self.job.sample_res[0] / self.job.render_res[0]))
       box_grid_height = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
       box_grid_size = (box_grid_height, box_grid_width)
@@ -276,13 +277,16 @@ class DCGAN(object):
 
       for box_idx in range(1, nbr_of_boxes + 1):
         box_folder_name = '{}/{}'.format(self.sample_dir, get_box_name(box_idx))
-        file_name = './{}/train_{:09d}_{:03d}.png'.format(box_folder_name, step, suffix)
-        box_samples = samples[:tiles_per_box]
-        save_images(box_samples, box_grid_size, file_name)
+        file_name = frame_file_name_format.format(box_folder_name, step, suffix)
+        begin = (box_idx - 1) * tiles_per_box
+        end = box_idx * tiles_per_box
+        box_samples = samples[begin:end]
+        save_images(box_samples, box_grid_size, file_name)  # TODO: async
         # frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
     else:
-      file_name = './{}/train_{:09d}_{:03d}.png'.format(self.sample_dir, step, suffix)
-      save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
+      # save frames in the main folder
+      file_name = frame_file_name_format.format(self.sample_dir, step, suffix)
+      save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)  # TODO: async
       # frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))

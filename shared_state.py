@@ -1,3 +1,4 @@
+# TODO: change name to reflect what it actually does (share info for automatic periodic time cuts
 class ThreadsSharedState:
   def __init__(self):
     self.sample_folder = None
@@ -9,7 +10,7 @@ class ThreadsSharedState:
     self.upload_to_ftp = False
     self.delete_at_the_end = False
 
-  def get_folder(self):
+  def get_sample_folder(self):
     return self.sample_folder
 
   def set_folder(self, folder):

@@ -80,6 +80,7 @@ for job in jobs:
   try:
     print('')
     if job.has_auto_periodic_render:
+      # TODO: pass the job object directly
       shared_state.init_current_cut()
       shared_state.set_folder(job.sample_folder)
       shared_state.set_job_name(job.name)
@@ -87,7 +88,7 @@ for job in jobs:
       shared_state.set_upload_to_ftp(job.upload_to_ftp)
       shared_state.set_delete_at_the_end(job.delete_images_after_render)
       print('frames threshold: {}'.format(shared_state.get_frames_threshold()))
-      print('sample folder: {}'.format(shared_state.get_folder()))
+      print('sample folder: {}'.format(shared_state.get_sample_folder()))
 
     print('dataset size: {}'.format(job.dataset_size))
     print('video length: {:0.2f} min.'.format(job.video_length))

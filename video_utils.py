@@ -6,9 +6,9 @@ import threading
 from os import listdir
 from os.path import isfile, join
 
-from images_utils import get_nbr_of_boxes, get_boxes
 from dcgan_cmd_builder import Job
 from files_utils import upload_via_ftp
+from images_utils import get_nbr_of_boxes, get_boxes
 from shared_state import ThreadsSharedState
 
 
@@ -17,7 +17,10 @@ def get_box_name(box_idx):
 
 
 # noinspection PyListCreation
-def render_video(images_folder):
+def run_ffmpeg_render_cmd(images_folder, file_name=None):
+  if file_name is None:
+    file_name = images_folder + '.mp4'
+
   ffmpeg_cmd = ['ffmpeg']
   ffmpeg_cmd.append('-framerate')
   ffmpeg_cmd.append('60')
@@ -33,7 +36,8 @@ def render_video(images_folder):
   ffmpeg_cmd.append('17')
   ffmpeg_cmd.append('-pix_fmt')
   ffmpeg_cmd.append('yuv420p')
-  ffmpeg_cmd.append(images_folder + '.mp4')
+  ffmpeg_cmd.append(file_name)
+  print('{}'.format(ffmpeg_cmd))
   subprocess.run(ffmpeg_cmd)
 
 
@@ -48,8 +52,8 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
   """ Render to video, upload to ftp """
 
   if sample_res is None or render_res is None or sample_res == render_res:
-    render_video(images_folder)
     video_file_name = images_folder + '.mp4'
+    run_ffmpeg_render_cmd(images_folder, file_name=video_file_name)
 
     if upload_to_ftp:
       print('Sending {} to ftp'.format(video_file_name))
@@ -57,21 +61,17 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
 
     os.rename(video_file_name, 'renders/' + video_file_name)
   else:
-    original_frames = [f for f in listdir(images_folder) if isfile(join(images_folder, f))]
-    original_frames.sort()
-
     nbr_of_boxes = get_nbr_of_boxes(sample_res, render_res)
     for box_idx in range(1, nbr_of_boxes + 1):
       box_folder_name = get_box_name(box_idx)
-      video_file_name = box_folder_name + '.mp4'
-      render_video(images_folder + '/' + box_folder_name)
+      video_file_name = images_folder + '_' + box_folder_name + '.mp4'
+      run_ffmpeg_render_cmd(images_folder + '/' + box_folder_name, file_name=video_file_name)
 
       if upload_to_ftp:
         print('Sending {} to ftp'.format(video_file_name))
         upload_via_ftp(video_file_name)
 
-      target_file_name = images_folder + '_' + box_folder_name + '.mp3'
-      os.rename(images_folder + '/' + video_file_name, 'renders/' + target_file_name)
+      os.rename(video_file_name, 'renders/' + video_file_name)
 
   if delete_images:
     shutil.rmtree(images_folder)
@@ -103,16 +103,16 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
 
 
 def must_proceed_time_cut(shared: ThreadsSharedState):
-  if shared.get_folder() is not None and os.path.exists(shared.get_folder()):
+  if shared.get_sample_folder() is not None and os.path.exists(shared.get_sample_folder()):
     if not shared.has_boxes():
       # TODO: move to function
-      folder_size = len([f for f in listdir(shared.get_folder()) if isfile(join(shared.get_folder(), f))])
-      print('{} folder size: {}'.format(shared.get_folder(), folder_size))
+      folder_size = len([f for f in listdir(shared.get_sample_folder()) if isfile(join(shared.get_sample_folder(), f))])
+      print('{} folder size: {}'.format(shared.get_sample_folder(), folder_size))
       return shared.get_frames_threshold() < folder_size
     else:
       boxes = get_boxes(shared.get_sample_res(), shared.get_render_res())
       for box_idx in range(1, len(boxes) + 1):
-        box_folder_name = shared.get_folder() + '/' + get_box_name(box_idx)
+        box_folder_name = shared.get_sample_folder() + '/' + get_box_name(box_idx)
         # TODO: move to function
         box_folder_size = len([f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))])
         print('{} size: {}'.format(box_folder_name, box_folder_size))
@@ -126,7 +126,7 @@ def must_proceed_time_cut(shared: ThreadsSharedState):
 
 def create_video_time_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
-  folder = shared.get_folder()
+  sample_folder = shared.get_sample_folder()
   time_cut_folder = shared.get_time_cut_folder_name()
   print('Time cut folder: {}'.format(time_cut_folder))
   os.makedirs(time_cut_folder)
@@ -141,30 +141,25 @@ def create_video_time_cut(shared: ThreadsSharedState):
       box_folder_name = get_box_name(box_idx)
       target_box_folder = '{}/{}'.format(time_cut_folder, box_folder_name)
       os.makedirs(target_box_folder)
-
-      # TODO: make this a function
-      frames = [f for f in listdir(folder + '/' + box_folder_name) if isfile(join(folder + '/' + box_folder_name, f))]
-      frames.sort()
-
-      # TODO: refactor (make a function)
-      for f in frames[0:nbr_frames]:
-        src = shared.get_folder() + '/' + box_folder_name + '/' + f
-        dest = target_box_folder + '/' + f
-        print('moving from {} to {}'.format(src, dest))
-        os.rename(src, dest)
+      move_frames(sample_folder + '/' + box_folder_name, target_box_folder, nbr_frames)
 
     # phase 2: render boxes videos
     process_videos(time_cut_folder, upload_to_ftp, delete_images, shared.get_sample_res(), shared.get_render_res())
   else:
-    # TODO: make this a function
-    frames = [f for f in listdir(folder) if isfile(join(folder, f))]
-    frames.sort()
-
-    # TODO: refactor (make a function)
-    for f in frames[0:nbr_frames]:
-      src = shared.get_folder() + '/' + f
-      dest = time_cut_folder + '/' + f
-      print('moving from {} to {}'.format(src, dest))
-      os.rename(src, dest)
-
+    move_frames(sample_folder, time_cut_folder, nbr_frames)
     process_videos(time_cut_folder, upload_to_ftp, delete_images)
+
+
+def find_frames_in_folder(folder):
+  frames = [f for f in listdir(folder) if isfile(join(folder, f))]
+  frames.sort()
+  return frames
+
+
+def move_frames(src_folder, dest_folder, nbr_frames):
+  frames = find_frames_in_folder(src_folder)
+  for f in frames[0:nbr_frames]:
+    src = src_folder + '/' + f
+    dest = dest_folder + '/' + f
+    print('moving from {} to {}'.format(src, dest))
+    os.rename(src, dest)

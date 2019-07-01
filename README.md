@@ -112,7 +112,7 @@ According to the original authors of the model, batch normalization "*deals with
 
 * `render_res`: if you use for example 1280x720 images and you picked 2 for `grid_width` and `grid_height`, by default
 output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 videos in 1280x720 by setting 
-`render_res` at `1280x720`. Frames will be cut before being rendered to videos.
+`render_res` at `1280x720`. The resulting 1280x720 videos are referred as "boxes".
 * `auto_render_period`: allow to render videos before the training is completed, so you can preview the result and save 
 some disk space (as it quickly produces Gb of images). For example, if you pick `60`, every time it has produces enough 
 frames to render 1 minute of video, it will be rendered while the training process continues in parallel.
