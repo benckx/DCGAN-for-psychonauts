@@ -281,13 +281,13 @@ class DCGAN(object):
         begin = (box_idx - 1) * tiles_per_box
         end = box_idx * tiles_per_box
         box_samples = samples[begin:end]
-        save_images(box_samples, box_grid_size, file_name)  # TODO: async
-        # frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
+        # save_images(box_samples, box_grid_size, file_name)
+        frames_saving_pool.apply_async(save_images, (box_samples, box_grid_size, file_name))
     else:
-      # save frames in the main folder
+      # save frames in the main sample folder
       file_name = frame_file_name_format.format(self.sample_dir, step, suffix)
-      save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)  # TODO: async
-      # frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
+      # save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
+      frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)

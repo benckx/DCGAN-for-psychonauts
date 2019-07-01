@@ -105,16 +105,14 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
 def must_proceed_time_cut(shared: ThreadsSharedState):
   if shared.get_sample_folder() is not None and os.path.exists(shared.get_sample_folder()):
     if not shared.has_boxes():
-      # TODO: move to function
-      folder_size = len([f for f in listdir(shared.get_sample_folder()) if isfile(join(shared.get_sample_folder(), f))])
+      folder_size = find_nbr_of_frames_in_folder(shared.get_sample_folder)
       print('{} folder size: {}'.format(shared.get_sample_folder(), folder_size))
       return shared.get_frames_threshold() < folder_size
     else:
       boxes = get_boxes(shared.get_sample_res(), shared.get_render_res())
       for box_idx in range(1, len(boxes) + 1):
         box_folder_name = shared.get_sample_folder() + '/' + get_box_name(box_idx)
-        # TODO: move to function
-        box_folder_size = len([f for f in listdir(box_folder_name) if isfile(join(box_folder_name, f))])
+        box_folder_size = find_nbr_of_frames_in_folder(box_folder_name)
         print('{} size: {}'.format(box_folder_name, box_folder_size))
         if shared.get_frames_threshold() >= box_folder_size:
           return False
@@ -148,6 +146,10 @@ def create_video_time_cut(shared: ThreadsSharedState):
   else:
     move_frames(sample_folder, time_cut_folder, nbr_frames)
     process_videos(time_cut_folder, upload_to_ftp, delete_images)
+
+
+def find_nbr_of_frames_in_folder(folder):
+  return len([f for f in listdir(folder) if isfile(join(folder, f))])
 
 
 def find_frames_in_folder(folder):
