@@ -292,6 +292,7 @@ class DCGAN(object):
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)
 
+  # TODO: move to a PerformanceLogger class
   def log_performances(self, step):
     now = datetime.datetime.now()
     self.frames_count += 1
