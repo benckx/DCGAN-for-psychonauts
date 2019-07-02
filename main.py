@@ -7,7 +7,6 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-import images_utils
 from dcgan_cmd_builder import Job
 from images_utils import get_datasets_images
 from model import DCGAN
@@ -121,7 +120,7 @@ def main(_):
 
   os.makedirs(sample_dir)
   if job.render_res is not None:
-    nbr_of_boxes = images_utils.get_nbr_of_boxes(job.sample_res, job.render_res)
+    nbr_of_boxes = job.get_nbr_of_boxes()
     for box_idx in range(1, nbr_of_boxes + 1):
       box_folder_name = '{}/{}'.format(sample_dir, get_box_name(box_idx))
       print('box folder: {}'.format(box_folder_name))

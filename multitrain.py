@@ -7,7 +7,6 @@ from multiprocessing.managers import BaseManager
 from os import listdir
 from os.path import isfile, join
 
-import images_utils
 from dcgan_cmd_builder import *
 from files_utils import backup_checkpoint, must_backup_checkpoint
 from shared_state import ThreadsSharedState
@@ -97,7 +96,7 @@ for job in jobs:
     print('sample resolution: {}'.format(job.sample_res))
     if job.render_res is not None:
       print('render resolution: {}'.format(job.render_res))
-      print('boxes: {}'.format(images_utils.get_boxes(job.sample_res, job.render_res)))
+      print('boxes: {}'.format(job.get_boxes()))
       if job.has_auto_periodic_render:
         shared_state.set_sample_res(job.sample_res)
         shared_state.set_render_res(job.render_res)

@@ -124,7 +124,7 @@ output frames will be 2560x1440 in a 2x2 grid format. But you can also render 4 
 * `auto_render_period`: allow to render videos before the training is completed, so you can preview the result and save 
 some disk space (as it quickly produces Gb of images). For example, if you pick `60`, every time it has produces enough 
 frames to render 1 minute of video, it will be rendered while the training process continues in parallel.
-    * The resulting video files have suffix `_timecut0001.mp4` so they be can merged later
+    * The resulting video files have suffix `_time_cut0001.mp4` so they be can merged later
     * You can use the following script `python3 merge_timecuts.py /home/user/Video/folder-with-timecuts` to do that
 
 # Dependencies

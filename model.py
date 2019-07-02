@@ -75,7 +75,7 @@ class DCGAN(object):
     self.nbr_of_layers_g = nbr_of_layers_g
 
     print('data folders: {}'.format(job.dataset_folders))
-    self.data_set_manager = DataSetManager(job.dataset_folders, enable_cache, 'rgb')
+    self.data_set_manager = DataSetManager(job.dataset_folders, enable_cache)
 
     np.random.shuffle(self.data_set_manager.images_paths)
     imread_img = imread(self.data_set_manager.images_paths[0])
@@ -272,7 +272,7 @@ class DCGAN(object):
       box_grid_height = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
       box_grid_size = (box_grid_height, box_grid_width)
 
-      nbr_of_boxes = images_utils.get_nbr_of_boxes(self.job.sample_res, self.job.render_res)
+      nbr_of_boxes = self.job.get_nbr_of_boxes()
       tiles_per_box = int(len(samples) / nbr_of_boxes)
 
       for box_idx in range(1, nbr_of_boxes + 1):
@@ -286,8 +286,8 @@ class DCGAN(object):
     else:
       # save frames in the main sample folder
       file_name = frame_file_name_format.format(self.sample_dir, step, suffix)
-      # save_images(samples, (self.job.grid_height, self.job.grid_width), file_name)
-      frames_saving_pool.apply_async(save_images, (samples, (self.job.grid_height, self.job.grid_width), file_name))
+      # save_images(samples, self.job.get_grid_size(), file_name)
+      frames_saving_pool.apply_async(save_images, (samples, self.job.get_grid_size(), file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)
@@ -354,7 +354,7 @@ class DCGAN(object):
 
   def generator(self, z):
     with tf.device(self.gpu_allocator.generator_device()):
-      with tf.variable_scope("generator") as scope:
+      with tf.variable_scope("generator"):
         nbr_layers = self.nbr_of_layers_g
         print('init generator with ' + str(nbr_layers) + ' layers ...')
 

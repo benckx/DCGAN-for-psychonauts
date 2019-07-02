@@ -6,9 +6,10 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from images_utils import get_datasets_images
+from images_utils import get_datasets_images, get_boxes, get_nbr_of_boxes
 
 samples_prefix = 'samples_'
+
 
 def extend_array_to(input_array, nbr):
   result_array = input_array
@@ -71,6 +72,24 @@ class Job:
     sample_width = self.grid_width * input_width
     sample_height = self.grid_height * input_height
     self.sample_res = (sample_width, sample_height)
+
+  def get_grid_size(self):
+    return self.grid_width, self.grid_height
+
+  def get_boxes(self):
+    if self.has_boxes():
+      return get_boxes(self.sample_res, self.render_res)
+    else:
+      return []
+
+  def get_nbr_of_boxes(self):
+    if self.has_boxes():
+      return get_nbr_of_boxes(self.sample_res, self.render_res)
+    else:
+      return 0
+
+  def has_boxes(self):
+    return not (self.render_res is None or self.sample_res == self.render_res)
 
   # noinspection PyListCreation
   def build_job_command(self, gpu_idx=None, enable_cache=True):

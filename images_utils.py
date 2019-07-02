@@ -7,12 +7,10 @@ import cv2
 import numpy as np
 
 
-# TODO: move to video_utils
 def get_nbr_of_boxes(sample_res, render_res):
   return len(get_boxes(sample_res, render_res))
 
 
-# TODO: move to video_utils
 def get_boxes(sample_res, render_res):
   if sample_res[0] % render_res[0] != 0 or sample_res[1] % render_res[1] != 0:
     print('Error: Resolution not divisible: {}, {}'.format(sample_res, render_res))
@@ -71,7 +69,7 @@ def normalize_rgb(image):
 
 
 class DataSetManager:
-  def __init__(self, base_folders, enable_cache, color_model):
+  def __init__(self, base_folders, enable_cache, color_model='rgb'):
     self.base_folders = base_folders
     self.enable_cache = enable_cache
     self.color_model = color_model
