@@ -38,7 +38,7 @@ less realistic but more visually interesting renders.
 
     python3 multitrain.py --config my_config.csv --disable_cache 
     
-You should use `nohup` for example do if you run it in the Cloud and want to be able to close the terminal:
+You can use `nohup` if you want to be able to close the terminal:
    
     nohup python3 multitrain.py --config my_config.csv --disable_cache > log.out 2>&1&
 
