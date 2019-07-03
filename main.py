@@ -40,7 +40,7 @@ flags.DEFINE_integer("sample_rate", None, "If == 5, it will take a sample image 
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
-flags.DEFINE_integer("generate_test_images", 100, "Number of images to generate during test. [0]")
+flags.DEFINE_integer("generate_test_images", 0, "Number of images to generate during test. [0]")
 flags.DEFINE_integer("nbr_of_layers_g", 5, "Number of layers in Generator")
 flags.DEFINE_integer("nbr_of_layers_d", 5, "Number of layers in Discriminator")
 flags.DEFINE_boolean("use_checkpoints", False, "Save and load checkpoints")
