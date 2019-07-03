@@ -188,7 +188,7 @@ wheel                0.33.1
 
 # Future Developments / Road map
 
-You're welcome to contribute if you want to. These are the next features I'm planning to work on:
+These are the next features I'm planning to work on:
 
 ## Model & Config
 
