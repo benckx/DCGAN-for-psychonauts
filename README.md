@@ -138,7 +138,7 @@ frames to render 1 minute of video, it will be rendered while the training proce
 
 This is my current environment, for reference. 
 Not all libraries listed here are required, but you'll need at least `tensorflow`, `Pillow`, `pandas`, `numpy`, 
-`opencv-python`, `h5py`.
+`opencv-python`, `h5py`, `scipy`.
 
 ```
 (tensorflow4) benoit@farm:~$ pip3 list
