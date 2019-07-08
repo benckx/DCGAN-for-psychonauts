@@ -2,7 +2,7 @@ import io
 import os
 import os.path
 import shutil
-
+import logging
 import numpy as np
 import tensorflow as tf
 from PIL import Image
@@ -96,6 +96,8 @@ def main(_):
   print("FLAGS.nbr_g_updates: {}".format(FLAGS.nbr_g_updates))
   print("FLAGS.nbr_d_updates: {}".format(FLAGS.nbr_d_updates))
   print()
+
+  logging.basicConfig(filename='{}.log'.format(FLAGS.name), level=logging.DEBUG)
 
   if FLAGS.input_width is None:
     FLAGS.input_width = FLAGS.input_height

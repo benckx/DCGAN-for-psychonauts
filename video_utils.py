@@ -6,6 +6,8 @@ import threading
 from os import listdir
 from os.path import isfile, join
 
+import logging
+
 from dcgan_cmd_builder import Job
 from files_utils import upload_via_ftp
 from images_utils import get_nbr_of_boxes, get_boxes
@@ -78,25 +80,28 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
 
 
 def periodic_render_job(shared: ThreadsSharedState, loop=True):
-  print()
-  print('------ periodic render ------')
-  if shared is not None:
-    print('current time cut: {}'.format(shared.get_current_cut()))
-    print('frame threshold: {}'.format(shared.get_frames_threshold()))
-    print('loop at the end: {}'.format(loop))
-    print('')
+  try:
+    print()
+    print('------ periodic render ------')
+    if shared is not None:
+      print('current time cut: {}'.format(shared.get_current_cut()))
+      print('frame threshold: {}'.format(shared.get_frames_threshold()))
+      print('loop at the end: {}'.format(loop))
+      print('')
 
-    proceed = must_proceed_time_cut(shared)
-    print('proceed to time cut: {}'.format(proceed))
+      proceed = must_proceed_time_cut(shared)
+      print('proceed to time cut: {}'.format(proceed))
 
-    if proceed:
-      create_video_time_cut(shared)
-      shared.increment_cut()
-  else:
-    print('shared state not defined yet')
+      if proceed:
+        create_video_time_cut(shared)
+        shared.increment_cut()
+    else:
+      print('shared state not defined yet')
 
-  print('----- / periodic render -----')
-  print()
+    print('----- / periodic render -----')
+    print()
+  except Exception as e:
+    logging.error('{}'.format(e))
 
   if loop:
     threading.Timer(30.0, periodic_render_job, args=[shared]).start()
