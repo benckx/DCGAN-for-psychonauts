@@ -333,7 +333,8 @@ class Job:
     job.video_length = FLAGS.video_length
     job.k_w = FLAGS.k_w
     job.k_h = FLAGS.k_h
-    job.render_res = tuple([int(val) for val in FLAGS.render_res.split('x')])
+    if FLAGS.render_res is not None:
+      job.render_res = tuple([int(val) for val in FLAGS.render_res.split('x')])
     job.compute_sample_res()
 
     return job
