@@ -310,7 +310,7 @@ class DCGAN(object):
     print()
     if min_since_started >= 3:
       print('frames/min (3 min): {:0.2f}'.format(len(self.frames_last_timestamps) / 3))
-    else:
+    elif min_since_started > 0:
       print('frames/min (total): {:0.2f}'.format(self.frames_count / min_since_started))
 
     # progress and time remaining estimate
