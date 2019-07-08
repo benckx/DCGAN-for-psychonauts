@@ -81,7 +81,7 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
 
 def periodic_render_job(shared: ThreadsSharedState, loop=True):
   try:
-    logging.info()
+    logging.info('')
     logging.info('------ periodic render ------')
     if shared is not None:
       logging.info('current time cut: {}'.format(shared.get_current_cut()))
@@ -99,7 +99,7 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
       logging.info('shared state not defined yet')
 
     logging.info('----- / periodic render -----')
-    logging.info()
+    logging.info('')
   except Exception as e:
     logging.error('{}'.format(e))
 
