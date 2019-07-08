@@ -39,14 +39,14 @@ def run_ffmpeg_render_cmd(images_folder, file_name=None):
   ffmpeg_cmd.append('-pix_fmt')
   ffmpeg_cmd.append('yuv420p')
   ffmpeg_cmd.append(file_name)
-  print('{}'.format(ffmpeg_cmd))
+  logging.info('{}'.format(ffmpeg_cmd))
   subprocess.run(ffmpeg_cmd)
 
 
 def process_videos_job_param(job: Job):
-  print('job.sample_folder: ' + job.sample_folder)
-  print('job.sample_res: {}'.format(job.sample_res))
-  print('job.render_res: {}'.format(job.render_res))
+  logging.info('job.sample_folder: ' + job.sample_folder)
+  logging.info('job.sample_res: {}'.format(job.sample_res))
+  logging.info('job.render_res: {}'.format(job.render_res))
   process_videos(job.sample_folder, job.upload_to_ftp, job.delete_images_after_render, job.sample_res, job.render_res)
 
 
@@ -58,7 +58,7 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
     run_ffmpeg_render_cmd(images_folder, file_name=video_file_name)
 
     if upload_to_ftp:
-      print('Sending {} to ftp'.format(video_file_name))
+      logging.info('Sending {} to ftp'.format(video_file_name))
       upload_via_ftp(video_file_name)
 
     os.rename(video_file_name, 'renders/' + video_file_name)
@@ -70,7 +70,7 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
       run_ffmpeg_render_cmd(images_folder + '/' + box_folder_name, file_name=video_file_name)
 
       if upload_to_ftp:
-        print('Sending {} to ftp'.format(video_file_name))
+        logging.info('Sending {} to ftp'.format(video_file_name))
         upload_via_ftp(video_file_name)
 
       os.rename(video_file_name, 'renders/' + video_file_name)
@@ -81,25 +81,25 @@ def process_videos(images_folder, upload_to_ftp, delete_images, sample_res=None,
 
 def periodic_render_job(shared: ThreadsSharedState, loop=True):
   try:
-    print()
-    print('------ periodic render ------')
+    logging.info()
+    logging.info('------ periodic render ------')
     if shared is not None:
-      print('current time cut: {}'.format(shared.get_current_cut()))
-      print('frame threshold: {}'.format(shared.get_frames_threshold()))
-      print('loop at the end: {}'.format(loop))
-      print('')
+      logging.info('current time cut: {}'.format(shared.get_current_cut()))
+      logging.info('frame threshold: {}'.format(shared.get_frames_threshold()))
+      logging.info('loop at the end: {}'.format(loop))
+      logging.info('')
 
       proceed = must_proceed_time_cut(shared)
-      print('proceed to time cut: {}'.format(proceed))
+      logging.info('proceed to time cut: {}'.format(proceed))
 
       if proceed:
         create_video_time_cut(shared)
         shared.increment_cut()
     else:
-      print('shared state not defined yet')
+      logging.info('shared state not defined yet')
 
-    print('----- / periodic render -----')
-    print()
+    logging.info('----- / periodic render -----')
+    logging.info()
   except Exception as e:
     logging.error('{}'.format(e))
 
@@ -111,14 +111,14 @@ def must_proceed_time_cut(shared: ThreadsSharedState):
   if shared.get_sample_folder() is not None and os.path.exists(shared.get_sample_folder()):
     if not shared.has_boxes():
       folder_size = find_nbr_of_frames_in_folder(shared.get_sample_folder)
-      print('{} folder size: {}'.format(shared.get_sample_folder(), folder_size))
+      logging.info('{} folder size: {}'.format(shared.get_sample_folder(), folder_size))
       return shared.get_frames_threshold() < folder_size
     else:
       boxes = get_boxes(shared.get_sample_res(), shared.get_render_res())
       for box_idx in range(1, len(boxes) + 1):
         box_folder_name = shared.get_sample_folder() + '/' + get_box_name(box_idx)
         box_folder_size = find_nbr_of_frames_in_folder(box_folder_name)
-        print('{} size: {}'.format(box_folder_name, box_folder_size))
+        logging.info('{} size: {}'.format(box_folder_name, box_folder_size))
         if shared.get_frames_threshold() >= box_folder_size:
           return False
 
@@ -131,7 +131,7 @@ def create_video_time_cut(shared: ThreadsSharedState):
   nbr_frames = shared.get_frames_threshold()
   sample_folder = shared.get_sample_folder()
   time_cut_folder = shared.get_time_cut_folder_name()
-  print('Time cut folder: {}'.format(time_cut_folder))
+  logging.info('Time cut folder: {}'.format(time_cut_folder))
   os.makedirs(time_cut_folder)
 
   upload_to_ftp = shared.is_upload_to_ftp()
@@ -168,5 +168,5 @@ def move_frames(src_folder, dest_folder, nbr_frames):
   for f in frames[0:nbr_frames]:
     src = src_folder + '/' + f
     dest = dest_folder + '/' + f
-    print('moving from {} to {}'.format(src, dest))
+    logging.info('moving from {} to {}'.format(src, dest))
     os.rename(src, dest)
