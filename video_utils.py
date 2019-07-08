@@ -6,6 +6,7 @@ import threading
 from os import listdir
 from os.path import isfile, join
 
+import traceback
 import logging
 
 from dcgan_cmd_builder import Job
@@ -102,6 +103,12 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
     logging.info('')
   except Exception as e:
     logging.error('{}'.format(e))
+    tb = traceback.format_exc()
+  else:
+    tb = None
+  finally:
+    if tb is not None:
+      logging.error(str(tb))
 
   if loop:
     threading.Timer(30.0, periodic_render_job, args=[shared]).start()
