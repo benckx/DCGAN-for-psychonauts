@@ -98,9 +98,6 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
         shared.increment_cut()
     else:
       logging.info('shared state not defined yet')
-
-    logging.info('----- / periodic render -----')
-    logging.info('')
   except Exception as e:
     logging.error('{}'.format(e))
     tb = traceback.format_exc()
@@ -109,6 +106,11 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
   finally:
     if tb is not None:
       logging.error(str(tb))
+      logging.error('sample folder: {}'.format(shared.get_sample_folder()))
+      logging.error('has boxes: {}'.format(shared.has_boxes()))
+
+      logging.info('----- / periodic render -----')
+      logging.info('')
 
   if loop:
     threading.Timer(30.0, periodic_render_job, args=[shared]).start()
@@ -117,7 +119,7 @@ def periodic_render_job(shared: ThreadsSharedState, loop=True):
 def must_proceed_time_cut(shared: ThreadsSharedState):
   if shared.get_sample_folder() is not None and os.path.exists(shared.get_sample_folder()):
     if not shared.has_boxes():
-      folder_size = find_nbr_of_frames_in_folder(shared.get_sample_folder)
+      folder_size = find_nbr_of_frames_in_folder(shared.get_sample_folder())
       logging.info('{} folder size: {}'.format(shared.get_sample_folder(), folder_size))
       return shared.get_frames_threshold() < folder_size
     else:
