@@ -4,7 +4,6 @@ import datetime
 import time
 from multiprocessing import Pool
 
-import images_utils
 from dcgan_cmd_builder import Job
 from files_utils import backup_checkpoint, must_backup_checkpoint, get_checkpoint_backup_delay
 from gpu_devices import GpuAllocator
@@ -172,15 +171,7 @@ class DCGAN(object):
 
   def train(self, config):
     print()
-    print('self.nbr_g_updates: {}'.format(self.job.nbr_g_updates))
-    print('self.nbr_d_updates: {}'.format(self.job.nbr_d_updates))
-    print('self.activation_g: {}'.format(self.job.activation_g))
-    print('self.activation_d: {}'.format(self.job.activation_d))
-    print("config.learning_rate_g: {}".format(config.learning_rate_g))
-    print("config.beta1_g: {}".format(config.beta1_g))
-    print("config.learning_rate_d: {}".format(config.learning_rate_d))
-    print("config.beta1_d: {}".format(config.beta1_d))
-    print("self.job.get_nbr_of_steps(): {}".format(self.job.get_nbr_of_steps()))
+    print(str(self.job))
     print()
 
     with tf.device(self.gpu_allocator.generator_device()):
@@ -266,7 +257,7 @@ class DCGAN(object):
       },
     )
 
-    if self.job.render_res is not None:
+    if self.job.has_boxes():
       # save boxes frames in separate folders
       box_grid_width = int(self.job.grid_width / (self.job.sample_res[0] / self.job.render_res[0]))
       box_grid_height = int(self.job.grid_height / (self.job.sample_res[1] / self.job.render_res[1]))
@@ -287,7 +278,8 @@ class DCGAN(object):
       # save frames in the main sample folder
       file_name = frame_file_name_format.format(self.sample_dir, step, suffix)
       # save_images(samples, self.job.get_grid_size(), file_name)
-      frames_saving_pool.apply_async(save_images, (samples, self.job.get_grid_size(), file_name))
+      grid_size = self.job.grid_height, self.job.grid_width
+      frames_saving_pool.apply_async(save_images, (samples, grid_size, file_name))
 
     print("[Sample] d_loss: %.8f, g_loss: %.8f" % (d_loss, g_loss))
     self.log_performances(step)

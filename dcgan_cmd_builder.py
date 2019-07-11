@@ -73,9 +73,6 @@ class Job:
     sample_height = self.grid_height * input_height
     self.sample_res = (sample_width, sample_height)
 
-  def get_grid_size(self):
-    return self.grid_width, self.grid_height
-
   def get_boxes(self):
     if self.has_boxes():
       return get_boxes(self.sample_res, self.render_res)
@@ -178,6 +175,16 @@ class Job:
     dcgan_cmd.append('--train')
 
     return dcgan_cmd
+
+  def __str__(self):
+    result = ''
+    for key in self.__dict__.keys():
+      result += '{} -> {}\n'.format(key, self.__dict__[key])
+
+    result += 'get_nbr_of_steps() -> {}'.format(self.get_nbr_of_steps())
+
+    return result
+
 
   @classmethod
   def from_row(cls, row, columns):
