@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-rm -rf samples_*
-rm -rf logs
+killall -9 python3
 rm -rf checkpoint
+rm -rf renders
+rm -rf samples_*
 rm -rf *.out
 rm -rf *.log
 rm -rf *.mp4
-killall -9 python3
