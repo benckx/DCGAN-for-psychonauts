@@ -116,14 +116,12 @@ class DCGAN(object):
       self.inputs = tf.placeholder(
         tf.float32, [self.batch_size] + image_dims, name='real_images')
 
-    inputs = self.inputs
-
     with tf.device(self.gpu_allocator.generator_device()):
       self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
       self.z_sum = histogram_summary("z", self.z)
 
     self.G = self.generator(self.z)
-    self.D, self.D_logits = self.discriminator(inputs, reuse=False)
+    self.D, self.D_logits = self.discriminator(self.inputs, reuse=False)
     self.sampler = self.sampler(self.z)
     self.D_, self.D_logits_ = self.discriminator(self.G, reuse=True)
 

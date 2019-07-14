@@ -93,4 +93,4 @@ samples_*
 ftp.ini
 *.mp4
 *.bak
-test_config.csv
+test_config*.csv
