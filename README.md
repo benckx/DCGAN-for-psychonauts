@@ -22,6 +22,11 @@ Use DCGAN to create trippy videos.
 <a href="https://www.vjloops.com//stock-video/8i-bits-loop-2-143180.html">![](https://storage.googleapis.com/vjloops/143180_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/8i-bits-loop-9-143296.html">![](https://storage.googleapis.com/vjloops/143296_thumb0.jpg)</a>
 
+<a href="https://www.vjloops.com/stock-video/pixel-art-loop-8-142186.html">![](https://storage.googleapis.com/vjloops/142186_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/pixel-art-loop-9-142187.html">![](https://storage.googleapis.com/vjloops/142187_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/pixel-art-loop-15-143906.html">![](https://storage.googleapis.com/vjloops/143906_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/dynamique-des-fluides-loop-7-143905.html">![](https://storage.googleapis.com/vjloops/143905_thumb0.jpg)</a>
+
 More examples on [my portfolio](https://www.vjloops.com/index.php?portfolio=1&user=20585&svideo=1&items=500&str=1&showmenu=0)
 
 ## DCGAN
