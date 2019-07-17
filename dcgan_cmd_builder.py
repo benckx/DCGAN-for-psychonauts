@@ -185,7 +185,6 @@ class Job:
 
     return result
 
-
   @classmethod
   def from_row(cls, row, columns):
     # model settings

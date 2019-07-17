@@ -1,0 +1,26 @@
+- job:
+    name: my_job_042
+    dataset:
+      - 4-People-100x150
+      - 5-People-100x150
+    render:
+      length: 5
+      resolution: 1280x720
+    discriminator:
+      optimizer:
+        type: adam
+        learning_rate: 0.001
+      number_of_layers: 7
+      layers:
+        - batch_norm: true
+          activation: selu
+          kernel: 3x3
+    generator:
+      optimizer:
+        type: adam
+        learning_rate: 0.004
+      number_of_layers: 5
+      layers:
+        - batch_norm: true
+          activation: selu
+          kernel: 5x5
