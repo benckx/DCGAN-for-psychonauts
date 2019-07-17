@@ -20,12 +20,16 @@ class TestStringMethods(unittest.TestCase):
       s.split(2)
 
   def test_parse_yaml(self):
-    stream = open('test_configs/test_config01.yaml', 'r')
-    docs = yaml.load(stream)
-    print(docs)
-    print(docs[0].items())
-    for x, y in docs[0].items():
-      print(x, y)
+    with open('test_configs/test_config01.yaml') as stream:
+      docs = yaml.load(stream)
+      print(docs)
+      print(docs[0].items())
+      for x, y in docs[0].items():
+        print('{} -> {}'.format(x, y))
+
+      print(docs[0].keys())
+      print(docs[0]['job'])
+      print(docs[0]['job']['name'])
 
 
 if __name__ == '__main__':
