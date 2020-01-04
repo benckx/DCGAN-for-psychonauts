@@ -18,6 +18,14 @@ def extend_array_to(input_array, nbr):
   return result_array[0:nbr]
 
 
+class Layer:
+  def __init__(self):
+    self.activation = 'lrelu'
+    self.k_w = 5
+    self.k_h = 5
+    self.batch_norm = True
+
+
 class Job:
 
   def __init__(self):

@@ -1,2 +1,2 @@
 name,dataset,grid_width,grid_height,nbr_of_layers_g,nbr_of_layers_d,batch_norm_d,batch_norm_g,activation_g,activation_d,learning_rate_d,beta1_d,learning_rate_g,beta1_g,nbr_g_updates,nbr_d_updates,,video_length,auto_render_period,render_res
-test01,people-640x360,3,3,5,5,,,,,,,,,1,1,,10,30,
+test01,4-People-100x150,3,3,5,5,,,selu,selu,,,,,1,1,,10,30,
