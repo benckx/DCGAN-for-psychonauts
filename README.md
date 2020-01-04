@@ -26,6 +26,11 @@ Use DCGAN to create trippy videos.
 <a href="https://www.vjloops.com//stock-video/8i-bits-loop-2-143180.html">![](https://storage.googleapis.com/vjloops/143180_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/8i-bits-loop-9-143296.html">![](https://storage.googleapis.com/vjloops/143296_thumb0.jpg)</a>
 
+<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-14-147660.html">![](https://storage.googleapis.com/vjloops/147660_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-29-155517.html">![](https://storage.googleapis.com/vjloops/155517_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-30-155518.html">![](https://storage.googleapis.com/vjloops/155518_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-27-155515.html">![](https://storage.googleapis.com/vjloops/155515_thumb0.jpg)</a>
+
 <a href="https://www.vjloops.com/stock-video/pixel-art-loop-8-142186.html">![](https://storage.googleapis.com/vjloops/142186_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/pixel-art-loop-9-142187.html">![](https://storage.googleapis.com/vjloops/142187_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/pixel-art-loop-15-143906.html">![](https://storage.googleapis.com/vjloops/143906_thumb0.jpg)</a>
