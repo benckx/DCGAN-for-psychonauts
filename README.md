@@ -22,7 +22,7 @@ Use DCGAN to create trippy videos.
 <a href="https://www.vjloops.com/stock-video/fresh-and-simple-5c-140711.html">![](https://storage.googleapis.com/vjloops/140711_thumb0.jpg)</a>
 
 <a href="https://www.vjloops.com/stock-video/hyperparameter-loop-14-147660.html">![](https://storage.googleapis.com/vjloops/147660_thumb0.jpg)</a>
-<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-14-147660.html">![](https://storage.googleapis.com/vjloops/147660_thumb0.jpg)</a>
+<a href="https://www.vjloops.com/stock-video/hyperparameter-loop-29-155517.html">![](https://storage.googleapis.com/vjloops/155517_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/hyperparameter-loop-14-147660.html">![](https://storage.googleapis.com/vjloops/147660_thumb0.jpg)</a>
 <a href="https://www.vjloops.com/stock-video/hyperparameter-loop-14-147660.html">![](https://storage.googleapis.com/vjloops/147660_thumb0.jpg)</a>
 
