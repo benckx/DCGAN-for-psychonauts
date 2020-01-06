@@ -130,12 +130,12 @@ class DCGAN(object):
     self.G_sum = image_summary("G", self.G)
 
     def softmax_cross_entropy_with_logits(x, y, device):
-      try:
+      # try:
         with tf.device(device):
           return tf.nn.sparse_softmax_cross_entropy_with_logits(logits=x, labels=y)
-      except:
-        with tf.device(device):
-          return tf.nn.sparse_softmax_cross_entropy_with_logits(logits=x, targets=y)
+      # except:
+      #   with tf.device(device):
+      #     return tf.nn.sparse_softmax_cross_entropy_with_logits(logits=x, targets=y)
 
     with tf.device(self.gpu_allocator.discriminator_device()):
       d_loss_real_input_tensor = softmax_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D), self.gpu_allocator.discriminator_device())
