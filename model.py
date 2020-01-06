@@ -129,20 +129,20 @@ class DCGAN(object):
     self.d__sum = histogram_summary("d_", self.D_)
     self.G_sum = image_summary("G", self.G)
 
-    def sigmoid_cross_entropy_with_logits(x, y, device):
+    def softmax_cross_entropy_with_logits(x, y, device):
       try:
         with tf.device(device):
-          return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, labels=y)
+          return tf.nn.softmax_cross_entropy_with_logits_v2(logits=x, labels=y)
       except:
         with tf.device(device):
-          return tf.nn.sigmoid_cross_entropy_with_logits(logits=x, targets=y)
+          return tf.nn.softmax_cross_entropy_with_logits_v2(logits=x, targets=y)
 
     with tf.device(self.gpu_allocator.discriminator_device()):
-      d_loss_real_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D), self.gpu_allocator.discriminator_device())
-      d_loss_fake_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_), self.gpu_allocator.generator_device())
+      d_loss_real_input_tensor = softmax_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D), self.gpu_allocator.discriminator_device())
+      d_loss_fake_input_tensor = softmax_cross_entropy_with_logits(self.D_logits_, tf.zeros_like(self.D_), self.gpu_allocator.generator_device())
 
     with tf.device(self.gpu_allocator.generator_device()):
-      g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_), self.gpu_allocator.generator_device())
+      g_loss_input_tensor = softmax_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_), self.gpu_allocator.generator_device())
 
     with tf.device(self.gpu_allocator.discriminator_device()):
       self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
