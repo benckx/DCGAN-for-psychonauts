@@ -145,11 +145,11 @@ class DCGAN(object):
       g_loss_input_tensor = sigmoid_cross_entropy_with_logits(self.D_logits_, tf.ones_like(self.D_), self.gpu_allocator.generator_device())
 
     with tf.device(self.gpu_allocator.discriminator_device()):
-      self.d_loss_real = tf.reduce_mean(d_loss_real_input_tensor)
-      self.d_loss_fake = tf.reduce_mean(d_loss_fake_input_tensor)
+      self.d_loss_real = tf.reduce_variance(d_loss_real_input_tensor)
+      self.d_loss_fake = tf.reduce_variance(d_loss_fake_input_tensor)
 
     with tf.device(self.gpu_allocator.generator_device()):
-      self.g_loss = tf.reduce_mean(g_loss_input_tensor)
+      self.g_loss = tf.reduce_variance(g_loss_input_tensor)
 
     self.d_loss_real_sum = scalar_summary("d_loss_real", self.d_loss_real)
     self.d_loss_fake_sum = scalar_summary("d_loss_fake", self.d_loss_fake)
