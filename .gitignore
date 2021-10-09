@@ -94,3 +94,4 @@ ftp.ini
 *.bak
 test_config*.csv
 *.log
+*.csv
