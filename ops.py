@@ -1,4 +1,5 @@
 from utils import *
+import tensorflow as tf
 
 try:
   image_summary = tf.image_summary
@@ -10,8 +11,8 @@ except:
   image_summary = tf.summary.image
   scalar_summary = tf.summary.scalar
   histogram_summary = tf.summary.histogram
-  merge_summary = tf.summary.merge
-  SummaryWriter = tf.summary.FileWriter
+  # merge_summary = tf.summary.merge
+  # SummaryWriter = tf.summary.FileWriter
 
 if "concat_v2" in dir(tf):
   def concat(tensors, axis, *args, **kwargs):
@@ -24,19 +25,17 @@ else:
 # batch normalization : deals with poor initialization helps gradient flow
 class batch_norm(object):
   def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
-    with tf.variable_scope(name):
+    with tf.compat.v1.variable_scope(name):
       self.epsilon  = epsilon
       self.momentum = momentum
       self.name = name
 
   def __call__(self, x, train=True):
-    return tf.contrib.layers.batch_norm(x,
-                      decay=self.momentum,
-                      updates_collections=None,
-                      epsilon=self.epsilon,
-                      scale=True,
-                      is_training=train,
-                      scope=self.name)
+    return tf.keras.layers.BatchNormalization(
+      name="BatchNorm",
+      scale=True,
+      center=True,
+      trainable=True)(x)
 
 
 def conv_cond_concat(x, y):
@@ -64,9 +63,9 @@ def conv2d(input_, output_dim,
 def deconv2d(input_, output_shape,
              k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02,
              name="deconv2d", with_w=False):
-  with tf.variable_scope(name):
+  with tf.compat.v1.variable_scope(name):
     # filter : [height, width, output_channels, in_channels]
-    w = tf.get_variable('w', [k_h, k_w, output_shape[-1], input_.get_shape()[-1]],
+    w = tf.compat.v1.get_variable('w', [k_h, k_w, output_shape[-1], input_.get_shape()[-1]],
                         initializer=tf.random_normal_initializer(stddev=stddev))
 
     try:
@@ -76,7 +75,7 @@ def deconv2d(input_, output_shape,
     except AttributeError:
       deconv = tf.nn.deconv2d(input_, w, output_shape=output_shape, strides=[1, d_h, d_w, 1])
 
-    biases = tf.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
+    biases = tf.compat.v1.get_variable('biases', [output_shape[-1]], initializer=tf.constant_initializer(0.0))
     deconv = tf.reshape(tf.nn.bias_add(deconv, biases), deconv.get_shape())
 
     if with_w:
@@ -93,10 +92,10 @@ def lrelu(x, leak=0.2, name="lrelu"):
 def linear(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=False):
   shape = input_.get_shape().as_list()
 
-  with tf.variable_scope(scope or "Linear"):
-    matrix = tf.get_variable("Matrix", [shape[1], output_size], tf.float32,
+  with tf.compat.v1.variable_scope(scope or "Linear"):
+    matrix = tf.compat.v1.get_variable("Matrix", [shape[1], output_size], tf.float32,
                              tf.random_normal_initializer(stddev=stddev))
-    bias = tf.get_variable("bias", [output_size],
+    bias = tf.compat.v1.get_variable("bias", [output_size],
                            initializer=tf.constant_initializer(bias_start))
     if with_w:
       return tf.matmul(input_, matrix) + bias, matrix, bias

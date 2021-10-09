@@ -13,8 +13,8 @@ import cv2
 import math
 import numpy as np
 import scipy.misc
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+# import tensorflow as tf
+# import tensorflow.contrib.slim as slim
 from six.moves import xrange
 
 pp = pprint.PrettyPrinter()
@@ -23,8 +23,9 @@ get_stddev = lambda x, k_h, k_w: 1/math.sqrt(k_w*k_h*x.get_shape()[-1])
 
 
 def show_all_variables():
-  model_vars = tf.trainable_variables()
-  slim.model_analyzer.analyze_vars(model_vars, print_info=True)
+  print('do nothing')
+  # model_vars = tf.trainable_variables()
+  # slim.model_analyzer.analyze_vars(model_vars, print_info=True)
 
 
 def get_image(image_path, input_height, input_width,

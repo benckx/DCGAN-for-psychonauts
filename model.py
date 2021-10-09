@@ -113,11 +113,11 @@ class DCGAN(object):
       image_dims = [self.input_height, self.input_width, self.c_dim]
 
     with tf.device(self.gpu_allocator.discriminator_device()):
-      self.inputs = tf.placeholder(
+      self.inputs = tf.compat.v1.placeholder(
         tf.float32, [self.batch_size] + image_dims, name='real_images')
 
     with tf.device(self.gpu_allocator.generator_device()):
-      self.z = tf.placeholder(tf.float32, [None, self.z_dim], name='z')
+      self.z = tf.compat.v1.placeholder(tf.float32, [None, self.z_dim], name='z')
       self.z_sum = histogram_summary("z", self.z)
 
     self.G = self.generator(self.z)
@@ -344,7 +344,7 @@ class DCGAN(object):
 
   def generator(self, z):
     with tf.device(self.gpu_allocator.generator_device()):
-      with tf.variable_scope("generator"):
+      with tf.compat.v1.variable_scope("generator"):
         nbr_layers = self.nbr_of_layers_g
         print('init generator with ' + str(nbr_layers) + ' layers ...')
 

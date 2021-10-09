@@ -14,7 +14,7 @@ from utils import show_all_variables
 from utils import visualize
 from video_utils import get_box_name
 
-flags = tf.app.flags
+flags = tf.compat.v1.flags
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("video_length", 5, "Length of the video render")
 flags.DEFINE_float("learning_rate_g", 0.0002, "Learning rate of for adam (G) [0.0002]")
@@ -108,7 +108,7 @@ def main(_):
     os.makedirs(FLAGS.checkpoint_dir)
 
   # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-  run_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+  run_config = tf.compat.v1.ConfigProto(allow_soft_placement=True, log_device_placement=False)
   run_config.gpu_options.allow_growth = True
   run_config.gpu_options.per_process_gpu_memory_fraction = 1
 
@@ -131,7 +131,7 @@ def main(_):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_idx
 
-  with tf.Session(config=run_config) as sess:
+  with tf.compat.v1.Session(config=run_config) as sess:
     dcgan = DCGAN(
       sess,
       job,
@@ -167,4 +167,4 @@ def main(_):
 
 
 if __name__ == '__main__':
-  tf.app.run()
+  tf.compat.v1.app.run()
